@@ -1,0 +1,13 @@
+REGEDIT4
+
+#---------------------------------------------------------------------
+#die Registry Keys fuer die 2 Kachelfiles LEDP und LEDX wieder entfernen
+
+[-HKEY_CLASSES_ROOT\.ledp]
+
+[-HKEY_CLASSES_ROOT\.ledx]
+
+
+[-HKEY_CLASSES_ROOT\LedKachel.Programm]
+
+[-HKEY_CLASSES_ROOT\LedKachel.Executable]

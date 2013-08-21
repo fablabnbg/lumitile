@@ -1,0 +1,217 @@
+#LED-Programm in lesbarer Form, nur VORSICHTIG editieren !
+{
+'version': 1.00,
+#DIE METASZENE...
+'size': (4, 4) ,
+'meta': [
+    [  1,  2,  3,  4, ],
+    [  5,  6,  7,  8, ],
+    [  9, 10, 11, 12, ],
+    [ 13, 14, 15, 16, ],
+  ],
+
+#USER DEFINED PROPERTIES
+'QuadratSize': 50,
+
+#LISTE VON SZENEN
+'szenen': [
+    { 
+      'name': 'Szene 1',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['FF00FF', 'FF00FF', 'FF00FF', 'FF00FF'],
+        ['AA00FF', 'AA00FF', 'AA00FF', 'AA00FF'],
+        ['5500FF', '5500FF', '5500FF', '5500FF'],
+        ['0000FF', '0000FF', '0000FF', '0000FF'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1.',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['AA00FF', 'AA00FF', 'AA00FF', 'AA00FF'],
+        ['5500FF', '5500FF', '5500FF', '5500FF'],
+        ['0000FF', '0000FF', '0000FF', '0000FF'],
+        ['0055FF', '0055FF', '0055FF', '0055FF'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1..',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['5500FF', '5500FF', '5500FF', '5500FF'],
+        ['0000FF', '0000FF', '0000FF', '0000FF'],
+        ['0055FF', '0055FF', '0055FF', '0055FF'],
+        ['00AAFF', '00AAFF', '00AAFF', '00AAFF'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1...',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['0000FF', '0000FF', '0000FF', '0000FF'],
+        ['0055FF', '0055FF', '0055FF', '0055FF'],
+        ['00AAFF', '00AAFF', '00AAFF', '00AAFF'],
+        ['00FFFF', '00FFFF', '00FFFF', '00FFFF'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1....',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['0055FF', '0055FF', '0055FF', '0055FF'],
+        ['00AAFF', '00AAFF', '00AAFF', '00AAFF'],
+        ['00FFFF', '00FFFF', '00FFFF', '00FFFF'],
+        ['00FFAA', '00FFAA', '00FFAA', '00FFAA'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1.....',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['00AAFF', '00AAFF', '00AAFF', '00AAFF'],
+        ['00FFFF', '00FFFF', '00FFFF', '00FFFF'],
+        ['00FFAA', '00FFAA', '00FFAA', '00FFAA'],
+        ['00FF55', '00FF55', '00FF55', '00FF55'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1......',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['00FFFF', '00FFFF', '00FFFF', '00FFFF'],
+        ['00FFAA', '00FFAA', '00FFAA', '00FFAA'],
+        ['00FF55', '00FF55', '00FF55', '00FF55'],
+        ['00FF00', '00FF00', '00FF00', '00FF00'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1.......',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['00FFAA', '00FFAA', '00FFAA', '00FFAA'],
+        ['00FF55', '00FF55', '00FF55', '00FF55'],
+        ['00FF00', '00FF00', '00FF00', '00FF00'],
+        ['55FF00', '55FF00', '55FF00', '55FF00'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1........',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['00FF55', '00FF55', '00FF55', '00FF55'],
+        ['00FF00', '00FF00', '00FF00', '00FF00'],
+        ['55FF00', '55FF00', '55FF00', '55FF00'],
+        ['AAFF00', 'AAFF00', 'AAFF00', 'AAFF00'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1.........',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['00FF00', '00FF00', '00FF00', '00FF00'],
+        ['55FF00', '55FF00', '55FF00', '55FF00'],
+        ['AAFF00', 'AAFF00', 'AAFF00', 'AAFF00'],
+        ['FFFF00', 'FFFF00', 'FFFF00', 'FFFF00'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1..........',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['55FF00', '55FF00', '55FF00', '55FF00'],
+        ['AAFF00', 'AAFF00', 'AAFF00', 'AAFF00'],
+        ['FFFF00', 'FFFF00', 'FFFF00', 'FFFF00'],
+        ['FFAA00', 'FFAA00', 'FFAA00', 'FFAA00'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1...........',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['AAFF00', 'AAFF00', 'AAFF00', 'AAFF00'],
+        ['FFFF00', 'FFFF00', 'FFFF00', 'FFFF00'],
+        ['FFAA00', 'FFAA00', 'FFAA00', 'FFAA00'],
+        ['FF5500', 'FF5500', 'FF5500', 'FF5500'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1............',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['FFFF00', 'FFFF00', 'FFFF00', 'FFFF00'],
+        ['FFAA00', 'FFAA00', 'FFAA00', 'FFAA00'],
+        ['FF5500', 'FF5500', 'FF5500', 'FF5500'],
+        ['FF0000', 'FF0000', 'FF0000', 'FF0000'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1.............',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['FFAA00', 'FFAA00', 'FFAA00', 'FFAA00'],
+        ['FF5500', 'FF5500', 'FF5500', 'FF5500'],
+        ['FF0000', 'FF0000', 'FF0000', 'FF0000'],
+        ['FF0055', 'FF0055', 'FF0055', 'FF0055'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1..............',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['FF5500', 'FF5500', 'FF5500', 'FF5500'],
+        ['FF0000', 'FF0000', 'FF0000', 'FF0000'],
+        ['FF0055', 'FF0055', 'FF0055', 'FF0055'],
+        ['FF00AA', 'FF00AA', 'FF00AA', 'FF00AA'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1...............',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['FF0000', 'FF0000', 'FF0000', 'FF0000'],
+        ['FF0055', 'FF0055', 'FF0055', 'FF0055'],
+        ['FF00AA', 'FF00AA', 'FF00AA', 'FF00AA'],
+        ['FF00FF', 'FF00FF', 'FF00FF', 'FF00FF'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1................',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['FF0055', 'FF0055', 'FF0055', 'FF0055'],
+        ['FF00AA', 'FF00AA', 'FF00AA', 'FF00AA'],
+        ['FF00FF', 'FF00FF', 'FF00FF', 'FF00FF'],
+        ['AA00FF', 'AA00FF', 'AA00FF', 'AA00FF'],
+      ],
+    } ,
+    { 
+      'name': 'Szene 1.................',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['FF00AA', 'FF00AA', 'FF00AA', 'FF00AA'],
+        ['FF00FF', 'FF00FF', 'FF00FF', 'FF00FF'],
+        ['AA00FF', 'AA00FF', 'AA00FF', 'AA00FF'],
+        ['5500FF', '5500FF', '5500FF', '5500FF'],
+      ],
+    } ,
+  ],
+}

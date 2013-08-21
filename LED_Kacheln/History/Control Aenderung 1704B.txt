@@ -1,0 +1,36 @@
+Aenderung 1704B
+
+Neue Nummer 0190-003-03
+
+- R30,31,32,33 neu
+
+- IC4 alle Masse zusammenfassen und einmal an Masse legen
+
+- Potis pos-Seite an +5V an R13 hängen und nicht an R2
+- Potis neg-Seite an Gnd vom PIC hängen
+
+- R22 auch in Raster 55mm vorsehen 
+- Kontrolle Löcher von R22, dass Drahtdurchmesser 1,0mm hat.
+
+- Kühlfläche für IC1 wieder wegmachen.
+
+- Pins für IC1 um 13mm nach oben schieben. 
+  R7805 steht dann nach oben und unten frei.
+  Dann kann ein R7805 (dicker 7805) 
+  nach vorne gekippt werden.
+
+- R21 wegstellen von X14 (Platzproblem)
+
+- X14 und X11 auseinanderzeiehen, so dass
+  Pfostenstecker mit Gehäuse benutzt werden können.
+
+- Kontrolle Loch von D2,6,7 , dass diese Diode einen
+  Drahtdurchmesser von 1,1mm hat.
+
+- An X11 Pins 3 und 5 tauschen.
+- X11 zusätzlich Text 'PC' hinschreiben.
+
+- X14 zusätzlich Text 'FUNK' hinschreiben
+
+
+

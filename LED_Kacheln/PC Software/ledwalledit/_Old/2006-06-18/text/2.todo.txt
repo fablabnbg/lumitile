@@ -1,0 +1,327 @@
+		~~~~~~~~~~~~~~~~~~~~~~~
+		KLARE PROGRAMMIER-TODOS
+		~~~~~~~~~~~~~~~~~~~~~~~
+
+  #NICHT ALLES VOR DER DEMO,
+  #ABER HIER KAUM KLAERUNGSBEDARF (ausser Startschuss...)
+
+----------------------------------------------------------------------
+KLARE AUFGABEN
+--------------
+
+  VIRTUELLE KACHELN
+  =================
+    ' IST DAS JETZT NOCH SCHNELL MACHBAR ? KEINE DISKUSSION !
+    
+    - der Editor arbeitet auf einem hoeheren Level als der Player;
+      hier spielen Metainfos, Gruende und Ideen eine Rolle...
+    - dazu gehoeren auch VIRTUELLE FARBEN in fehlenden Kacheln
+      ("Farbe die da waere wenn da eine Kachel waere")
+    
+    * SET: alle Operationen die die Farbe dieser Zelle zu setzen
+      versuchen wurden bisher ignoriert, jetzt einfach die virtuelle Farbe setzen
+    * GET: manchmal ist Test auf ungueltig relevant,
+      manchmal einfach RGB (GetHex und GetRgb verschieden ?)
+    * VALUE: (FF00AA) einfach der uebliche Hexwert in Klammern
+    * OPTIK: Zelle bleibt schwarz, gesetzt wird die Textfarbe,
+      bitte Text 1 kleiner und/oder kursiv !
+    * DEFAULT: (000000) ist echtes Schwarz, das ist logisch,
+      auch wenn man so anfangs den Text nicht sieht
+      ! wichtig, wenn es immer noch (------) gibt,
+        fallen viele Vereinfachungen wieder weg
+    
+    ' KONSEQUENZEN: alle Stellen, wo ich bei set oder get auf ------ teste,
+      aendern und die Folgen zum Caller* nach oben verfolgen,
+      vieles wird weiter oben schoener und einfacher...
+    
+      :-) FILL&GRAD brauchen nicht den Anfang suchen,
+        ausserdem werden sie auch bei Luecken glatt
+        
+      :-) LOEST DAS PROBLEM TRANSPARENZ IM BMP EXPORT
+        ##NOT Transparenz (zu affig fuer 5x5 Pixel)
+        ##NOT Ersatzfarbe live (wenn es wichtig ist, dann virtuelle Farbe)
+        ##NOT per extra Dialog fragen
+        
+        ' SUCHE => def GetImage
+        * einfach dort virtuelle Farbe nehmen
+          - beim Import kommt das auch virtuell an !
+  
+  3 -> 8 MOVES
+  ============
+    ! gehoert zu /Area/Fill + Grad + Move, ist sogar schon drin im Menu
+    ! sollte erst fuer die Demo drin sein, aber ich will lieber vorher
+      Refaktoring fuer virtuelle Kacheln erledigen, sonst schade um die extra Arbeit hier
+    
+    * SIMPEL: 3OPS + Richtung der Selektion (PFLICHT !) -> 8Richtungen
+    * FUELLFARBE: die neu von aussen reinwandert - einfach aus dem Masterbutton
+    
+    # SELEKTION: GRID nur box, LISTE multi unpraktisch (wechselnde Schiebefarbe ?)
+    # META: wichtig, STEP-BILDEND: nuetzlich :-)
+  
+  RELOAD DES PROGRAMMS
+  ====================
+    # derzeit wird das Programm anfangs geladen und bleibt bis zum Ende
+    
+    * rechter Refresh (GRID) gibt es schon
+    * linker Refresh (LISTE+GRID) ist der grosse Brudern,
+      aehnlich wie in XML-Automatisation
+    
+    ? so wie Grid-Refresh aus der Liste angestossen wird,
+      koennte das wiederum VON OBEN VON MEINEM MASTER,
+      dem wx.Notebook fuer die Umschaltung der Modes meta|edit|play kommen,
+      denn der muss sowieso alle Widgets killen und neu fuellen
+    ? WENN NICHT, dann auf jeden Fall auch optische Einstellugen
+      wie Gridsize runterreichen !
+    
+    ! LedProg + LedSzene: weitgehend bei jetzigem INIT ausklammern,
+      hier reicht Neukonstruktion
+    ! Liste + Grid: wenn es INIT bleibt ist es gut,
+      sonst von INIT zu Load Routine ausklammern und diese im INIT rufen
+    
+    =>VOLL GEBRAUCHT fuer spaeteres Load eines LEDP
+    ->TEILWEISE GEBRAUCHT fuer Meta Aenderung spaeter...
+    
+    + ZUGABE: auf Kommandozeile genanntes xxx.ledp bitte oeffnen
+  
+  FILEDIALOGE
+  ===========
+    # nach der Vorfuehrung, erstmal Infrastruktur klaeren...
+    
+    * fuer BMP reine Fleissarbeit, keine neue Philo
+      ' SUCHE => ImageImport ImageExport
+      ##EVENTUELL: wx.lib.imagebrowser.ImageDialog ?
+      ##NO: dass ich mehr als Filename fragen will, hat sich erledigt
+    * fuer LEDP "Reload" siehe obiger Para  noetig
+      - Save As & Load im Menue dazu
+      + ausserdem New: kleiner Koordinatendialog,
+        dann auf Meta-Tab einsteigen
+  
+  SAUBERE LINKE HBMP
+  ==================
+    * tote ------ transparent:
+      # NICHT EINFACH WEISS WIE DIE LISTE, beim Selekten sieht man das !
+      
+      - schon bei der Anfrage GetImage von der Szene unten
+      - leider schwierig SetRGB geht nicht mit -1 wie bei Resize
+        ich muesste also Maskenfarbe selber finden und setzen
+          #find unused colour -> setting this as mask colour -> paint those pixels
+        oder ich trage frech alpha nach ?
+          #das ist neu, kommt das in hbmp an ???
+        oder SetMaskFromImage
+          #das Maskenbitmap dafuer koennte ich einmalig aus Meta-Infos berechnen
+          #(wegwerfen wenn sich meta aendert...)
+      
+      - Szene.GetImage liefert fuer BMP Export virtuelle Farben 
+        der toten Zellen, das muss man also per Parameter entscheiden
+    
+    * saubere Skalierung um festen Faktor
+      # DER FEHLER IST IN Rescale, ICH HABE DIE PIXELWERTE GEPRUEFT
+      
+      - insgesamt mit GetData -> SetData
+      - einfach in den Zeilen N * die Pixel und dann N * die Zeilen
+      
+      ? genaugenommen macht Rescale nur 1 Fehler:
+        rechts/unten sind es N-1, links/oben dafuer N+1;
+        wenn es sicher so waere, wuerde einfache Verschiebung reichen
+  
+  UNDO & REDO
+  ===========
+    * fuer die Ops *IM GRID* waere *UNDO* einfach,
+      fuer einen Schritt muesste ich hier nur eine deep kopierte Farbtabelle merken
+      dafuer das 2d-deep-copy (1.lambda 2.list) woanders ausklammern
+    
+    * 1.REDO: Umkehrung von Undo
+    * 2.REDO: fertig gebundene Action des Menueitems kann
+      fuer viele Funktionen (die sich entsprechend anmelden)
+      auch nochmal gerufen werden
+      + auch die Selektion mit merken,
+        wenn ich in einer neuen Szene bin und es keine neue Sel gibt,
+        dann gilt die auch noch (auf diese weise gleiche op bei allen)
+    
+    + hier waeren Hotkeys ^Y ^Z besonders wichtig
+  
+  WEITERE OPERATIONEN		###LATER ?
+  ===================
+    /Paint ?/... TYPISCHE FUNKTIONEN VON ZEICHENPROGRAMMEN
+    /Image ?/...
+      * 2 Spiegel, 90 Drehen
+        #Selektion: gehen auch ohne, dann alles
+      
+      + ###NEIN: weitere Grafikprimitive ?
+        ##NO: Viereck - ist schon Fill
+        ##LATER: Linie, Kreis, Text - es ist einfach zu klein
+    
+    /Color/Enhance: Farbveraenderungen alla Irfan Shift-G
+      * plus/minus H S V oder R G B
+      * Formel fuer H S V hatte ich nur in Farbraum-Forschung, nicht in Code ?
+      
+      <-SELEKTION:
+        STEPS: SINGLE, MULTI
+        GRID: KEINE (=alle), BOX, DISJUNKT (voellig egal)
+    
+    /Fill/Random: volles Random ist wenig nuetzlich
+    /Fill/Random Range: parametrisierbarer Zufall
+      man muss die Flaeche vorher loeschen und 2..n Farbbeispiele reinlegen
+      der zufall nimmt das als Spielraum/als gueltige Spanne
+      fuer die Werte von h,s,v
+      * HUE 1.) Farben mit Saettigung 0 (b/w,grau) liefern keine hue-vorgabe
+      * HUE 2.) Hue ist ein Kreis, von lila nach gelb geht ueber die Grenze
+                wie Sommerzeit auf Suedhalbkugel
+      * HUE 3.) wenn 3 Punkte mehr als 180 Grad umfassen, dann voller Kreis
+      
+      - ###NOT r,g,b: es braucht nur pures rot & gruen drin sein und schon darf er alles
+  
+  SYSTEMNAH, CLIPBOARD, BMP-TRICKS		###LATER ...
+  ================================
+    + Farbe von woanders auf dem Bildschirm holen als kleine Hintertuer
+    + CLIPBOARD: copy & paste von Bildern und auch Hexwerte-Tabellen
+      wxTheClipboard sollte beide Typen 
+      wxTextDataObject, wxBitmapDataObject beherrschen
+    + DRAG&DROP: nur fuer Bilder, gleiches Schema...
+    
+    + als kleiner Bruder fuer Hex koennte jede Masterbutton Operation
+      auch ins Clipboard stellen...
+    
+    + 1 BMP als VIELE SZENEN importieren:
+      - meine 5x5 Pixel wie ein Fenster ueber das grosse Bild wandern lassen,
+      + Wanderkoordinaten (normalerweise x+1, y umbruch) angeben
+
+
+----------------------------------------------------------------------
+HAUPT-MODI, OP RECYCLING
+------------------------
+
+  <=KUNDE: haengt von den Entscheidungen zu meta und play ab,
+    muss aber nicht direkt diskutiert werden...
+  
+  TABFENSTER OBENDRUEBER FUER GROSSE MODI
+  =======================================
+    		ICON			HGCOLOR
+    		====			=======
+    1.META:	leerer Grid		rot fuer Gefahr
+    2.EDIT:	bunter Grid mit Farben	grau/normal
+      		aus 'lededit.ico'
+    3.PLAY:	leerer Grid + green >	leicht gruen
+    
+    + 4?.EXECUTE: hartes Play unten im Player.EXE
+      die GUI soll tot sein, passiert das ueber Modi ???
+    
+    - leider muss ich dadurch die Widgets jedesmal killen & konstruieren lassen,
+      das heisst aber nicht dass ich nicht immer die gleichen Widgetklassen
+      verwende und die durch eine Flag steuere
+    + wenn ich kille und konstruiere, wuerde ich die aktuelle Zeile links
+      gerne uebertragen, die aktuelle Selection in Grid aber nicht
+    
+    * ich kann mir von aussen wuenschen, wo ich anfangen will,
+      nach NEW: auf meta
+      nach LOAD: auf edit
+    
+    + LedGrid.showhex haengt vom Modus ab
+      ###LATER: nur im Toolbar, nicht im Menu
+        toggle Schalter Code von XML Auto holen,
+        LedGrid.showhex umschalten und kleines,rechtes Update anstossen
+  
+  ZUSAMMENSPIEL MIT PLAYER.EXE
+  ============================
+    ausser im Sondermodus EXECUTE, in dem die GUI ganz tot ist,
+    gilt immer die GUI und der PLAYER laeuft im "MONITOR MODE" mit:
+    
+    META: alle weiss, Selektion in GUI blau, auf Wall rot oder Blau
+      + ###LATER auf GUI und auch WALL alle zufaellig fuellen ?
+        oder jeder eine Farbformel zuordnen ? das wuerde auch chains loesen !
+    
+    EDIT: einfach GRID-Inhalt uebertragen, jeden Handgriff mitmachen
+      + ###LATER/NEIN links markierte Blenden vielleicht spielen lassen ?
+    
+    PLAY: das ist softes Play in der GUI, wieder alles uebertragen
+  
+  "OPERATION RECYCLING 2: Auto-Step"
+  ==================================
+    mit OPERATION RECYCLING ist hier gemeint, die gleichen Operationen
+    je nach Context mit recht verschiedener Bedeutung wiederzuverwenden
+    
+    # OPERATION RECYCLING 1 waren die Operationen auf Meta-Ebene, siehe dort
+    
+    * OPERATION RECYCLING 2 "Auto Step"
+      ist kein voller Modus sondern nur eine Bedien-Variante von EDIT:
+        viele Operationen die sonst einfach den aktuellen Grid aendern,
+        koennen auch "STEP-BILDEND" verwendet werden;
+        dh. die Operation wird ausgefuehrt aber das Ergebnis
+          in den Nachfolgestep abgelegt, der bekommt den Fokus
+    
+    * VORTEILE :-)
+      - zum Bsp BMP-Import waere in neuen Frame schoener
+      - so koennte man eine 5 Schritte Schiebe-Blende
+        mit 5 ganz leichten Schritten direkt anlegen
+      - ...
+    
+    ? PREISFRAGE IST DIE BEDIENUNG
+      - ###NO: bitte kein extra roter Button dafuer
+      * einfach Ctrl druecken waere nett (Ctrl heisst oft Copy oder Mehr...)
+      - oder nach Tastaturfokus entscheiden ?
+        - in LISTE war die OP als Listenop gemeint (Auto Step)
+        - in GRID war die OP fuer Grid gemeint (normal)
+        koennte aber tueckisch sein und auch mit multi-listen-ops kollidieren ?
+    
+    - ###LATER PLUS BLENDENSCHRITT: wenn es echte LedBlendeXxxx Zwischenschritte
+      gibt (siehe dort), koennten bestimmte Ops auch gleich den richtigen 
+      Zwischenschritt mit den richtigen Einstellungen zur Folge haben
+        (weniger relevant, da auch Move durch Mischung zu machen ist)
+  
+  TYPEN/EIGENSCHAFTEN VON OPERATIONEN 
+  ===================================
+    * GRUNDVERHALTEN
+      - NORMAL
+      + recycling 1=META
+      + recycling 2=AUTOSTEP
+    
+    * SELEKTION IN STEP-LISTE:
+      # KEINE IST NICHT RELEVANT
+      - SINGLE
+      - MULTI
+        + ##TEST das muss erst noch getestet werden
+          ##  gibt es ein Pivot element, was dem Grid entspricht
+        + ist hier zusammenhaengend oder disjunkt relevant
+        + auch wenn ich multi mache, unselect der letzten verhindern
+        
+        + /ODER/ wx.LC_SINGLE_SEL lassen; 5 Steps anders BEGIN+END markieren:
+          wxListCtrl::SetItemBackgroundColour :-)
+    
+    * SELECTION IM GRID:
+      - KEINE, NUR AKTUELLER PUNKT
+        =>fuer manche OPS unmoeglich;
+          zB. 3 Buttons fuer 8 Richtungen brauchen die Orientierung der Selektion
+        =>fuer andere OPS kein Problem;
+          zB. fuer /Color/Enhance sogar der Normalfall
+      
+      * BOX (kann auch Alles sein, jetziger Normalfall fuer Fill)
+      
+      - GETRENNT
+        + ###NEU: einige OPS gehen locker auch so, sogar Fill selber
+          <-ich kriege [Pivot gemerkt+Einzelliste+Arealiste] alle zusammen
+    
+    ! die KOMBINATION DER 2 SELECTIONS ist unabhaengig !
+      eine Operation wie Fill kann durchaus eine Selection im Grid verlangen,
+      dann aber in Multi Steps arbeiten (und jeweils gleiche Grid-Selection annehmen)
+
+
+----------------------------------------------------------------------
+###AM ENDE...
+-------------
+
+  EINPACKEN ALS EXE
+  =================
+    * wie von Markus/Steven einmal fuer Franz/Juergen gemacht...
+    
+    ! ist der Check der Seriennummer gegen die Netzwerkkarte schon drin ?
+    ? eventuell Encryption von Franz ?
+  
+  PROGABSCHLUSS AM ENDE
+  =====================
+    * fuer Windows ein REG-File mitliefern,
+      was meine 2 Filetypen LEDP und LEDX 
+      mit den beiden EXEs und den beiden Icons verbindet
+    
+    * ich habe Bilder mit wx.Image verarbeitet,
+      brauche ich keine PIL ?
+

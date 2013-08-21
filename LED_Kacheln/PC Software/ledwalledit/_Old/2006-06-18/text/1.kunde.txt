@@ -1,0 +1,613 @@
+		~~~~~~~~~~~~~~~~~~~~~~~~
+		Demo->Kundenentscheidung
+		~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #WEITERE ENTWICKLUNSWEGE
+  #  nur mit Kundenabstimmung, erst nach der Demo
+  
+!!!BEI DEMO WESENTLICH:
+  Umgebung installieren, 
+  in Zukunft wird das Subdir 'ledwalledit' gemailt...
+
+???BEKANNTE PROG-WELTEN:
+  - C oder auch C++ ?
+  - OOP sonst ?
+  - GUI, Eventorientierung ?
+
+----------------------------------------------------------------------
+META-SZENE, GRUND-LAYOUT
+------------------------
+
+  <=KUNDE: Format Kachelnummern, siehe unten beim Programm
+  <=KUNDE: Wichtigkeit, Umfang
+  
+  #derzeit muss das grundlegende Layout vorher im Textfile editiert werden,
+  #ein grundlegendes Editieren des Wall-Layouts gehoert dazu
+  #ebenso wie eine Datenbank selbst Tabellen anlegen koennen muss
+
+  OPTIK
+  =====
+    - gleiches Grundlayout der GUI, besonderer Edit-Modus
+    
+    - der GRID enthaelt nicht Hex-Farben sondern Kachelnummern
+    - Zellfarben sind nur schwarz (tote Kacheln, -1) 
+      oder weiss (normale Kacheln mit Nummer)
+      + ###LATER: Kachelketten staendig beobachten (auch bei Eintippen)
+        und automatisch mit Pastellfarbe einfaerben
+    - links ausgeschaltet, das ganze rot markiert
+
+  NEW
+  ===
+    + mit LOAD gibt es schon eine Op, bei der sich spaeter zur Laufzeit
+      das ganze Programm aendertn, NEW wird eine zweite
+    
+    - am Anfang x * y im New-Dialog eingeben lassen,
+      es werden automatisch Nummern (1..x*y) vergeben und 
+      eine erste Szene angelegt (komplett weiss)
+
+  SIMPLE OPERATIONS
+  =================
+    - simples INS und DEL kann durch Editieren der Felder passieren
+      von +X zu -1 machen heisst DEL
+      von -1 zu +X machen heisst INS
+    
+    ! diese Nummern sind fest, es darf nicht einfach 1..10, 15-20 aufgerueckt werden,
+      denn die werden ja in der Kachel eingestellt
+    
+    ! wenn die Meta-Operationen sich NICHT SOFORT auf die existing Szenen auswirken,
+      dann muss danach das Programm komplett gegen Meta geprueft und angepasst werden,
+      so wie jetzt beim Load...
+
+  "OPERATION RECYCLING 1: meta"
+  =============================
+    # BESSER als nur die SIMPLE OPERATIONS:
+    ! wie in einem modernen DB-Programm sollten sich Schema
+      Aenderungen auch sofort auf die Datensaetze auswirken
+    ! ausserdem sind durch diese Live-Mit-Aenderung auch 
+      interessante Tricks mit den Vorgabefarben fuer neue Zellen moeglich
+    
+    * der Farbbutton rechts
+      liefert nicht nur ein Kachelnummer, was im Meta-Modus sein Job ist
+      sondern auch noch die Vorgabefarbe fuer neu angelegte Zellen
+      
+      a)wenn die Farbe ueber den weiterhin existierenden Farbdialog
+        gewaehlt wird, ist sie fest "FF00AA"
+        # das war frueher als INS mit Vorgabefarbe geplant
+      
+      b)wenn er mit Ctrl-Rightklick aus einer Zelle gefuellt wird,
+        merkt er sich die Zelle
+        :-) dann kann die Fuellfarbe in jeder Szene anders sein !
+        # das war frueher als COPY anderer Zelle geplant
+      
+      er zeigt also ausser/unter der Kachelnummer noch
+      a)die hexfarbe oder b)die Zellkoordinaten
+    
+    * die Operationen FILL + GRAD haben beide eine Entsprechung
+      FILL: einfach, das Fuellen bezieht sich auf die Kachelnummern,
+        die werden also alle auf die gleiche Nummer verlinkt
+      
+      GRAD: *TRICK*, das gibt sonst verschiedene Farben,
+        hier also verschiedene Kachelnummern:
+        - die markierte Flaeche wird mit neuen Nummern gefuellt
+        + als kleiner Bonus kommt die Fuellfarbe fuer die neuen Zellen
+          in jeder Szene aus der Pivotzelle der Markierung !
+        
+        ###UEBERLEGEN: das hat nicht mehr viel mit GRAD zu tun,
+          wenn schon alle 3 Widgets fuer Meta das Aussehen wechseln,
+          koennten das Menu + Toolbar ruhig auch tun
+    
+    * die neuen Operationen ->MOVE und MIRROR 
+      ziehen auch jeweils die Szenenbilder mit...
+    
+    * auch die einfachen Operationen INS und DEL
+      durch Eintippen der Nummern laufen anders
+      - INS verwendet die Vorgabefarbe aus dem Button :-)
+        es sei denn es ist LINK (ich geben eine bestehende Nummer ein)
+      - DEL ist so gefaehrlicher, weil es sofort alle Zellen aendert
+        ~~>siehe VIRTUELLE FARBE, das waere hier die Rettung
+    
+    ! in dem Falle muessen sich Meta-Operationen SOFORT auf die Szenen auswirken,
+      sonst gehen Infos verloren
+      ###LATER: Backup, Undo etc hilfreich
+  
+  INS/DEL VON ZEILEN UND SPALTEN
+  ==============================
+    - nicht nur anfangs bei NEW x*y eingeben,
+      ein Minimum an Editing soll auch spaeter noch moeglich sein
+    
+    * INS: neue Zeilen&Spalten mit -1=tot gefuellt aussen anlegen
+    * DEL: komplett -1=tote Zeilen&Spalten aussen loeschen
+    
+    :-) die Bedienung waere ganz einfach Doppelklick auf eine
+      aeussere Zeilen oder Spaltenueberschrift im Metamodus
+      - wenn sie ganz leer=-1 ist, dann heisst das DEL,
+        dann brauche ich da ja nicht noch eine leere
+      - ansonsten heisst das INS
+    
+    ! natuerlich nur in META, nicht im normalen Farbediting !
+    
+    + das genuegt jetzt, fuer schwierigere Kombinationen
+      muss das mit MOVE Ops kombiniert werden
+    + ###LATER: waeren im Excel-Sinne noch viele weitere Ops moeglich:
+      - ausser NEW auch COPY und MOVE von Spalten
+      - nicht nur aussen sondern auch mittendrin
+    
+  ###INTERN: alle 3 Widgets beachten den Metamodus
+  ================================================
+    ' SUCHE => KAPITEL Arbeit auf Metaebene BEI class LedProgramm
+    
+    die Szenenliste links, der Grid zentral und der Farbbutton rechts
+    aendern alle 3 ihre Inhalte,Aussehen und Eventverhalten
+      (dazu muss man sie nicht killen und neuanlegen,
+       es genuegt ein if in den Handlern)
+    
+    * die Szenenliste leer, damit man sieht Metamodus
+      ###FUTURE: man koennte sofort sehen, wie es auf alle Zellen wirkt,
+        wenn ich nach jeder Aenderungsschleife die hbmp updaten wuerde
+    * der GRID schwarz/weiss mit Kachelnummern
+    * der FARBBUTTON zweizeilig Kachelnummer+Vorlagefarbe, siehe oben
+    
+    ! MODUS 'M'=META
+    ! PLUS ROTER HINTERGRUND oder so, damit man in Meta vorsichtiger ist
+  
+  ###FUTURE: Hilfe bei Kachel-Adressierung
+  ========================================
+    + BLINKEN: alle weiss, diese rot genuegt, im 'MONITOR MODE' 
+      nach unten an Player geben, damit man die richtige erwischt
+      :-) das ist der ideale Platz in der GUI
+          fuer die Hilfe bei der Adressierung
+          (die Adressierung selber passiert mit DIP Switches auf den Kacheln)
+
+
+----------------------------------------------------------------------
+EDITOR-INTERNES "PLAY"
+----------------------
+
+  <=KUNDE: Argumentation durchsprechen, entscheiden !
+  
+  ARGUMENTATION ???
+  =================
+    die 'untere' Exe, der Player muss die volle Faehigkeit haben,
+    ein LED-Programmfile einzulesen und auf den Kacheln abzuspielen,
+    denn das ist ihr Job wenn sie alleine ausgeliefert wird,
+    
+    die PLAY-Faehigkeit auch in den Editor zur Programmeingabe
+    als eine Art interne Simulation einzubauen hat seinen Preis
+    und muss ueberlegt werden:
+    
+    NACHTEIL: AUFWAND
+      (-) DOPPLUNG zwischen Player und GUI;
+        die Mischtransformation "schrittweiser allmaehlicher Farbuebergang"
+        muss in beiden programmiert werden;
+        ebenso auch alle zukuenftigen Transformationen
+      
+      (-) VERGEWALTIGUNG der GUI-Widgets
+        die Fensterbibliothek ist [wie alle anderen]
+        fuer typische GUI Interaktionen gedacht: User tut was,
+        Daten aendern sich, Anzeige aendert sich, warten...;
+        sie tun sich mit einer Animation womoeglich schwer
+        
+        ##VERGLEICH MIT EXCEL: bisher haben wir den Grid so genutzt wie Excel,
+        ##  es gab Zellen mit Werten und bestimmte Farbeinstellungen fuer Zellen, ganz normal
+        ##  =>jetzt woellten wir in Excel mit den Zellfarben eine Animation machen !
+    
+    VORTEILE: SAUBERE TRENNUNG
+      (+) das braucht keinen Player und insbesondere keine Kacheln !
+      (+) wenn die Programme mal komplizierter werden,
+          waere das fast wie ein DEBUGGER, weil man nicht nur sehen kann,
+          welche Farben das Grid annehmen wird, sondern auch warum,
+          also in welchem Schritt (Szene,Blende) man sich da befindet
+      
+      (+) die harte Variante mit Player und Kacheln bleibt aber immer noch als Alternative
+      (+) so sind auch Unterschiede zwischen Theorie (soft, so war es gemeint)
+          und Praxis (hard, soviel schafft der Bus) zu erkennen
+    
+    Ich neige dazu, trotz des Aufwands die GUI um dieses eigene Play
+    zu erweitern, kleinere Alternativen waeren:
+      1.MINIMAL: in der GUI selber keinerlei Animation,
+        dh. die Farbwerte und Bilder und Uebergaenge werden eingestellt,
+        abgespielt werden sie aber nur auf den Kacheln,
+        waehrend die die Szenen wechseln und Blenden machen bleibt die GUI still
+      
+      2.PLAYER RECHNEN LASSEN:
+        um zumindest den ersten Nachteil der Dopplung zu umgehen,
+        koennte der Editor dem Player/Kanal das komplette Programm geben
+        und ihn spielen lassen und ihn dabei staendig nach der aktuellen
+        Anzeige fragen
+    
+    Die 2.Alternative ist leider immer noch recht aufwendig (zweiter Nachteil)
+    und dazu kommt, dass die GUI die Szenenwechsel nicht reflektieren kann.
+    Wenn man jetzt auf das volle Play verzichten will, sollte man
+    den harten Schnitt "1.MINIMAL" ziehen...
+  
+  GUI FUER 'INTERNES PLAY'		<=falls ja
+  ========================
+    * SOFTES,INTERNES PLAY: simuliert in der Oberflaeche
+      - die Widgets sind nicht bedienbar, der Inhalt aendert im Lauf der Animation
+      - PLAYER.EXE laeuft im 'MONITOR MODE' mit,
+        dh. jede Aenderung wird als Einzelschritt runtergegeben
+    
+    #ausserdem gibt es noch: HARTES,REALES PLAY: 
+    #  * ganzes Programm ueber gleichen Kanal runter an PLAYER.EXE geben
+    #  * die Oberflaeche wird stillgelegt, Widgets ohne Inhalte und ohne Eventreaktion
+    #
+    #  ? am besten gar nicht da, nur ein Hinweis ?
+    #  ? wie wird das abgebrochen ?
+    
+    * keine Eventreaktion in den Widgets
+    * Markierung links in der SZENENLISTE laeuft durchs Programm
+    * der GRID zeigt die wechselnden Farben ohne Hex-Texte
+      + ###OPTI: in diesem Modus gar keine Hextexte erst setzen
+        und die HG-Farbe direkt als R,G,B akzeptieren ?
+      + statt in SetLedXxxx jedesmal if zu fragen,
+        koennte ich die Funktion bei Moduswechsel umhaengen :-)
+    
+    * 3 Buttons PLAY,PAUSE,STOP
+      - am liebsten nur auf dem Tab fuer den Play Modus
+        ? aber einen Toolbar kann man nicht an Unterfenster binden ?
+      - sonst eventuell als Buttons auf dem Tab (rechts im Sonderframe)
+        oder als Buttons im normalen Toolbar, die jeweils Play-Mode aktivieren
+      + ###SVEN: Buttons mit Bitmap, eigene Klasse dafuer machen und aufheben
+    
+    * darunter/darueber/daneben die Zeit ab Start in 
+      LED Control anzeigen :-)
+    
+    ! MODUS 'P'=PLAY
+    ! PLUS GRUENER HINTERGRUND oder so, KEINE EVENTREAKTION
+    
+    + derzeit nur in realer Zeit	###LATER mit Faktor oder virtuell wie in Simulation
+    + noch keine Events			###LATER siehe Events...
+  
+  ###INTERN: zur Simulation...
+  ============================
+    - 1 schritt so schnell es auf der CPU geht:
+      neuen Grid berechnen, Grid fuellen, Update erzwingen, 1ms pause?
+      ###TEST: zum thema update erzwingen: einfach mal Grid 10 sec lang
+        mit Aenderungen ueberschuetten und zusehen...
+    - danach gucken wieviel Zeit real vergangen ist und weiter
+    
+    - bei PLAY nach Pause fortsetzen (mitten in Transition)
+      oder bei aktueller Markierung anfangen
+    - bei PAUSE genau hier stehenbleiben und auf PLAY oder STOP warten
+    - bei STOP beenden, Reset nach oben
+    
+    * PLAY fuer ganze SzeneList:
+      - immer Szenen wechseln (wirklich Markierung weitersetzen)
+        wenn ich laut Zeit nicht mehr darin bin
+      - sonst Play fuer aktuelle Szene,
+        sie kriegt die Zeiten xxx von yyy fuer sich vorgekaut,
+        die 2D Farbliste (vorher,aktuell,nachher) kann sie sich selber holen
+      
+      ! ich will idiotische Sequenzen wie Blende am Anfang
+        oder Szene,Blende,Blende,Szene zwischenzeitlich beim Edit erlauben,
+        damit ich Sachen manipulieren kann,
+        =>DAS HEISST ABER, DASS PLAY AUCH SCHIEFGEHEN KANN !!!
+    
+    * PLAY fuer eine Szene:
+      - ich werde von oben gefragt wie meine Farbwerte sind (ganze 2D Liste)
+        wenn xxx von yyy Zentelsekunden vergangen sind
+      - die Formel fuer die Farbwerte ist unten im Programmobjekt LedSchritt
+        fuer LedSzene: immer die gleichen Farbwerte aus self
+        fuer LedBlende: keine eigenen Farbwerte, er muss in vorher und nachher gucken
+          (vorkauen oder selber nachsehen ?)
+          jede Blende implementiert ihre eigene Formel
+          2dvorher,2dnachher,xxx,yyy => 2djetzt
+    
+    + WENN ICH DAS SCHON HABE,
+      dann kann ich im Grid fuer Blenden im 'N'ormal Modus 
+      auch den 50% status anzeigen -> einfach die Formel nach vorher,nachher,1,2 fragen
+      ! ###LATER nicht animieren, aber ein Regler der anfangs auf 50% ist,
+        koennte die Stelle waehlen :-)
+
+
+----------------------------------------------------------------------
+VERBINDUNG EDITOR->PLAYER
+-------------------------
+
+  <=KUNDE: Argumentation und Benennung klaeren !
+  
+  ARGUMENTATION VON KANAL -> ZU PLAYER
+  ====================================
+    * die TECHNISCHE Trennung von Editor und Kanal war schon geklaert,
+      der Editor braucht kein Wissen um die Faehigkeiten des Kanals
+      und keine Steuerung der seriellen o.a. Schnittstelle
+    
+    * dazu kommt die KAUFMAENNISCHE TRENNUNG,
+      was Geld kostet (Editor) und was frei mitgeliefert wird (Player):
+      - wenn beide zusammen sind, steuert der Editor den Player
+      - ist der Player alleine, kann er nur fertige Programme aus Files lesen
+    
+    + das waere mit 3 EXES denkbar:
+      A)bezahlt EDITOR -> KANAL		kostenlos EDITOR-DUMMY -> KANAL
+      B)kostenlos PLAYER -> KANAL	bezahlt EDITOR -> PLAYER -> KANAL
+      
+      es waere aber Wahnsinn, nunmehr 3 EXES dafuer zu pflegen
+      und die Vorteile sind minimal (Player koennte Pythonscripten verwenden)
+    
+    ! die KANAL.EXE muss also zur PLAYER.EXE aufgewertet werden,
+      die ganze Programme aus Files liest und 
+      selbstaendig ohne den Editor auf den Kacheln abspielt
+  
+  EDITOR.PY UND PLAYER.CPP
+  ========================
+    EDITOR:
+      - vollwertige GUI
+      - in Python geschrieben, durch wxPython inklusive GUI portabel
+      - als Zubehoer verkauft
+        ! ausserdem per Nummer der Netzwerkkarte
+          auf eine bestimmte Seriennummer blockieren,
+          aber nur simpel, nicht hackersicher...
+      - ohne Wissen von low-level Einschraenkungen
+        (die vielleicht in 2 Monaten nicht mehr gelten)
+    
+    PLAYER:
+      - keine Fenster, nur Kommandozeile
+      - in C++ geschrieben, low-level;
+        auf diesem Level ist C++ allerdings auch zu guten Teilen portabel
+      - kostenlos mit den Kacheln mitgeliefert
+      
+      ! LOW LEVEL 1) FEINE KANAL-AUFTEILUNG:
+        Player nimmt die "Wuensche" und teilt sie in kleine Schritte auf,
+        die genau so fein sind, wie er es fuer so viele Kacheln 
+        ueber einen so dicken Draht genau noch drueber bringt
+      
+      ! LOW LEVEL 2) INPUT EVENTS:
+        ein vollwertiger Player muss auch auf Input-Events reagieren,
+        z.B. Mensch laeuft vor Sensor vorbei
+        + Vorteil: wir brauchen fuer Events keinen TCP Rueckkanal mehr,
+          das waere Aufwand gewesen
+  
+  VERBINDUNG UEBER TCP/IP UND PROGRAMMFILES
+  =========================================
+    * lose Bindung EDITOR -> PROGRAMMFILES -> PLAYER,
+      Programm des Players kommt aus dem File,
+      Editor muss nicht da sein, wurde vielleicht nicht mit gekauft
+    
+    * feste Bindung EDITOR -> TCP/IP -> PLAYER,
+      der Editor als Master steuert den Player als Slave
+    
+    ! Technik ist TCP
+      - oder vielleicht UDP, weil Paket-Denke sinnvoll waere ?
+      - aber kein http, reines TCP/IP ueber Socket
+      
+      + ###LATER: damit koennte ein EDITOR sogar mehrere PLAYER
+        auf verschiedenen Rechner ansteuern, dann natuerlich
+        keine Befehlsvarianten mit Files nutzen
+    
+    ! es gibt 2 Modi, wie der Editor dem Player
+      Farben und Programme anweist:
+      
+      MONITOR MODE: der Player laeuft mit dem Editor mit,
+        es kommen in schneller Folge lauter einzelne Szenen
+        "SETZE SOFORT FOLGENDE KACHEL-FARBEN ..."
+        ~>konkretes Szenen-Format siehe next kapitel
+        
+        der Player darf Zwischen-Szenen droppen, die so schnell nicht
+        durch den Kanal gehen, solange nur immer die letzte gesetzt wird
+      
+      PROGRAM MODE: der Editor stoesst einen echten Programmstart
+        im Player an
+        "FUEHRE PROGRAMM ... AUS"
+        ~>konkretes Programm-Format siehe next kapitel
+        
+        da der Player Programme schon aus Files lesen kann,
+        koennte hier nur der Filename uebertragen werden
+        "FUEHRE FILE xxx.ledx AUS"
+      
+      # die beiden muessen getrennt werden, MONITOR ist zu haeufig
+      # und zu eilig, um es jedesmal als PROGRAM of 1 runterzugeben
+    
+    + als dritten und letzten Befehl/Datenpaket
+      kann der Editor bei seinem Ende 
+      das Programmende des Players anweisen
+  
+  IDEE: ETWAS SCHLAUERE KACHELN ?
+  -------------------------------
+    - ist mir fuer EDITOR egal, das betrifft PLAYER -> Kacheln
+    - die Kacheln haben doch schon etwas Logik,
+      um die Pakete fuer sich zu erkennen und gemeinsam zu schalten
+    
+    * sind sie nicht schlau genug, dass man ihnen im voraus
+      sagt von "xxx bis yyy wechsle auf Farbe zzz"
+      und sie selber die feinen Schritte machen
+    
+    ! damit waere der Player von Farbuebergaengen komplett entlastet
+      und harte Verschiebungen sollen ja hart sein...
+    
+    ! damit die Teile dennoch SYNCHRON bleiben,
+      genuegt es, wenn PLAYER.EXE regelmaessige TAKT-Pakete schickt
+        (das entspricht etwas den jetzigen Abschlussmarkern,
+         die auch das Zeichen zum Farbwechsel fuer alle sind)
+
+
+----------------------------------------------------------------------
+FORMAT VON LED-PROGRAMM-FILES
+-----------------------------
+
+  <=KUNDE: Entscheidung offen und geschlossen
+  <=KUNDE: mehrere Formate !
+
+  LED PROGRAMM OFFEN & GESCHLOSSEN
+  ================================
+    der EDITOR hat eine ganz andere Sicht auf LED-Programme
+    und braucht viel mehr Infos darin als der PLAYER:
+      - 2D Array statt simpler Kachelnummer->Farbwert liste
+      - virtuelle Farben in fehlenden Zellen (siehe spaeter)
+      - reine Infos fuer die GUI (Groesse von Gridzellen)
+    
+    die uebliche Vorgehensweise hierfuer ist die 
+    Trennung von:
+      *.LEDP internem,offenen Format		(P wie Program)
+      *.LEDX externem,geschlossenen Format	(X wie Executable)
+    
+    am Ende des Editing steht ein Export,
+    der sonst dem Compilieren entspricht...
+      ! VORSICHT, kein Rueckuebersetzen vorgesehen...
+  
+  INTERNES FORMAT *.LEDP
+  ======================
+    # das jetzige Python war nur zur Bequemlichkeit, minimaler Aufwand R/W
+    ! DIE INHALTE BLEIBEN: Variablen, 2D Meta-Szene, Liste von 2D Szenen
+    
+    ! DAS FORMAT JETZT ENTSCHEIDEN:
+    <=KUNDE: das kriegen Kaeufer der vollen GUI als Files zu sehen,
+      gibt es Formatwuensche ?
+      - einfach PYTHON lassen, ist gut lesbar...
+      - eventuell XML, Lizenz fuer Library pruefen
+      - oder TAB-SEPARATED zum Weitereditieren in Excel ?
+  
+  EXTERNES FORMAT *.LEDX
+  ======================
+    * FORMAT EINER SZENE: nicht mehr 2D, 
+      sondern reine Aufzaehlung <KACHELNUMMER> <= <FARBWERT>
+      <=KUNDE: das Format der beiden Werte ganz auf Wunsch
+        wie low level gebraucht
+        ! Farbwert ist nur fuer geschlossenen Export,
+          aber Kachelnummer auch in GUI-GRID und offenem Programm !
+      
+      ! binaer oder text siehe unten
+      
+      =>das ist das Format fuer Einzelszenen ueber TCP/IP im Monitor mode
+        und fuer Szenen im Programm im naechsten Absatz
+    
+    * FORMAT EINES PROGRAMS:
+      - SZENEN mit DAUER + DATEN SIEHE OBEN
+      - BLENDEN mit DAUER + TYP/NAME (spaeter kann es verschiedene geben)
+    
+    ! TEXT ODER BINAER ???
+      BINAER: 
+        - fuer Player direkt verwendbar, kein Parsen noetig
+        - kompletter Schutz vor Editing ohne Editor,
+          aber muss nicht sein, EDITOR ist nur Bequemlichkeit ?
+        - muss nicht lesbar sein, dafuer gibt es das offene Format oben
+    
+    + Versionsnummer im Header ist wichtig, 
+      in beiden Files...
+
+
+----------------------------------------------------------------------
+AUSSER SZENEN AUCH BLENDEN
+--------------------------
+
+  <=KUNDE: Ueberlegen, Tragweite klarmachen
+  
+  UEBERLEGUNG
+  ===========
+    * es ist klar dass es jetzt nur 1 Art von Blende 
+      zwischen den Szenen geben wird: "MIX = schrittweise Farbmischung"
+    
+    * die Frage ist, ob das Modell fuer weitere Blendenarten offen bleiben soll
+      oder "fuer immer" auf eine festgelegt wird
+      
+      OFFEN: 
+        in der grossen Szenenliste sind ausser LedSzenen (= Bitmaps)
+        auch LedBlenden (= programmierte Uebergaenge);
+        LedBlendeMix ist derzeitig aber die einzige
+        
+        (-) einiger AUFWAND, der jetzt gar nicht genutzt wird
+        (-) wenn die weiteren Szenen dazukommen,
+            ist das auch fuer den PLAYER ein rechter Aufwand
+      
+      FEST:
+        jede Szene bekommt 2 Zeitangaben zugefuegt
+        1.Stop mit konstantem Bild
+        2.Dauer des Uebergangs aufs naechste
+        
+        (-) das wird tief in der Denke von Editor und Player(!) verankert
+            und ist spaeter kaum noch zu aendern
+        (-) wenn schon immer ein Computer fuer die LED Wall 
+            gebraucht wird, dann brauchen wir ihn nicht so unter Wert schlagen
+            und uns auf etwas beschraenken was der BasicTiger auch koennte
+  
+  MOEGLICHE WEITERE BLENDEN
+  =========================
+    ! der WITZ waere, selbst mit einfachen Szenen (alles rot,blau,weiss...)
+      und wenig Aufwand tolle Animationen zu schaffen
+    ! man kann mit der EXE kaum fertige Programme mitliefern,
+      eine grosse Bibliothek von Blenden aber schon,
+      die Formeln sind von der Feldgroesse unabhaengig
+    
+    - Mischung: als einzige fest eingebaut, siehe oben
+    - Verschieben: ist nix anderes als Mischung wenn
+      das naechste Bild die verschobene Szene ist (erstaunlich !)
+    
+    * Vorhaenge...
+    * Aufpixeln, Random...
+    + weitere Anregungen von Flash oder Director...
+  
+  ###ALTERNATIVE: BLENDEN NUR ALS GUI-MAKROS
+  ==========================================
+    (+) DIE MEISTEN VORTEILE VON OBEN
+        (von Groesse unabhaengig, wird als Bibliothek mitgeliefert)
+        MUSS ABER NUR IM PLAYER IMPLEMENTIERT WERDEN
+    
+    (-) natuerlich werden die Programme groesser
+    
+    * Menuepunkte in neuem Menue die aus 2 Szenen
+      Anfang+Ende -> eine ganze Folge fuer den Uebergang machen
+    * vielleicht in der linken Liste/im Programm
+      Szenengruppen markieren
+    
+    ! BENENNUNG: wenn in der Liste alle Steps wirklich Szenen sind,
+      muss keine der Varis mehr Stepxxx heissen
+  
+  ###INTERN: FALLS ECHTE BLENDENOBJEKTE
+  =====================================
+    ' SUCHE => class LedSzene
+    ' MARKER => ###LEDSCHRITT (bei der Konstruktion)
+      - darueber abstrakte Oberklasse LedSchritt
+      - offene Konstruktion aus Textfile vielleicht wieder mit Factory
+      
+      - darunter Bruderklassen LedBlende (bleibt abstract)
+        und LedBlendeMix (REAL...)
+        + auch wieder mit Name und Zeitdauer, nur statt BMP andere Infos
+        + wird im speicherformat und auch im GUI Strahl mit Szenen vermischt,
+          also aufpassen
+    
+    * LedBlende->LedBlendeMix: die UEBERGAENGE sind [jetzt] nur reine Mischungen
+      in bestimmter Geschwindigkeit
+    
+    + ###LATER LedBlende->LedBlendeXxxxx weitere UEBERGAENGE:
+      - derzeit gibt es harte Uebergaenge (Szenen mit Zeitdauer, ohne Luecken)
+      - und LedBlendeMix mit Zeitdauer = 'Mischen in x Sekunden'
+      
+      + spaeter soll es mehr Blenden-Namen/Blenden-Klassen geben,
+        der Player ignoriert ihm unbekannte (damit er neuere Files spielt...)
+    
+    * Blende in Liste und Grid:
+      - deren Icons in der Folge links mit extremem muster, 
+        das aus Malerei sehr unwahrscheinlich ist: 'spec-step.gif'
+      - die 2..3 Parameter/Eigenschaften lassen sich mit doppelklick
+        im Propertiesdialog der Szene -> Blende einstellen
+        + ###SVEN: SzeneDialog zum allgemeinem Properties Dialog ausbauen ?
+          - fuer int die Typcallbacks mitgeben (int,str)
+          - nicht davon ableiten, einfach Werte einsetzen...
+          ' das vielleicht auch tun, wenn nicht hier genutzt...
+  
+      - der Grid bleibt erstmal weiss, r/o,
+        + ###LATER ist er der 50% Zustand, siehe Mischformel bei eigenem Play
+        + ###NOT animieren, das gehoert nicht hierher
+    
+    - Szenen haben nur 1 Zeit: Dauer des Stops
+
+
+----------------------------------------------------------------------
+INPUT EVENTS
+------------
+
+  war noch nicht zu entscheiden, deshalb siehe later.txt
+  ? Test-Schritte im Programm oder globale Event-Handler
+  ! von Editor vorbereitet aber von Player ausgefuehrt
+  ? eigentlich weg von "volle Szenen" hin zu "Parametrisierbarkeit"
+
+
+----------------------------------------------------------------------
+MEHR ANREGUNGEN
+---------------
+  
+  <=KUNDE: je nachdem, wohin noch Ausbau gewuenscht wird...
+  
+  * FUER ZEICHNEN: PSP, MicroAngelo
+  * FUER ANIMATION: Director, Flash, Animated GIF Maker ?
+  * FUER CODESCHRITTE: Assembler ?, Endlicher Automat
+

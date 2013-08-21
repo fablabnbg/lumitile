@@ -1,0 +1,29 @@
+*****************************
+* Version 1.21 / 23.06.2006 *
+*****************************
+
+- Aufruf des Kachelplayers mit Commandlineübergabe:
+  Durch Doppelklick auf ein .ledx-File wird der Kachelplayer
+  gestartet und das File wird gleich geladen
+
+- Fehlermeldung beim Upload: "Hexschalter auf xx"-> xx mit 4 ersetzt
+
+- Meldung "Programm verlassen?" ersatzlos gestrichen
+
+- Wird ein zu spielendes File (Befehl vom KachelEditor) nicht gefunden, wird eine
+  Fehlermeldung ausgegeben (statt Programmabsturz)
+
+
+*****************************
+* Version 1.12 / 14.05.2006 *
+*****************************
+
+- Eine Zeiteinheit für Trans und Dauer von LedEdit ist jetzt nicht mehr 1000msec
+  sondern 100msec.
+
+*****************************
+* Version 1.11 / 05.04.2006 *
+*****************************
+
+- Anzahl Bytes für Upload auf Kachel von 1000 auf 10.000 vergrößert
+- Parametermenü: Abspeichern und Anzeige von Comport (1 oder 2) geht jetzt

@@ -1,0 +1,56 @@
+V=1.00
+S(10,10) {
+  001=ff,ff,ff
+  002=ff,ff,ff
+  003=ff,ff,ff
+  004=ff,ff,ff
+  005=ff,ff,ff
+  006=ff,ff,ff
+  007=ff,ff,ff
+  008=ff,ff,ff
+  009=ff,ff,ff
+  010=ff,ff,ff
+  011=ff,ff,ff
+  012=ff,ff,ff
+  013=ff,ff,ff
+  014=ff,ff,ff
+  015=ff,ff,ff
+  016=ff,ff,ff
+  017=ff,ff,ff
+  018=ff,ff,ff
+  019=ff,ff,ff
+  020=ff,ff,ff
+  021=ff,ff,ff
+  022=ff,ff,ff
+  023=ff,ff,ff
+  024=ff,ff,ff
+  025=ff,ff,ff
+}
+
+S(10,10) {
+  001=ff,ff,ff
+  002=ff,ff,ff
+  003=ff,ff,ff
+  004=ff,ff,ff
+  005=ff,ff,ff
+  006=ff,ff,ff
+  007=ff,ff,ff
+  008=ff,ff,ff
+  009=ff,ff,ff
+  010=ff,ff,ff
+  011=ff,ff,ff
+  012=ff,ff,ff
+  013=ff,ff,ff
+  014=ff,ff,ff
+  015=ff,ff,ff
+  016=ff,ff,ff
+  017=ff,ff,ff
+  018=66,d9,cb
+  019=ff,ff,ff
+  020=ff,ff,ff
+  021=ff,ff,ff
+  022=ff,ff,ff
+  023=ff,ff,ff
+  024=ff,ff,ff
+  025=ff,ff,ff
+}

@@ -1,0 +1,418 @@
+<aiw2project project-file-version="6">
+  <cs-general>
+    <application-name value="LED-Wall-Editor" />
+    <application-version value="1.00" />
+    <company-name value="Leber Systemtechnik" />
+    <install-path value="&lt;ProgramFiles&gt;\Leber Systemtechnik\LED-Wall-Editor" reg-root-key="2" reg-path="Software\&lt;CompanyName&gt;\&lt;AppName&gt;" read-from-registry="0" reg-value="Directory" />
+    <shortcut-path value="&lt;AppName&gt;" all-users-start-menu="0" />
+    <update-installation value="0" />
+    <allow-clean-install value="0" />
+    <prompt-before-running value="0" />
+    <silent-installation value="0" />
+  </cs-general>
+  <cs-dialogs>
+    <dialog selected="0" title="Language" project-relative-path="0" display-once="0" template="Themes\Windows Installer theme\Language.adt" />
+    <dialog selected="1" title="Welcome" project-relative-path="0" display-once="0" template="Themes\Leber Installer Theme\Welcome.adt" />
+    <dialog selected="1" title="License agreement" project-relative-path="0" display-once="0" template="Themes\Leber Installer Theme\License.adt" />
+    <dialog selected="0" title="Readme" project-relative-path="0" display-once="0" template="Themes\Windows Installer theme\Readme.adt" />
+    <dialog selected="0" title="System information" project-relative-path="0" display-once="0" template="Themes\Windows Installer theme\Sysinfo.adt" />
+    <dialog selected="0" title="User information" project-relative-path="0" display-once="0" template="Themes\Windows Installer theme\Userinfo.adt" />
+    <dialog selected="1" title="Select destination directory" project-relative-path="0" display-once="0" template="Themes\Leber Installer Theme\Destdir.adt" />
+    <dialog selected="1" title="Select shortcut folder" project-relative-path="0" display-once="0" template="Themes\Leber Installer Theme\Shortcutdir.adt" />
+    <dialog selected="0" title="Installation type" project-relative-path="0" display-once="0" template="Themes\Windows Installer theme\Installtype.adt" />
+    <dialog selected="0" title="Options" project-relative-path="0" display-once="0" template="Themes\Windows Installer theme\Options.adt" />
+    <dialog selected="1" title="Summary" project-relative-path="0" display-once="0" template="Themes\Leber Installer Theme\Summary.adt" />
+    <dialog selected="1" title="Installing" project-relative-path="0" display-once="0" template="Themes\Leber Installer Theme\Installing.adt" />
+    <dialog selected="1" title="Finished" project-relative-path="0" display-once="0" template="Themes\Leber Installer Theme\Finished.adt" />
+    <dialog selected="1" title="Uninstall" project-relative-path="0" display-once="0" template="Themes\Leber Installer Theme\Uninstall.adt" />
+    <scale value="1" />
+  </cs-dialogs>
+  <cs-dialogs-language>
+    <language project-relative-path="0" filename="LanguageSets\lang_ger.als" />
+    <default-language value="0" />
+    <dialog-title value="Select language" />
+    <dialog-text value="Please select the language that you would like to use during the installation." />
+    <use-dialog-strings value="0" />
+  </cs-dialogs-language>
+  <cs-dialogs-readme>
+    <text value="" language="0" />
+    <text value="" language="4" />
+  </cs-dialogs-readme>
+  <cs-dialogs-license>
+    <text value="{\rtf1\ansi\ansicpg1252\deff0\deflang1031{\fonttbl{\f0\fnil MS Sans Serif;}{\f1\fnil\fcharset0 MS Sans Serif;}}&#013;&#010;\viewkind4\uc1\pard\f0\fs16 LED Edit Copyright \f1\'a9 2006 Systemtechnik LEBER GmbH &amp; Co. KG.\par&#013;&#010;Alle Rechte vorbehalten.\par&#013;&#010; \par&#013;&#010;LED Edit Lizenzvereinbarung\par&#013;&#010; \par&#013;&#010;Bitte lesen Sie die folgenden Bestimmungen sorgf\'e4ltig durch, bevor Sie das\par&#013;&#010;Programm installieren. Sofern Sie mit Systemtechnik LEBER GmbH &amp; Co. KG\par&#013;&#010;(&quot;Lizenzgeber&quot;) nicht schriftlich einen anders lautenden Lizenzvertrag\par&#013;&#010;abgeschlossen haben, erkl\'e4ren Sie durch die Benutzung oder Installation\par&#013;&#010;dieser Kopie der LED Edit-Software Ihr Einverst\'e4ndnis mit den Bestimmungen\par&#013;&#010;der vorliegenden Lizenzvereinbarung.\par&#013;&#010; \par&#013;&#010;Wenn Sie mit irgendeiner der hier aufgef\'fchrten Bestimmungen nicht\par&#013;&#010;einverstanden sind, d\'fcrfen Sie diese Kopie der LED Edit-Software nicht\par&#013;&#010;installieren oder benutzen. Haben Sie LED Edit bei dem Lizenzgeber direkt\par&#013;&#010;gekauft und bezahlt, so k\'f6nnen Sie die unbenutzte Kopie innerhalb von\par&#013;&#010;drei\'dfig (30) Tagen ab Kaufdatum unter Vorlage des Kaufbelegs gegen\par&#013;&#010;Erstattung des Kaufpreises an den Lizenzgeber zur\'fcckgeben. Sie erkennen an,\par&#013;&#010;dass Sie diese LED Edit-Lizenz unmittelbar vom Lizenzgeber erwerben.\par&#013;&#010; \par&#013;&#010;Lizenzumfang: Diese Kopie der LED Edit-Software darf entweder von einer\par&#013;&#010;einzelnen Person auf einem oder mehreren Computern installiert und\par&#013;&#010;ausschlie\'dflich von ihr selbst genutzt, oder aber auf einer einzigen\par&#013;&#010;Workstation installiert und von mehreren Personen auf dieser einen\par&#013;&#010;Workstation benutzt werden. Eine Installation auf mehreren Computern, die\par&#013;&#010;von verschiedenen Personen gleichzeitig benutzt werden, ist nicht zul\'e4ssig.\par&#013;&#010; \par&#013;&#010;Wenn Sie diese Kopie der LED Edit-Software in einem Netzwerk installieren\par&#013;&#010;m\'f6chten, m\'fcssen Sie f\'fcr jede Workstation, die \'fcber das Netzwerk auf die\par&#013;&#010;Software zugreift, eine eigene LED Edit-Lizenz erwerben, unabh\'e4ngig davon,\par&#013;&#010;ob der Zugriff gleichzeitig oder zu verschiedenen Zeiten erfolgt.\par&#013;&#010; \par&#013;&#010;Gew\'e4hrleistung: Gew\'e4hr wird nur f\'fcr Fehler geleistet, die innerhalb von\par&#013;&#010;zw\'f6lf (12) Monaten nach Kauf dieser LED Edit Lizenz geltend gemacht werden.\par&#013;&#010;Offensichtliche M\'e4ngel der Software m\'fcssen innerhalb zwei (2) Wochen nach\par&#013;&#010;Kenntnis angezeigt werden. Bei mangelhafter Software ist der Lizenzgeber\par&#013;&#010;nach seiner Wahl berechtigt, Ersatz zu liefern oder den Geldbetrag zur\'fcck zu\par&#013;&#010;zahlen. Bei Fehlschlagen oder Unm\'f6glichkeit der Ersatzlieferung k\'f6nnen Sie\par&#013;&#010;Erstattung des Kaufpreises vom Lizenzgeber verlangen.\par&#013;&#010; \par&#013;&#010;Haftung: Der Lizenzgeber haftet nur f\'fcr Vorsatz und grobe Fahrl\'e4ssigkeit, im\par&#013;&#010;Falle der Verletzung wesentlicher Vertragspflichten jedoch f\'fcr jedes\par&#013;&#010;schuldhafte Verhalten ihrer Mitarbeiter.\par&#013;&#010; \par&#013;&#010;Der Lizenzgeber haftet nicht f\'fcr mittelbare Sch\'e4den oder Folgesch\'e4den,\par&#013;&#010;insbesondere nicht f\'fcr entgangenen Gewinn, es sei denn, diese Sch\'e4den\par&#013;&#010;beruhen auf Vorsatz von Mitarbeitern oder auf Vorsatz oder grober\par&#013;&#010;Fahrl\'e4ssigkeit von gesetzlichen Vertretern oder leitenden Angestellten.\par&#013;&#010; \par&#013;&#010;Au\'dfer bei Vorsatz von Mitarbeitern oder Vorsatz oder grober Fahrl\'e4ssigkeit\par&#013;&#010;von gesetzlichen Vertretern oder leitenden Angestellten ist die Haftung der\par&#013;&#010;H\'f6he nach auf die bei Vertragsschluss typischerweise vorhersehbaren Sch\'e4den\par&#013;&#010;begrenzt. Es wird dringend empfohlen, neue Softwareprogramme vor dem\par&#013;&#010;tats\'e4chlichen Einsatz umfassend in einer nicht kritischen Umgebung zu\par&#013;&#010;testen. Sie tragen das gesamte Risiko daf\'fcr, dass das Programm f\'fcr die von\par&#013;&#010;Ihnen angestrebten Zwecke genutzt werden kann.\par&#013;&#010; \par&#013;&#010;Gerichtsstand: F\'fcr Streitigkeiten aus diesem Lizenzvertrag ist der\par&#013;&#010;Gerichtsstand N\'fcrnberg ausschlie\'dflich zust\'e4ndig, sofern Sie Kaufmann i.S.d.\par&#013;&#010;Handelsgesetzbuches sind.\par&#013;&#010; \par&#013;&#010;Rechtswahl: Auf die vorliegende Vereinbarung findet ausschlie\'dflich deutsches\par&#013;&#010;materielles Recht Anwendung. Die Anwendung des Abkommens \'fcber den\par&#013;&#010;internationalen Kauf von Waren (ZISG) wird ausdr\'fccklich ausgeschlossen.\par&#013;&#010; \par&#013;&#010;Diese Vereinbarung stellt den vollst\'e4ndigen Vertrag zwischen den beiden\par&#013;&#010;Parteien dar und tritt an die Stelle aller fr\'fcheren Verabredungen,\par&#013;&#010;Kaufvertr\'e4ge, Abmachungen und Vereinbarungen, es sei denn, Sie haben eine\par&#013;&#010;anderslautende schriftliche Vereinbarung mit Lizenzgeber getroffen.\par&#013;&#010; \par&#013;&#010;Jegliche Rechte an der LED Edit-Software, die mit dieser Lizenzvereinbarung\par&#013;&#010;nicht ausdr\'fccklich an Sie \'fcbertragen werden, bleiben ausschlie\'dflich dem\par&#013;&#010;Lizenzgeber vorbehalten. Sie sind nicht berechtigt, die LED Edit-Software zu\par&#013;&#010;verleihen, zu vermieten, zu ver\'e4ndern, zu \'fcbersetzen, auf ihre\par&#013;&#010;Funktionsweise hin zu untersuchen, zu dekompilieren sowie als Grundlage f\'fcr\par&#013;&#010;eigene Softwareprogramme zu verwenden. Aus Ihren Rechten aus dieser Lizenz\par&#013;&#010;lassen sich keine Rechte Dritter ableiten.\f0\par&#013;&#010;}&#013;&#010;" language="0" />
+    <text value="" language="4" />
+    <direct-approval value="0" />
+    <prohibit-silent-installation value="1" />
+  </cs-dialogs-license>
+  <cs-dialogs-sysinfo>
+    <item selected="1" index="0" />
+    <item selected="1" index="1" />
+    <item selected="1" index="2" />
+    <item selected="1" index="3" />
+    <item selected="1" index="4" />
+    <item selected="0" index="5" />
+    <item selected="0" index="6" />
+    <item selected="0" index="7" />
+    <item selected="1" index="8" />
+    <item selected="0" index="9" />
+    <item selected="0" index="10" />
+    <item selected="0" index="11" />
+    <item selected="0" index="12" />
+    <item selected="1" index="13" />
+    <tentative value="0" />
+  </cs-dialogs-sysinfo>
+  <cs-dialogs-userinfo>
+    <user-name selected="0" required="0" />
+    <company-name selected="0" required="0" />
+    <serial selected="0" required="0" />
+    <show-confirmation selected="0" />
+    <delimited-style selected="0" field1="4" field2="4" field3="4" />
+    <serial-codes value="" />
+  </cs-dialogs-userinfo>
+  <cs-dialogs-options>
+    <show-lines-at-tree-root selected="1" />
+    <show-sub-process-progress selected="0" />
+    <show-restart-computer selected="0" force="0" />
+    <show-launch-program selected="1" file="&lt;InstallDir&gt;\KachelEditor.exe" default="0" />
+    <show-open-readme selected="0" file="" default="0" />
+  </cs-dialogs-options>
+  <cs-dialogs-uninstall>
+    <add-remove-dialog comments="" selected="1" publisher="&lt;CompanyName&gt;" title="&lt;AppName&gt;" publisher-url="" support-url="" version="&lt;AppVersion&gt;" update-url="" icon="" />
+    <custom-uninstaller command-line="" file="" />
+    <uninstaller-name value="&lt;WindowsDir&gt;\&lt;AppNameInFileNameFormat&gt; Uninstaller.exe" />
+    <no-uninstallation selected="0" />
+  </cs-dialogs-uninstall>
+  <cs-files>
+    <installation-item name="Application files" description="Minimum files required for the application to run." flags="1">
+      <files>
+        <folder value="O:\0190_LED-Wall\Intern\ledwalledit\Auslieferung\" relative="0" expanded="1">
+          <file runtime-location="" name="KachelEditor.exe" destination-modified="0" destination="&lt;InstallDir&gt;" reg-priority="1" overwrite-mode="0" attributes="97" />
+          <file runtime-location="" name="KachelPlayer.exe" destination-modified="0" destination="&lt;InstallDir&gt;" reg-priority="1" overwrite-mode="0" attributes="97" />
+          <file runtime-location="" name="lumiTile Hilfe.pdf" destination-modified="0" destination="&lt;InstallDir&gt;" reg-priority="1" overwrite-mode="0" attributes="97" />
+          <file runtime-location="" name="MFC42D.DLL" destination-modified="0" destination="&lt;InstallDir&gt;" reg-priority="1" overwrite-mode="0" attributes="97" />
+          <file runtime-location="" name="MFCO42D.DLL" destination-modified="0" destination="&lt;InstallDir&gt;" reg-priority="1" overwrite-mode="0" attributes="97" />
+          <file runtime-location="" name="MSVCR71.dll" destination-modified="0" destination="&lt;InstallDir&gt;" reg-priority="1" overwrite-mode="0" attributes="97" />
+          <file runtime-location="" name="MSVCRTD.DLL" destination-modified="0" destination="&lt;InstallDir&gt;" reg-priority="1" overwrite-mode="0" attributes="97" />
+          <file runtime-location="" name="Parameter.ini" destination-modified="0" destination="&lt;InstallDir&gt;" reg-priority="1" overwrite-mode="0" attributes="97" />
+        </folder>
+      </files>
+      <installation-item name="help" description="(No description available)" flags="1">
+        <files>
+          <folder value="O:\0190_LED-Wall\Intern\ledwalledit\Auslieferung\help\" relative="0" expanded="1">
+            <file-set flat="0" dynamic="0" destination="&lt;InstallDir&gt;\help" mask="*.*" recursive="1" exclude-mask="0" expanded="1">
+              <file runtime-location="" name="index.html" destination-modified="0" destination="&lt;InstallDir&gt;\help" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\filelist.xml" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image001.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image002.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image003.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image004.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image005.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image006.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image007.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image008.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image009.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image010.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image011.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image012.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image013.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image014.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image015.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image016.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image017.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image018.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image019.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image020.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image021.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image022.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image023.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image024.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image025.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image026.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image027.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image028.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image029.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image030.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image031.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image032.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image033.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image034.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image035.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image036.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image037.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image038.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image039.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image040.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image041.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image042.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image043.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image044.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image045.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image046.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image047.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image048.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image049.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image050.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image051.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image052.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image053.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image054.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image055.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image056.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image057.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image058.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image059.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image060.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image061.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image062.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image063.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image064.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image065.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image066.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image067.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image068.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image069.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image070.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image071.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image072.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image073.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image074.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image075.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image076.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image077.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image078.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image079.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image080.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image081.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image082.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image083.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image084.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image085.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image086.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image087.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image088.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image089.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image090.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image091.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image092.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image093.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image094.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image095.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image096.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image097.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image098.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image099.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image100.wmz" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image101.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image102.wmz" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image103.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image104.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image105.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image106.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image107.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image108.wmz" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image109.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image110.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image111.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image112.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image113.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image114.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image115.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image116.gif" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image117.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image118.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image119.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image120.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image121.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image122.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image123.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image124.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image125.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image126.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image127.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image128.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image129.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image130.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image131.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image132.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image133.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image134.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image135.png" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\image136.jpg" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="index-Dateien\oledata.mso" destination-modified="0" destination="&lt;InstallDir&gt;\help\index-Dateien" reg-priority="1" overwrite-mode="0" attributes="97" />
+            </file-set>
+          </folder>
+        </files>
+      </installation-item>
+      <installation-item name="icons" description="(No description available)" flags="1">
+        <files>
+          <folder value="O:\0190_LED-Wall\Intern\ledwalledit\Auslieferung\icons\" relative="0" expanded="1">
+            <file-set flat="0" dynamic="0" destination="&lt;InstallDir&gt;\icons" mask="*.*" recursive="1" exclude-mask="0" expanded="0">
+              <file runtime-location="" name="file-bmpex.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="file-bmpin.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="file-exit.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="file-load.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="file-new.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="file-resize.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="file-save.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="file-saveas.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="fill-diag.bmp" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="fill-hori.bmp" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="fill-verti.bmp" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="grad-diag.bmp" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="grad-hori.bmp" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="grad-verti.bmp" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="ledp.ico" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="ledx.ico" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="meta.bmp" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="mode-export.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="mode-play.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="mode-test.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="move-diag.bmp" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="move-hori.bmp" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="move-verti.bmp" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="picker.bmp" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="scene-del.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="scene-dn.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="scene-dup.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="scene-new.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="scene-up.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="undo.gif" destination-modified="0" destination="&lt;InstallDir&gt;\icons" reg-priority="1" overwrite-mode="0" attributes="97" />
+            </file-set>
+          </folder>
+        </files>
+      </installation-item>
+      <installation-item name="led" description="(No description available)" flags="1">
+        <files>
+          <folder value="O:\0190_LED-Wall\Intern\ledwalledit\Auslieferung\led\" relative="0" expanded="1">
+            <file-set flat="0" dynamic="0" destination="&lt;InstallDir&gt;\led" mask="*.*" recursive="1" exclude-mask="0" expanded="0">
+              <file runtime-location="" name="4X4 Rainbow Up.ledp" destination-modified="0" destination="&lt;InstallDir&gt;\led" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="4X4 Rainbow Up.ledx" destination-modified="0" destination="&lt;InstallDir&gt;\led" reg-priority="1" overwrite-mode="0" attributes="97" />
+              <file runtime-location="" name="xxxx.ledx" destination-modified="0" destination="&lt;InstallDir&gt;\led" reg-priority="1" overwrite-mode="0" attributes="97" />
+            </file-set>
+          </folder>
+        </files>
+      </installation-item>
+    </installation-item>
+  </cs-files>
+  <cs-syschanges>
+    <require-admin selected="0" />
+  </cs-syschanges>
+  <cs-syschanges-registry>
+    <root key="0" />
+    <root key="1" />
+    <root key="2">
+      <key name="Software" uninstall-type="0">
+        <key name="&lt;CompanyName&gt;" uninstall-type="0">
+          <key name="&lt;AppName&gt;" uninstall-type="0">
+            <value value="&lt;InstallDir&gt;" name="Directory" type="2" uninstall-type="0" />
+            <value value="&lt;AppVersion&gt;" name="Version" type="2" uninstall-type="0" />
+            <value value="&lt;UninstallerName&gt;" name="Uninstaller" type="2" uninstall-type="0" />
+          </key>
+        </key>
+      </key>
+    </root>
+    <root key="3" />
+    <apply-conditions-access selected="0" />
+  </cs-syschanges-registry>
+  <cs-syschanges-shortcuts>
+    <shortcut link-name="&lt;ShortcutDir&gt;\&lt;AppName&gt; Uninstaller.lnk" command-line="" target-file="&lt;UninstallerName&gt;" working-dir="&lt;InstallDir&gt;" icon="" />
+    <shortcut link-name="&lt;ShortcutDir&gt;\KachelPlayer.lnk" command-line="" target-file="&lt;InstallDir&gt;\KachelPlayer.exe" working-dir="&lt;InstallDir&gt;" icon="" />
+    <shortcut link-name="&lt;Desktop&gt;\KachelEditor.lnk" command-line="" target-file="&lt;InstallDir&gt;\KachelEditor.exe" working-dir="&lt;InstallDir&gt;" icon="" />
+    <shortcut link-name="&lt;Desktop&gt;\KachelPlayer.lnk" command-line="" target-file="&lt;InstallDir&gt;\KachelPlayer.exe" working-dir="&lt;InstallDir&gt;" icon="" />
+    <shortcut link-name="&lt;ShortcutDir&gt;\KachelEditor.lnk" command-line="" target-file="&lt;InstallDir&gt;\KachelEditor.exe" working-dir="&lt;InstallDir&gt;" icon="" />
+    <open-shortcut-folder selected="0" />
+  </cs-syschanges-shortcuts>
+  <cs-syschanges-ini />
+  <cs-syschanges-text />
+  <cs-syschanges-associations>
+    <association parameters="&quot;%1&quot;" command="Open" program="&lt;InstallDir&gt;\KachelEditor.exe" description="" extension=".ledp" icon="&lt;InstallDir&gt;\KachelEditor.exe,0" />
+  </cs-syschanges-associations>
+  <cs-sys-requirements>
+    <cpu amd="0" manufacturer="0" flags="0" speed="0" intel="0" />
+    <win-9x build="0" index="0" />
+    <win-nt index="2" service-pack="0" />
+    <ram value="0" />
+    <directx minor-version="0" major-version="0" />
+    <resolution yres="0" xres="0" bpp="0" />
+    <wave-playback selected="0" />
+    <midi-playback selected="0" />
+    <joystick selected="0" />
+    <java-version index="0" />
+    <net-version index="0" />
+  </cs-sys-requirements>
+  <cs-background>
+    <show-window selected="0" />
+    <occupy-task-bar selected="0" />
+    <title-bar show="1" text="&lt;AppName&gt; Installation" />
+    <background-color color1="8421376" color2="8421376" color3="8421376" mid-color-pos="50" />
+    <main-text color="16777215" shadow-color="0" text="&lt;AppName&gt; Installation" />
+    <sub-text color="16777215" shadow-color="0" text="Version &lt;AppVersion&gt;" />
+    <bottom-text color="16777215" text="Copyright Â&#169; 2004 &lt;CompanyName&gt;" />
+    <image y-offset="60" transparent="0" file="" tiled="0" position="0" full-screen="0" x-offset="20" />
+  </cs-background>
+  <cs-background-slideshow>
+    <settings y-offset="0" showtime="0" relative-position="0" image-position="0" dialog-position="0" x-offset="0" />
+  </cs-background-slideshow>
+  <cs-advanced>
+    <convert-jpgs selected="0" />
+    <convert-mp3s selected="0" />
+    <default-overwrite-mode index="4" />
+    <backup-system-files selected="0" />
+    <replace-in-use-files selected="0" />
+    <no-append-appname selected="0" />
+    <disable-xp-visuals selected="0" />
+    <suppress-privilege-warning value="0" />
+    <check-previous-installations value="" selected="1" value-name="" any-above="0" path="Software\&lt;CompanyName&gt;\&lt;AppName&gt;" root-key="2" />
+    <start-sound file="" />
+    <own-dll command-line="" file="" />
+    <installation-icon file="" />
+    <min-compression-ratio value="0" />
+    <autorun-mode selected="0" />
+    <x64-compliance-mode selected="0" />
+    <version-information file-version-major-low="0" file-version-minor-low="0" file-version-major-high="1" create-version-information="0" file-version-minor-high="0">
+      <string-properties>
+        <property property-key="Comments" property-value="" />
+        <property property-key="CompanyName" property-value="&lt;CompanyName&gt;" />
+        <property property-key="FileDescription" property-value="" />
+        <property property-key="FileVersion" property-value="&lt;AppVersion&gt;" />
+        <property property-key="InternalName" property-value="" />
+        <property property-key="LegalCopyright" property-value="" />
+        <property property-key="LegalTrademarks" property-value="" />
+        <property property-key="OriginalFilename" property-value="" />
+        <property property-key="ProductName" property-value="&lt;AppName&gt;" />
+        <property property-key="ProductVersion" property-value="&lt;AppVersion&gt;" />
+      </string-properties>
+    </version-information>
+  </cs-advanced>
+  <cs-advanced-variables />
+  <cs-advanced-shell-interactive />
+  <cs-advanced-shell-file />
+  <cs-advanced-resource />
+  <cs-autoupdate>
+    <mode index="0" />
+    <installation-item index="0" />
+    <install-to value="&lt;CommonFiles&gt;\Thraex Software\AutoUpdator" />
+    <update-xml-url value="" />
+    <download-urls>
+      <url value="" />
+    </download-urls>
+    <program-description value="" />
+    <save-xml-as value="(Use project name)" />
+    <create-shortcut selected="0" />
+    <auto-execute selected="0" />
+  </cs-autoupdate>
+  <cs-create-setup>
+    <setup-filename value="Setup" />
+    <multiple-disk-spanning selected="0" disk-size="1,38" />
+  </cs-create-setup>
+  <constants />
+  <internal>
+    <use-main-window-caption value="1" />
+    <last-bc-image-path value="" />
+    <last-dll-path value="" />
+    <last-text-file-path value="" />
+    <last-files-path value="O:\0190_LED-Wall\Intern\ledwalledit\Auslieferung\" />
+    <last-slide-image-path value="" />
+    <active-theme value="Leber Installer theme" />
+  </internal>
+</aiw2project>

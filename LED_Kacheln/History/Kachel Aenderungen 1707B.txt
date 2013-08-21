@@ -1,0 +1,5 @@
+
+Neue Nummer :xxxxxxxxxxxxxx
+
+- Alle Potis Typ ändern, so dass von oben und von unten
+  abgeglichen werden kann.

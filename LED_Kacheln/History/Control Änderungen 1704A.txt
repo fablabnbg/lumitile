@@ -1,0 +1,50 @@
+Änderungen LED-Wall Control 1704A
+
+Neue Nummer 190-003.02
+
+- Löcher von Poti R4,R5,R6 und R7 genau 9mm unterhlb von Mittelpunkt
+  des Poti legen. Dadurch kommen die Löcher genau zwischen die Potis.
+  Jetzt ist der Abstand zu groß so dass die Mutter des unteren Potis die
+  Löcher kurzschliesst.
+
+- an X9 ein grosses - (Minus) schreiben
+- an X10 ein grosses + (Plus) schreiben
+
+- Raster IC5 auf 150mil ändern
+
+- D6 und D7 neu - gleiches Format wie D2
+
+- Bezeichnung U1 in IC1 korrigieren
+- Nummer irgendwo anders hinschieben (zur Not kleiner)
+- IC1 bekommt Kupferfläche zum Kühlen so gross wie möglich auf BS und LS.
+  Die beiden Kupferflächen auf LS und BS mit vielen Durchsteigern verbinden
+
+
+- D3,4,5 weg
+- R12,13,14 weg
+
+- 12V eingeführt
+- X14 eingeführt, teilweise parallel zu X11
+
+- X14 2 wird 12V
+- X14.7 wird 5V
+- X14.4 wird R1
+- X14.6 wird T1
+
+- neuen PIC eingebaut
+- einige Leitungen am PIC anderes belegt. Alles kontrollieren
+
+
+- Jp1 neu
+
+- R12,13 neu
+- C11,12 neu
+
+- R28,29 neu
+
+
+
+
+- D0 an IC3 von Pin 40 auf pin 6 umgelegt
+- D1 an IC3 von Pin 39 auf Pin 10 umgelegt
+

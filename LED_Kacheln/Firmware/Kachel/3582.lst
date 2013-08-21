@@ -1,0 +1,1401 @@
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 ;       Processor 16F88
+                      00002 
+                      00003 ; ********************************************************************************************
+                      00004 ; **************************  LED-Wall RGB-Control  ******************************************
+                      00005 ; ********************************************************************************************
+                      00006 ; 14.09.2005
+                      00007 ;       -Baudrate 19,2kbit, 9bit + 1 Stopbit
+                      00008 ;       -9.Bit: 0=Wert 1=Adresse
+                      00009 ;       -Pause von > 6ms startet eine Sequenz
+                      00010 ;       -Sequenz: bis zu 128 mal (Adresse + R + G + B + Control)
+                      00011 ;       -Adresse 255 meint alle Kacheln
+                      00012 ; 29.09.2005
+                      00013 ;       -Versuch, unter 200 gleichzeitig die Periodendauer zu verlängern!
+                      00014 ; 04.10.2005
+                      00015 ;       -Bis Stellwert 255 die Periodendauer linear verlängern
+                      00016 ;       -mit Anfangsstellwert und 255 Stufen auf Rest verteilen
+                      00017 ; 03.05.2006
+                      00018 ;       -Baudrate erhöht auf 56kBaud
+                      00019 ;       -Datenübernahme bei Addr. 255 und CS Bit5 gesetzt
+                      00020 ;
+                      00021 ; ********************************************************************************************
+                      00022         LIST P=16F88
+                      00023 ; ********************************************************************************************
+                      00024 #define W               00
+                      00025 #define F               01
+                      00026 #define TMR0            01
+                      00027 #define PCL             02
+                      00028 #define STATUS          03
+                      00029 #define FSR             04
+                      00030 #define PORTA           05
+                      00031 #define PORTB           06
+                      00032 #define PCLATH          0A
+                      00033 #define INTCON          0B
+                      00034 #define PIR1            0C
+                      00035 #define PIE1            0C
+                      00036 #define PIR2            0D
+                      00037 #define PIE2            0D
+                      00038 #define TMR1L           0E
+                      00039 #define TMR1H           0F
+                      00040 #define OSCCON          0F      ; Oszillator Control Register 8FH
+                      00041 
+                      00042 #define T1CON           10      ; T1Con Register
+                      00043 #define OSCTUNE         10      ; Oszi. 90H
+                      00044 #define TXSTA           18      ; Transmit Status Register
+                      00045 #define RCSTA           18
+                      00046 #define TXREG           19      ; Transmit-Register
+                      00047 #define SPBRG           19      ; Baudrate Generation 99H
+                      00048 #define RCREG           1A      ; Receive-Register
+                      00049 #define ANSEL           1B
+                      00050 #define CMCON           1C      ; Bank 1
+                      00051 #define ADRESH          1E
+                      00052 #define ADCON0          1F
+                      00053 #define ADCON1          1F      ; Bank 1
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00054 
+                      00055 #define ON_Time         20      ; Messung der EIN-Zeit
+                      00056 
+                      00057 #define DEV_Adr         22      ; lokale Adresse
+                      00058 #define TMR_0           23      ; Timer für seriellen Bus
+                      00059 #define Count_L         24      ; Counter für Byte-Gruppe
+                      00060 #define Count_H         25      ; Counter für Adresse
+                      00061 #define RX_Status       26
+                      00062 ;                       26.0    1=Adresse ok
+                      00063 ;                       26.1    1=Adresse 255
+                      00064 
+                      00065 #define Hilfs_RegL      27      ; Hilfs Register
+                      00066 #define Hilfs_RegH      28      ; Hilfs Register
+                      00067 
+                      00068 #define RX_Rotate       2D
+                      00069 #define RX_TempC        2E      ; Temp-RX_Buffer
+                      00070 #define RX_Buffer       2F
+                      00071 #define RX_CS           30      ; CS-Berechnung
+                      00072 
+                      00073 #define SOLL_R          31      ; Sollwert für ROT
+                      00074 #define SOLL_G          32      ; Sollwert für GRUEN
+                      00075 #define SOLL_B          33      ; Sollwert für BLAU
+                      00076 #define BEFEHL          34      ; 4. Byte
+                      00077 #define TEMP_R          35      ; Reserve
+                      00078 #define TEMP_G          36      ; Reserve
+                      00079 #define TEMP_B          37      ; Reserve
+                      00080 #define TEMP_R1         38      ; Reserve
+                      00081 #define TEMP_G1         39      ; Reserve
+                      00082 #define TEMP_G2         3A      ; Reserve
+                      00083 
+                      00084 #define COLOR_R         3D      ; Stellwert für Rot
+                      00085 #define COLOR_G         3E      ; Stellwert für Grün
+                      00086 #define COLOR_B         3F      ; Stellwert für Blau
+                      00087 
+                      00088 #define ROT_S           60
+                      00089 #define GRUEN_S         61
+                      00090 #define BLAU_S          62
+                      00091 
+                      00092 ; 70H .. 7FH in allen vier Bänken gleich!
+                      00093 
+                      00094 #define RGB_Wert        71      ; RGB-Wert vom Controller
+                      00095 
+                      00096 #define H_Stellwert     72      ; Hilfsmerker für Stellwert
+                      00097 #define Stell_HW        73      ; berechneter Stellwert
+                      00098 #define StellWert       74      ; Stellwert
+                      00099 
+                      00100 #define CounterT        76      ; berechneter Counter Wert
+                      00101 #define CounterWert     77      ; Wert für Counter
+                      00102 
+                      00103 #define Int_Frei        78      ; Freigabe für Übernahme der Werte
+                      00104 #define PWM             79      ; PWM-Wert (Ringzähler)
+                      00105 
+                      00106 #define W_TEMP          7D
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00107 #define STATUS_TEMP     7E
+                      00108 #define PCLATH_TEMP     7F
+                      00109 
+                      00110 #define StartTime       d'208'  ; kürzester Timer Wert (50us)
+                      00111 
+                      00112 ; ********************************************************************************************
+                      00113 ; ********************************************************************************************
+                      00114 ;16F628-Configs---------------------------------------------------------------------
+2000   0003 0005 0008 00115         __IDLOCS        H'3582' ;       User ID
+       0002 
+                      00116 ;-----------------------------------------------------------------------------------
+                      00117 ;
+  00002007            00118 _CONFIG1        EQU     H'2007'                     
+  00002008            00119 _CONFIG2        EQU     H'2008' 
+                      00120                     
+2007   0934           00121         __CONFIG        _CONFIG1,  B'00100100110100'
+                      00122 
+                      00123 ;                 B'10011101110100'
+                      00124 ;                   ||||||||||||||
+                      00125 ;                   |||||||||+||++---FOSC 1xx11=RC R+C an RA7, RA6=CLKOUT
+                      00126 ;                   |||||||||+||++---FOSC 1xx10=RC R+C an RA7
+                      00127 ;                   |||||||||+||++---FOSC 1xx01=INTOSC RA6=CLKOUT
+                      00128 ;                   |||||||||+||++---FOSC 1xx00=INTOSC
+                      00129 ;                   |||||||||+||++---FOSC 0xx11=EX
+                      00130 ;                   |||||||||+||++---FOSC 0xx10=HS      ***
+                      00131 ;                   |||||||||+||++---FOSC 0xx01=XT
+                      00132 ;                   |||||||||+||++---FOSC 0xx00=LP
+                      00133 ;                   ||||||||| ||     
+                      00134 ;                   ||||||||| |+-----WDTE 0=disa 1=ena
+                      00135 ;                   ||||||||| +------PWRT 0=ena  1=disa
+                      00136 ;                   ||||||||+--------MCLR 0=din  1=ena
+                      00137 ;                   |||||||+---------BOR  0=disa 1=ena
+                      00138 ;                   ||||||+----------LVP  0=HV   1=RB4 LVP
+                      00139 ;                   |||||+-----------CPD  0=prod 1=CPD off
+                      00140 ;                   |||++------------WRT  00= 000..FFF write protected
+                      00141 ;                   |||++------------WRT  01= 000..7FF write protected
+                      00142 ;                   |||++------------WRT  10= 000..0FF write protected
+                      00143 ;                   |||++------------WRT  11= Write prod. OFF
+                      00144 ;                   ||+--------------ICD  0=ena  1=dis
+                      00145 ;                   |+---------------CCP1 0=RB3  1=RB0
+                      00146 ;                   +----------------CP   0=prod 1=CPF off
+                      00147 ;
+2008   3FFC           00148         __CONFIG        _CONFIG2,  B'11111111111100'
+                      00149 ;
+                      00150 ;-----------------------------------------------------------------------------------
+                      00151 ;=============================================================================================
+                      00152 ; PROGRAMM
+                      00153 ;=============================================================================================
+                      00154 
+0000   0000           00155         NOP                     ; für ICD2 freihalten
+0001   0000           00156         NOP                     ; für ICD2 freihalten
+0002   2824           00157         goto    start
+                      00158 
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00159 ; ********************************************************************************************
+                      00160 ; ********************       ISR     *********************************************************
+                      00161 ; ********************************************************************************************
+0004                  00162         org     004
+                      00163 ; ********************************************************************************************
+0004   00FD           00164         MOVWF   W_TEMP          ;Copy W to TEMP register
+0005   0E03           00165         SWAPF   STATUS, W       ;Swap status to be saved into W
+0006   0183           00166         CLRF    STATUS          ;bank 0, regardless of current bank, Clears IRP,RP1,RP0
+0007   00FE           00167         MOVWF   STATUS_TEMP     ;Save status to bank zero STATUS_TEMP register
+                      00168 
+0008                  00169 BOISR
+0008   1F0D           00170         btfss   PIR2, 6
+0009   2811           00171         goto    TMR0_ISR        ; Timer0 INT
+                      00172 
+000A   1206           00173         bcf     PORTB, 4        ; ausschalten
+                      00174 
+000B   1683           00175         bsf     STATUS, 5
+000C   081C           00176         movf    CMCON, W
+000D   1283           00177         bcf     STATUS, 5
+                      00178 
+                      00179 ;       movf    TMR0, W
+                      00180 ;       movwf   ON_Time
+                      00181 
+000E   130D           00182         bcf     PIR2, 6         ; Comparator Bit
+000F   1D0B           00183         btfss   INTCON, 2
+0010   281F           00184         goto    EOISR
+                      00185 
+0011                  00186 TMR0_ISR
+0011   1206           00187         bcf     PORTB, 4        ; spätestens jetzt ausschalten
+0012   0877           00188         movf    CounterWert, W
+0013   0781           00189         addwf   TMR0, F
+0014   110B           00190         bcf     INTCON, 2       ; TMR0 INT
+                      00191 
+                      00192 ;       incfsz  TMR_0, F
+                      00193 ;       goto    TMR0_ISRn
+                      00194 ;       decf    TMR_0, F        ; 12,6ms bis 255
+                      00195         
+0015                  00196 TMR0_ISRn
+0015   0874           00197         movf    StellWert, W
+0016   07F9           00198         addwf   PWM, F
+0017   1803           00199         btfsc   STATUS, 0       ; immer einschalten, wenn C
+0018   1606           00200         bsf     PORTB, 4        ; einschalten
+                      00201 
+0019   1C78           00202         btfss   Int_Frei, 0     ; testen, ob neue Werte übernommen werden dürfen
+001A   281F           00203         goto    EOISR
+                      00204 
+001B   0876           00205         movf    CounterT, W
+001C   00F7           00206         movwf   CounterWert
+001D   0873           00207         movf    Stell_HW, W
+001E   00F4           00208         movwf   StellWert
+                      00209 
+001F                  00210 EOISR
+001F   0E7E           00211         SWAPF   STATUS_TEMP, W  ; Swap STATUS_TEMP register into W
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00212                                 ; (sets bank to original state)
+0020   0083           00213         MOVWF   STATUS          ; Move W into STATUS register
+0021   0EFD           00214         SWAPF   W_TEMP, F       ; Swap W_TEMP
+0022   0E7D           00215         SWAPF   W_TEMP, W       ; Swap W_TEMP into W
+                      00216 
+0023   0009           00217         RETFIE                  ; sofort zurück nach INT
+                      00218 
+                      00219 ; ********************************************************************************************
+                      00220 ; ************** Initialisierung beginnt hier *******************
+                      00221 ; ********************************************************************************************
+                      00222 
+0024                  00223 start
+0024   0064           00224         clrwdt
+0025   0000           00225         nop
+                      00226 
+                      00227 ;=============================================================================================
+                      00228 ; Register 20H bis 7FH löschen
+                      00229 ;=============================================================================================
+0026   3020           00230         movlw   20      ; beginne bei Register 20H
+0027   0084           00231         movwf   FSR     ; FSR
+                      00232 
+                      00233 
+0028   0180           00234         clrf    0
+0029   0A84           00235         incf    FSR, F
+002A   1F84           00236         btfss   FSR, 7  ; wenn REGISTER 80H erreicht
+002B   2828           00237         goto    $-3
+                      00238 
+                      00239 ;=============================================================================================
+                      00240 ; INIT Ports, OPTIN, INTCON
+                      00241 ;=============================================================================================
+                      00242 
+                      00243 ;>>>    OSCCON (8Fh)
+                      00244         
+002C   1683           00245         BSF     STATUS, 5
+002D   307E           00246         movlw   b'01111110'     ; 8MHz interner Oszillator
+002E   008F           00247         movwf   OSCCON
+002F   0190           00248         clrf    OSCTUNE         ; abgestimmt auf Mittenfrequenz
+0030   1283           00249         BCF     STATUS, 5
+                      00250 
+                      00251 ;>>>    OPTION (81H)
+                      00252 
+0031   1683           00253         bsf     STATUS, 5       ; Bank 1
+0032   3080           00254         movlw   b'10000000'     ; no RBPull-Up, falling edge, noWDT, 000=1:2
+0033   0081           00255         movwf   1
+0034   1283           00256         bcf     STATUS, 5       ; Bank 0
+                      00257 
+                      00258 ;>>>    Ports
+                      00259 
+                      00260 ;       >>> ANSEL
+0035   1683           00261         bsf     STATUS, 5
+0036   3016           00262         movlw   b'00010110'     ; AN4 = RA4
+0037   009B           00263         movwf   ANSEL           ; ANSEL
+0038   1283           00264         bcf     STATUS, 5
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00265 
+0039   0185           00266         clrf    PORTA           ; Port A
+003A   0186           00267         clrf    PORTB           ; Port B
+                      00268 
+                      00269 ; ADCON0        (1Fh)
+                      00270 
+003B   30A1           00271         movlw   b'10100001'     ; AN4, ON, FOSC/16
+003C   009F           00272         movwf   ADCON0
+                      00273 
+                      00274 ; ADCON1        (9Fh)
+                      00275 
+003D   1683           00276         bsf     STATUS, 5       ; Bank 1
+003E   3040           00277         movlw   b'01000000'     ; Left Adj., OSZ/2 REF=VDD + VSS
+003F   009F           00278         movwf   ADCON1
+                      00279 
+                      00280 ; TRISA         (85h)
+0040   30FF           00281         movlw   b'11111111'     ; 
+0041   0085           00282         movwf   PORTA           ; RA0..RA4,RB6,RB7=IN  RB5=MCLR
+                      00283         
+0042   30EF           00284         movlw   b'11101111'     ; 
+0043   0086           00285         movwf   PORTB           ; RB4=OUT RB0..3,6,7=IN RB5=TX
+0044   1283           00286         bcf     STATUS, 5       ; Bank 0
+                      00287 
+0045   0185           00288         clrf    PORTA           ; Port A
+0046   0186           00289         clrf    PORTB           ; Port B
+                      00290 
+                      00291 ;>>>    INTCON (0BH)
+                      00292 
+0047   3060           00293         movlw   b'01100000'     ; PEIE, TMR0-Int
+0048   008B           00294         movwf   INTCON
+                      00295         
+                      00296 ;>>>    PIE1 (8CH)
+                      00297         
+0049   1683           00298         bsf     STATUS, 5
+004A   3000           00299         movlw   b'00000000'     ; 
+004B   008C           00300         movwf   PIE1
+004C   1283           00301         bcf     STATUS, 5
+                      00302         
+004D   018C           00303         clrf    PIR1
+                      00304 
+                      00305 ;>>>    PIE2 (8DH)
+                      00306         
+004E   1683           00307         bsf     STATUS, 5
+004F   3040           00308         movlw   b'01000000'     ; Comparator IE
+0050   008D           00309         movwf   PIE2
+0051   1283           00310         bcf     STATUS, 5
+                      00311 
+0052   018D           00312         clrf    PIR2
+                      00313 
+                      00314 ; CMCON         (9Ch)
+                      00315 
+0053   1683           00316         bsf     STATUS, 5
+0054   3025           00317         movlw   b'00100101'     ; V- = RA1, VRef = RA2
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0055   009C           00318         movwf   CMCON
+                      00319 
+                      00320 ; CVRON         (9Dh)
+                      00321 
+                      00322 ;       movlw   b'00000000'
+0056   3022           00323         movlw   b'00100010'
+0057   009D           00324         movwf   0x1D            ; CVRON
+0058   1283           00325         bcf     STATUS, 5
+                      00326 
+                      00327         ;>>> T1CON (10H)
+                      00328 
+0059   3025           00329         movlw   b'00100101'     ; OSZ/4, Prescaler 1:4, TMR1ON=1
+005A   0090           00330         movwf   T1CON
+                      00331 
+                      00332         ;>>> TXSTA (98H)
+                      00333         
+005B   1683           00334         bsf     STATUS, 5
+005C   3045           00335         movlw   b'01000101'     ; Transmit DIS, asynchron, 9-bit, high speed
+                      00336 ;       movlw   b'00000000'
+005D   0098           00337         movwf   TXSTA
+005E   1283           00338         bcf     STATUS, 5
+                      00339         
+                      00340         ;>>> RCSTA (18H)
+                      00341         
+005F   30D0           00342         movlw   b'11010000'     ; asychron, 9-bit, cont. Receive
+0060   0098           00343         movwf   RCSTA
+                      00344 
+                      00345         ;>>> SPBRG (99H)
+                      00346         
+0061   1683           00347         bsf     STATUS, 5
+                      00348 ;       movlw   d'025'          ; Baudrate: 19,2kBaud
+                      00349 ;       movlw   d'016'          ; Baudrate: 28,8kBaud
+                      00350 ;       movlw   d'012'          ; Baudrate: 38,4kBaud
+0062   3008           00351         movlw   d'008'          ; Baudrate: 57,6kBaud   
+0063   0099           00352         movwf   SPBRG
+0064   1283           00353         bcf     STATUS, 5
+                      00354 
+0065   20FD           00355         call    delay_100us
+                      00356 
+                      00357 ; hier die eigene Adresse abfragen
+0066   307F           00358         movlw   0x7F
+0067   00A2           00359         movwf   DEV_Adr         ; alles auf HIGH setzen
+                      00360 
+0068   1D85           00361         btfss   PORTA, 3
+0069   1022           00362         bcf     DEV_Adr, 0
+006A   1C06           00363         btfss   PORTB, 0
+006B   10A2           00364         bcf     DEV_Adr, 1
+006C   1C86           00365         btfss   PORTB, 1
+006D   1122           00366         bcf     DEV_Adr, 2
+006E   1D86           00367         btfss   PORTB, 3
+006F   11A2           00368         bcf     DEV_Adr, 3
+0070   1E86           00369         btfss   PORTB, 5
+0071   1222           00370         bcf     DEV_Adr, 4
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0072   1F86           00371         btfss   PORTB, 7
+0073   12A2           00372         bcf     DEV_Adr, 5
+0074   1F06           00373         btfss   PORTB, 6
+0075   1322           00374         bcf     DEV_Adr, 6
+                      00375 
+0076   178B           00376         bsf     INTCON, 7       ; Comparator als einziger Int.
+                      00377         
+0077   081A           00378         movf    RCREG, W
+0078   00AF           00379         movwf   RX_Buffer       ; schon mal das Byte abholen
+                      00380 
+                      00381 ;***************************************************************************************************
+                      00382 ;***************************************************************************************************
+                      00383 
+                      00384 ; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                      00385 ; %%%%%% Hauptprogramm LOOP Begin  %%%%%%%%%
+                      00386 ; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                      00387 
+0079                  00388 main
+0079   0064           00389         clrwdt
+007A   0000           00390         nop
+                      00391 
+007B   307F           00392         movlw   0x7F            ; NULL ist lokaler Betrieb
+007C   0622           00393         xorwf   DEV_Adr, W
+007D   397F           00394         andlw   0x7F
+                      00395         
+007E   1D03           00396         btfss   STATUS, 2
+007F   289F           00397         goto    RS232
+                      00398         
+0080   191F           00399         btfsc   ADCON0, 2
+0081   20FD           00400         call    delay_100us
+                      00401         
+0082   081E           00402         movf    ADRESH, W
+0083   00BD           00403         movwf   COLOR_R
+0084   00B1           00404         movwf   SOLL_R
+0085   00BE           00405         movwf   COLOR_G
+0086   00B2           00406         movwf   SOLL_G
+0087   00BF           00407         movwf   COLOR_B
+0088   00B3           00408         movwf   SOLL_B
+                      00409 
+0089   151F           00410         bsf     ADCON0, 2       ; AD-Wandlung wieder starten
+                      00411         
+008A                  00412 main_Stell
+008A   083D           00413         movf    COLOR_R, W      ; A6=0, A7=0 vorbelegen mit ROT holen
+008B   1B85           00414         btfsc   PORTA, 7        ; 
+008C   083F           00415         movf    COLOR_B, W      ; wenn A7=1, dann Blau holen
+008D   1B05           00416         btfsc   PORTA, 6        ; 
+008E   083E           00417         movf    COLOR_G, W      ; wenn A6=1, dann Grün holen
+                      00418 
+008F   00F1           00419         movwf   RGB_Wert
+                      00420 
+0090   1078           00421         bcf     Int_Frei, 0
+                      00422 
+0091   3003           00423         movlw   HIGH Tab_Wert+1
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0092   008A           00424         movwf   PCLATH
+                      00425 
+0093   0871           00426         movf    RGB_Wert, W
+0094   22FF           00427         call    Tab_Wert
+                      00428 
+0095   018A           00429         clrf    PCLATH  
+                      00430         
+0096   00F3           00431         movwf   Stell_HW
+                      00432 
+0097   3005           00433         movlw   HIGH Tab_Timer+1
+0098   008A           00434         movwf   PCLATH
+                      00435 
+0099   0871           00436         movf    RGB_Wert, W
+009A   24FF           00437         call    Tab_Timer
+                      00438 
+009B   018A           00439         clrf    PCLATH  
+                      00440         
+009C   00F6           00441         movwf   CounterT
+                      00442 
+009D   1478           00443         bsf     Int_Frei, 0
+009E   2879           00444         goto    main            ; nichts tun
+                      00445 
+                      00446 ;***************************************************************************************************
+                      00447 ; hierher nur, wenn DEV_Adr NICHT 255
+                      00448 ; Protokoll: Pause > 13ms, 1..127 mal vier Bytes
+                      00449 ; vier Bytes:   SOLL_R + SOLL_G + SOLL_B + Byte
+                      00450 ; Zeit: bei 19,2Baud -> ca. 0,5ms/Zeichen -> 2ms pro Adresse -> ca. 250ms/Loop
+                      00451 ; Zeit: bei 1m * 3m -> 4*12 = 48 Kacheln -> ca. 100ms/Loop
+                      00452 
+009F                  00453 RS232
+009F   1898           00454         btfsc   RCSTA, 1
+00A0   1218           00455         bcf     RCSTA, 4
+00A1   1618           00456         bsf     RCSTA, 4
+                      00457 
+00A2   1E8C           00458         btfss   PIR1, 5         ; wenn 1, dann Transfer eines Bytes ist komplett
+00A3   2879           00459         goto    main
+                      00460 
+00A4   081A           00461         movf    RCREG, W
+00A5   00AF           00462         movwf   RX_Buffer       ; schon mal das Byte abholen
+                      00463 
+                      00464 ;       btfsc   TMR_0, 5        ; TimeOut > 1,7ms
+                      00465 ;       nop
+                      00466 ;       clrf    TMR_0
+                      00467 
+                      00468 ; kam eine Adresse?
+00A6   1818           00469         btfsc   RCSTA, 0        ; wenn 9.Bit=HIGH, dann Adresse
+00A7   20BF           00470         call    RS232_Adr
+                      00471         
+00A8   1826           00472         btfsc   RX_Status, 0
+00A9   28BD           00473         goto    RS232_Addr      ; wenn eine Adresse kam, zurück 
+                      00474 
+00AA   300B           00475         movlw   d'11'           ; maximal 10 Bytes sollen empfangen werden
+00AB   0224           00476         subwf   Count_L, W
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 10
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00AC   1803           00477         btfsc   STATUS, 0
+00AD   2879           00478         goto    main            ; hier noch nicht stellen
+                      00479 
+00AE   3031           00480         movlw   SOLL_R
+00AF   0724           00481         addwf   Count_L, W
+00B0   0084           00482         movwf   FSR
+                      00483         
+00B1   3003           00484         movlw   d'03'           ; Anzahl der Nullen zählen
+00B2   0224           00485         subwf   Count_L, W
+00B3   1C03           00486         btfss   STATUS, 0
+00B4   20CD           00487         call    RS232_Nullen    ; über R, G und B die Nullen zählen
+                      00488 
+00B5   3003           00489         movlw   03
+00B6   0624           00490         xorwf   Count_L, W      ; 4. Byte = CS
+00B7   1903           00491         btfsc   STATUS, 2
+00B8   20DA           00492         call    RS232_CS
+                      00493         
+00B9   082F           00494         movf    RX_Buffer, W
+00BA   0080           00495         movwf   0
+                      00496 
+00BB   0AA4           00497         incf    Count_L, F
+00BC   288A           00498         goto    main_Stell      ; 
+                      00499 
+00BD                  00500 RS232_Addr
+00BD   1026           00501         bcf     RX_Status, 0
+00BE   2879           00502         goto    main
+                      00503 
+00BF                  00504 RS232_Adr
+00BF   1026           00505         bcf     RX_Status, 0    ; Addr ok erst mal löschen
+                      00506 
+00C0   30FF           00507         movlw   0xFF            ; Sammel-Adresse
+00C1   062F           00508         xorwf   RX_Buffer, W
+00C2   1903           00509         btfsc   STATUS, 2
+00C3   1426           00510         bsf     RX_Status, 0    ; Adresse ist ok
+                      00511 
+00C4   1903           00512         btfsc   STATUS, 2
+00C5   14A6           00513         bsf     RX_Status, 1    ; Adresse ist 255
+                      00514 
+00C6   0822           00515         movf    DEV_Adr, W      ; lokale Adresse holen
+00C7   062F           00516         xorwf   RX_Buffer, W
+00C8   1903           00517         btfsc   STATUS, 2
+00C9   1426           00518         bsf     RX_Status, 0    ; Adresse ist ok
+                      00519         
+00CA   1826           00520         btfsc   RX_Status, 0
+00CB   01A4           00521         clrf    Count_L         ; Byte-Counter auf NULL setzen
+00CC   0008           00522         return
+                      00523 
+00CD                  00524 RS232_Nullen
+00CD   08A4           00525         movf    Count_L, F
+00CE   1903           00526         btfsc   STATUS, 2
+00CF   01B0           00527         clrf    RX_CS
+                      00528         
+00D0   082F           00529         movf    RX_Buffer, W
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 11
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00D1   00AE           00530         movwf   RX_TempC
+                      00531         
+00D2   3008           00532         movlw   0x08
+00D3   00AD           00533         movwf   RX_Rotate
+                      00534         
+00D4   0CAE           00535         RRF     RX_TempC, F
+00D5   1C03           00536         btfss   STATUS, 0
+00D6   0AB0           00537         incf    RX_CS, F        ; wenn kein C, dann NULL
+00D7   0BAD           00538         decfsz  RX_Rotate, F
+00D8   28D4           00539         goto    $-4
+00D9   0008           00540         return
+                      00541 
+00DA                  00542 RS232_CS
+00DA   082F           00543         movf    RX_Buffer, W
+00DB   391F           00544         andlw   b'00011111'     ; mit 31 verunden (kann nur kleiner 25 sein!)
+00DC   0630           00545         xorwf   RX_CS, W
+00DD   1D03           00546         btfss   STATUS, 2       ; wenn Anz. Nullen = CS, Daten übernehmen
+00DE   0008           00547         return
+                      00548 
+00DF   1AAF           00549         btfsc   RX_Buffer, 5
+00E0   28EC           00550         goto    RS232_CS_warte
+                      00551 
+00E1   0831           00552         movf    SOLL_R, W
+00E2   00BD           00553         movwf   COLOR_R
+00E3   00E0           00554         movwf   ROT_S
+00E4   0832           00555         movf    SOLL_G, W
+00E5   00BE           00556         movwf   COLOR_G
+00E6   00E1           00557         movwf   GRUEN_S
+00E7   0833           00558         movf    SOLL_B, W
+00E8   00BF           00559         movwf   COLOR_B
+00E9   00E2           00560         movwf   BLAU_S
+00EA   10A6           00561         bcf     RX_Status, 1
+00EB   0008           00562         return
+                      00563 
+00EC                  00564 RS232_CS_warte
+00EC   18A6           00565         btfsc   RX_Status, 1    ; Sammeladresse kam
+00ED   28F5           00566         goto    RS232_CS_Sammel
+00EE   0831           00567         movf    SOLL_R, W
+00EF   00E0           00568         movwf   ROT_S
+00F0   0832           00569         movf    SOLL_G, W
+00F1   00E1           00570         movwf   GRUEN_S
+00F2   0833           00571         movf    SOLL_B, W
+00F3   00E2           00572         movwf   BLAU_S
+00F4   0008           00573         return
+                      00574 
+00F5                  00575 RS232_CS_Sammel
+00F5   0860           00576         movf    ROT_S, W
+00F6   00BD           00577         movwf   COLOR_R
+00F7   0861           00578         movf    GRUEN_S, W
+00F8   00BE           00579         movwf   COLOR_G
+00F9   0862           00580         movf    BLAU_S, W
+00FA   00BF           00581         movwf   COLOR_B
+00FB   10A6           00582         bcf     RX_Status, 1
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 12
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00FC   0008           00583         return
+                      00584         
+                      00585 ;***************************************************************************************************
+00FD                  00586 delay_100us
+00FD   30D9           00587         movlw   d'217'
+00FE   00FB           00588         movwf   7B
+                      00589         
+00FF   0064           00590         clrwdt
+0100   0000           00591         nop
+                      00592         
+0101   0FFB           00593         incfsz  7B, F
+0102   28FF           00594         goto    $-3
+                      00595 
+0103   0008           00596         return
+                      00597 
+                      00598 ;***************************************************************************************************
+                      00599 ;***************************************************************************************************
+02FF                  00600         org     2FF
+                      00601 ;***************************************************************************************************
+02FF                  00602 Tab_Wert
+02FF   0782           00603         addwf   PCL, F
+0300   3410           00604         retlw   d'16'   ; 0
+0301   3410           00605         retlw   d'16'   ; 1
+0302   3411           00606         retlw   d'17'   ; 2
+0303   3412           00607         retlw   d'18'   ; 3
+0304   3413           00608         retlw   d'19'   ; 4
+0305   3414           00609         retlw   d'20'   ; 5
+0306   3415           00610         retlw   d'21'   ; 6
+0307   3416           00611         retlw   d'22'   ; 7
+0308   3417           00612         retlw   d'23'   ; 8
+0309   3418           00613         retlw   d'24'   ; 9
+030A   3419           00614         retlw   d'25'   ; 10
+030B   341A           00615         retlw   d'26'   ; 11
+030C   341B           00616         retlw   d'27'   ; 12
+030D   341C           00617         retlw   d'28'   ; 13
+030E   341D           00618         retlw   d'29'   ; 14
+030F   341E           00619         retlw   d'30'   ; 15
+0310   341F           00620         retlw   d'31'   ; 16
+0311   341F           00621         retlw   d'31'   ; 17
+0312   3420           00622         retlw   d'32'   ; 18
+0313   3421           00623         retlw   d'33'   ; 19
+0314   3422           00624         retlw   d'34'   ; 20
+0315   3423           00625         retlw   d'35'   ; 21
+0316   3424           00626         retlw   d'36'   ; 22
+0317   3425           00627         retlw   d'37'   ; 23
+0318   3426           00628         retlw   d'38'   ; 24
+0319   3427           00629         retlw   d'39'   ; 25
+031A   3428           00630         retlw   d'40'   ; 26
+031B   3429           00631         retlw   d'41'   ; 27
+031C   342A           00632         retlw   d'42'   ; 28
+031D   342B           00633         retlw   d'43'   ; 29
+031E   342C           00634         retlw   d'44'   ; 30
+031F   342D           00635         retlw   d'45'   ; 31
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 13
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0320   342E           00636         retlw   d'46'   ; 32
+0321   342E           00637         retlw   d'46'   ; 33
+0322   342F           00638         retlw   d'47'   ; 34
+0323   3430           00639         retlw   d'48'   ; 35
+0324   3431           00640         retlw   d'49'   ; 36
+0325   3432           00641         retlw   d'50'   ; 37
+0326   3433           00642         retlw   d'51'   ; 38
+0327   3434           00643         retlw   d'52'   ; 39
+0328   3435           00644         retlw   d'53'   ; 40
+0329   3436           00645         retlw   d'54'   ; 41
+032A   3437           00646         retlw   d'55'   ; 42
+032B   3438           00647         retlw   d'56'   ; 43
+032C   3439           00648         retlw   d'57'   ; 44
+032D   343A           00649         retlw   d'58'   ; 45
+032E   343B           00650         retlw   d'59'   ; 46
+032F   343C           00651         retlw   d'60'   ; 47
+0330   343D           00652         retlw   d'61'   ; 48
+0331   343D           00653         retlw   d'61'   ; 49
+0332   343E           00654         retlw   d'62'   ; 50
+0333   343F           00655         retlw   d'63'   ; 51
+0334   3440           00656         retlw   d'64'   ; 52
+0335   3441           00657         retlw   d'65'   ; 53
+0336   3442           00658         retlw   d'66'   ; 54
+0337   3443           00659         retlw   d'67'   ; 55
+0338   3444           00660         retlw   d'68'   ; 56
+0339   3445           00661         retlw   d'69'   ; 57
+033A   3446           00662         retlw   d'70'   ; 58
+033B   3447           00663         retlw   d'71'   ; 59
+033C   3448           00664         retlw   d'72'   ; 60
+033D   3449           00665         retlw   d'73'   ; 61
+033E   344A           00666         retlw   d'74'   ; 62
+033F   344B           00667         retlw   d'75'   ; 63
+0340   344C           00668         retlw   d'76'   ; 64
+0341   344C           00669         retlw   d'76'   ; 65
+0342   344D           00670         retlw   d'77'   ; 66
+0343   344E           00671         retlw   d'78'   ; 67
+0344   344F           00672         retlw   d'79'   ; 68
+0345   3450           00673         retlw   d'80'   ; 69
+0346   3451           00674         retlw   d'81'   ; 70
+0347   3452           00675         retlw   d'82'   ; 71
+0348   3453           00676         retlw   d'83'   ; 72
+0349   3454           00677         retlw   d'84'   ; 73
+034A   3455           00678         retlw   d'85'   ; 74
+034B   3456           00679         retlw   d'86'   ; 75
+034C   3457           00680         retlw   d'87'   ; 76
+034D   3458           00681         retlw   d'88'   ; 77
+034E   3459           00682         retlw   d'89'   ; 78
+034F   345A           00683         retlw   d'90'   ; 79
+0350   345B           00684         retlw   d'91'   ; 80
+0351   345B           00685         retlw   d'91'   ; 81
+0352   345C           00686         retlw   d'92'   ; 82
+0353   345D           00687         retlw   d'93'   ; 83
+0354   345E           00688         retlw   d'94'   ; 84
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 14
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0355   345F           00689         retlw   d'95'   ; 85
+0356   3460           00690         retlw   d'96'   ; 86
+0357   3461           00691         retlw   d'97'   ; 87
+0358   3462           00692         retlw   d'98'   ; 88
+0359   3463           00693         retlw   d'99'   ; 89
+035A   3464           00694         retlw   d'100'  ; 90
+035B   3465           00695         retlw   d'101'  ; 91
+035C   3466           00696         retlw   d'102'  ; 92
+035D   3467           00697         retlw   d'103'  ; 93
+035E   3468           00698         retlw   d'104'  ; 94
+035F   3469           00699         retlw   d'105'  ; 95
+0360   346A           00700         retlw   d'106'  ; 96
+0361   346A           00701         retlw   d'106'  ; 97
+0362   346B           00702         retlw   d'107'  ; 98
+0363   346C           00703         retlw   d'108'  ; 99
+0364   346D           00704         retlw   d'109'  ; 100
+0365   346E           00705         retlw   d'110'  ; 101
+0366   346F           00706         retlw   d'111'  ; 102
+0367   3470           00707         retlw   d'112'  ; 103
+0368   3471           00708         retlw   d'113'  ; 104
+0369   3472           00709         retlw   d'114'  ; 105
+036A   3473           00710         retlw   d'115'  ; 106
+036B   3474           00711         retlw   d'116'  ; 107
+036C   3475           00712         retlw   d'117'  ; 108
+036D   3476           00713         retlw   d'118'  ; 109
+036E   3477           00714         retlw   d'119'  ; 110
+036F   3478           00715         retlw   d'120'  ; 111
+0370   3479           00716         retlw   d'121'  ; 112
+0371   3479           00717         retlw   d'121'  ; 113
+0372   347A           00718         retlw   d'122'  ; 114
+0373   347B           00719         retlw   d'123'  ; 115
+0374   347C           00720         retlw   d'124'  ; 116
+0375   347D           00721         retlw   d'125'  ; 117
+0376   347E           00722         retlw   d'126'  ; 118
+0377   347F           00723         retlw   d'127'  ; 119
+0378   3480           00724         retlw   d'128'  ; 120
+0379   3481           00725         retlw   d'129'  ; 121
+037A   3482           00726         retlw   d'130'  ; 122
+037B   3483           00727         retlw   d'131'  ; 123
+037C   3484           00728         retlw   d'132'  ; 124
+037D   3485           00729         retlw   d'133'  ; 125
+037E   3486           00730         retlw   d'134'  ; 126
+037F   3487           00731         retlw   d'135'  ; 127
+0380   3488           00732         retlw   d'136'  ; 128
+0381   3488           00733         retlw   d'136'  ; 129
+0382   3489           00734         retlw   d'137'  ; 130
+0383   348A           00735         retlw   d'138'  ; 131
+0384   348B           00736         retlw   d'139'  ; 132
+0385   348C           00737         retlw   d'140'  ; 133
+0386   348D           00738         retlw   d'141'  ; 134
+0387   348E           00739         retlw   d'142'  ; 135
+0388   348F           00740         retlw   d'143'  ; 136
+0389   3490           00741         retlw   d'144'  ; 137
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 15
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+038A   3491           00742         retlw   d'145'  ; 138
+038B   3492           00743         retlw   d'146'  ; 139
+038C   3493           00744         retlw   d'147'  ; 140
+038D   3494           00745         retlw   d'148'  ; 141
+038E   3495           00746         retlw   d'149'  ; 142
+038F   3496           00747         retlw   d'150'  ; 143
+0390   3497           00748         retlw   d'151'  ; 144
+0391   3497           00749         retlw   d'151'  ; 145
+0392   3498           00750         retlw   d'152'  ; 146
+0393   3499           00751         retlw   d'153'  ; 147
+0394   349A           00752         retlw   d'154'  ; 148
+0395   349B           00753         retlw   d'155'  ; 149
+0396   349C           00754         retlw   d'156'  ; 150
+0397   349D           00755         retlw   d'157'  ; 151
+0398   349E           00756         retlw   d'158'  ; 152
+0399   349F           00757         retlw   d'159'  ; 153
+039A   34A0           00758         retlw   d'160'  ; 154
+039B   34A1           00759         retlw   d'161'  ; 155
+039C   34A2           00760         retlw   d'162'  ; 156
+039D   34A3           00761         retlw   d'163'  ; 157
+039E   34A4           00762         retlw   d'164'  ; 158
+039F   34A5           00763         retlw   d'165'  ; 159
+03A0   34A6           00764         retlw   d'166'  ; 160
+03A1   34A6           00765         retlw   d'166'  ; 161
+03A2   34A7           00766         retlw   d'167'  ; 162
+03A3   34A8           00767         retlw   d'168'  ; 163
+03A4   34A9           00768         retlw   d'169'  ; 164
+03A5   34AA           00769         retlw   d'170'  ; 165
+03A6   34AB           00770         retlw   d'171'  ; 166
+03A7   34AC           00771         retlw   d'172'  ; 167
+03A8   34AD           00772         retlw   d'173'  ; 168
+03A9   34AE           00773         retlw   d'174'  ; 169
+03AA   34AF           00774         retlw   d'175'  ; 170
+03AB   34B0           00775         retlw   d'176'  ; 171
+03AC   34B1           00776         retlw   d'177'  ; 172
+03AD   34B2           00777         retlw   d'178'  ; 173
+03AE   34B3           00778         retlw   d'179'  ; 174
+03AF   34B4           00779         retlw   d'180'  ; 175
+03B0   34B5           00780         retlw   d'181'  ; 176
+03B1   34B5           00781         retlw   d'181'  ; 177
+03B2   34B6           00782         retlw   d'182'  ; 178
+03B3   34B7           00783         retlw   d'183'  ; 179
+03B4   34B8           00784         retlw   d'184'  ; 180
+03B5   34B9           00785         retlw   d'185'  ; 181
+03B6   34BA           00786         retlw   d'186'  ; 182
+03B7   34BB           00787         retlw   d'187'  ; 183
+03B8   34BC           00788         retlw   d'188'  ; 184
+03B9   34BD           00789         retlw   d'189'  ; 185
+03BA   34BE           00790         retlw   d'190'  ; 186
+03BB   34BF           00791         retlw   d'191'  ; 187
+03BC   34C0           00792         retlw   d'192'  ; 188
+03BD   34C1           00793         retlw   d'193'  ; 189
+03BE   34C2           00794         retlw   d'194'  ; 190
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 16
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+03BF   34C3           00795         retlw   d'195'  ; 191
+03C0   34C4           00796         retlw   d'196'  ; 192
+03C1   34C4           00797         retlw   d'196'  ; 193
+03C2   34C5           00798         retlw   d'197'  ; 194
+03C3   34C6           00799         retlw   d'198'  ; 195
+03C4   34C7           00800         retlw   d'199'  ; 196
+03C5   34C8           00801         retlw   d'200'  ; 197
+03C6   34C9           00802         retlw   d'201'  ; 198
+03C7   34CA           00803         retlw   d'202'  ; 199
+03C8   34CB           00804         retlw   d'203'  ; 200
+03C9   34CC           00805         retlw   d'204'  ; 201
+03CA   34CD           00806         retlw   d'205'  ; 202
+03CB   34CE           00807         retlw   d'206'  ; 203
+03CC   34CF           00808         retlw   d'207'  ; 204
+03CD   34D0           00809         retlw   d'208'  ; 205
+03CE   34D1           00810         retlw   d'209'  ; 206
+03CF   34D2           00811         retlw   d'210'  ; 207
+03D0   34D3           00812         retlw   d'211'  ; 208
+03D1   34D3           00813         retlw   d'211'  ; 209
+03D2   34D4           00814         retlw   d'212'  ; 210
+03D3   34D5           00815         retlw   d'213'  ; 211
+03D4   34D6           00816         retlw   d'214'  ; 212
+03D5   34D7           00817         retlw   d'215'  ; 213
+03D6   34D8           00818         retlw   d'216'  ; 214
+03D7   34D9           00819         retlw   d'217'  ; 215
+03D8   34DA           00820         retlw   d'218'  ; 216
+03D9   34DB           00821         retlw   d'219'  ; 217
+03DA   34DC           00822         retlw   d'220'  ; 218
+03DB   34DD           00823         retlw   d'221'  ; 219
+03DC   34DE           00824         retlw   d'222'  ; 220
+03DD   34DF           00825         retlw   d'223'  ; 221
+03DE   34E0           00826         retlw   d'224'  ; 222
+03DF   34E1           00827         retlw   d'225'  ; 223
+03E0   34E2           00828         retlw   d'226'  ; 224
+03E1   34E2           00829         retlw   d'226'  ; 225
+03E2   34E3           00830         retlw   d'227'  ; 226
+03E3   34E4           00831         retlw   d'228'  ; 227
+03E4   34E5           00832         retlw   d'229'  ; 228
+03E5   34E6           00833         retlw   d'230'  ; 229
+03E6   34E7           00834         retlw   d'231'  ; 230
+03E7   34E8           00835         retlw   d'232'  ; 231
+03E8   34E9           00836         retlw   d'233'  ; 232
+03E9   34EA           00837         retlw   d'234'  ; 233
+03EA   34EB           00838         retlw   d'235'  ; 234
+03EB   34EC           00839         retlw   d'236'  ; 235
+03EC   34ED           00840         retlw   d'237'  ; 236
+03ED   34EE           00841         retlw   d'238'  ; 237
+03EE   34EF           00842         retlw   d'239'  ; 238
+03EF   34F0           00843         retlw   d'240'  ; 239
+03F0   34F1           00844         retlw   d'241'  ; 240
+03F1   34F1           00845         retlw   d'241'  ; 241
+03F2   34F2           00846         retlw   d'242'  ; 242
+03F3   34F3           00847         retlw   d'243'  ; 243
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 17
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+03F4   34F4           00848         retlw   d'244'  ; 244
+03F5   34F5           00849         retlw   d'245'  ; 245
+03F6   34F6           00850         retlw   d'246'  ; 246
+03F7   34F7           00851         retlw   d'247'  ; 247
+03F8   34F8           00852         retlw   d'248'  ; 248
+03F9   34F9           00853         retlw   d'249'  ; 249
+03FA   34FA           00854         retlw   d'250'  ; 250
+03FB   34FB           00855         retlw   d'251'  ; 251
+03FC   34FC           00856         retlw   d'252'  ; 252
+03FD   34FD           00857         retlw   d'253'  ; 253
+03FE   34FE           00858         retlw   d'254'  ; 254
+03FF   34FF           00859         retlw   d'255'  ; 255
+                      00860 
+                      00861 ;***************************************************************************************************
+                      00862 ;***************************************************************************************************
+04FF                  00863         org     4FF
+                      00864 ;***************************************************************************************************
+04FF                  00865 Tab_Timer
+04FF   0782           00866         addwf   PCL, F
+                      00867         
+0500   3400           00868         retlw   d'0'    ; 0
+0501   3401           00869         retlw   d'1'    ; 1
+0502   3402           00870         retlw   d'2'    ; 2
+0503   3403           00871         retlw   d'3'    ; 3
+0504   3404           00872         retlw   d'4'    ; 4
+0505   3404           00873         retlw   d'4'    ; 5
+0506   3405           00874         retlw   d'5'    ; 6
+0507   3406           00875         retlw   d'6'    ; 7
+0508   3407           00876         retlw   d'7'    ; 8
+0509   3408           00877         retlw   d'8'    ; 9
+050A   3408           00878         retlw   d'8'    ; 10
+050B   3409           00879         retlw   d'9'    ; 11
+050C   340A           00880         retlw   d'10'   ; 12
+050D   340B           00881         retlw   d'11'   ; 13
+050E   340C           00882         retlw   d'12'   ; 14
+050F   340D           00883         retlw   d'13'   ; 15
+0510   340D           00884         retlw   d'13'   ; 16
+0511   340E           00885         retlw   d'14'   ; 17
+0512   340F           00886         retlw   d'15'   ; 18
+0513   3410           00887         retlw   d'16'   ; 19
+0514   3411           00888         retlw   d'17'   ; 20
+0515   3411           00889         retlw   d'17'   ; 21
+0516   3412           00890         retlw   d'18'   ; 22
+0517   3413           00891         retlw   d'19'   ; 23
+0518   3414           00892         retlw   d'20'   ; 24
+0519   3415           00893         retlw   d'21'   ; 25
+051A   3415           00894         retlw   d'21'   ; 26
+051B   3416           00895         retlw   d'22'   ; 27
+051C   3417           00896         retlw   d'23'   ; 28
+051D   3418           00897         retlw   d'24'   ; 29
+051E   3419           00898         retlw   d'25'   ; 30
+051F   341A           00899         retlw   d'26'   ; 31
+0520   341A           00900         retlw   d'26'   ; 32
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 18
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0521   341B           00901         retlw   d'27'   ; 33
+0522   341C           00902         retlw   d'28'   ; 34
+0523   341D           00903         retlw   d'29'   ; 35
+0524   341E           00904         retlw   d'30'   ; 36
+0525   341E           00905         retlw   d'30'   ; 37
+0526   341F           00906         retlw   d'31'   ; 38
+0527   3420           00907         retlw   d'32'   ; 39
+0528   3421           00908         retlw   d'33'   ; 40
+0529   3422           00909         retlw   d'34'   ; 41
+052A   3422           00910         retlw   d'34'   ; 42
+052B   3423           00911         retlw   d'35'   ; 43
+052C   3424           00912         retlw   d'36'   ; 44
+052D   3425           00913         retlw   d'37'   ; 45
+052E   3426           00914         retlw   d'38'   ; 46
+052F   3427           00915         retlw   d'39'   ; 47
+0530   3427           00916         retlw   d'39'   ; 48
+0531   3428           00917         retlw   d'40'   ; 49
+0532   3429           00918         retlw   d'41'   ; 50
+0533   342A           00919         retlw   d'42'   ; 51
+0534   342B           00920         retlw   d'43'   ; 52
+0535   342B           00921         retlw   d'43'   ; 53
+0536   342C           00922         retlw   d'44'   ; 54
+0537   342D           00923         retlw   d'45'   ; 55
+0538   342E           00924         retlw   d'46'   ; 56
+0539   342F           00925         retlw   d'47'   ; 57
+053A   342F           00926         retlw   d'47'   ; 58
+053B   3430           00927         retlw   d'48'   ; 59
+053C   3431           00928         retlw   d'49'   ; 60
+053D   3432           00929         retlw   d'50'   ; 61
+053E   3433           00930         retlw   d'51'   ; 62
+053F   3434           00931         retlw   d'52'   ; 63
+0540   3434           00932         retlw   d'52'   ; 64
+0541   3435           00933         retlw   d'53'   ; 65
+0542   3436           00934         retlw   d'54'   ; 66
+0543   3437           00935         retlw   d'55'   ; 67
+0544   3438           00936         retlw   d'56'   ; 68
+0545   3438           00937         retlw   d'56'   ; 69
+0546   3439           00938         retlw   d'57'   ; 70
+0547   343A           00939         retlw   d'58'   ; 71
+0548   343B           00940         retlw   d'59'   ; 72
+0549   343C           00941         retlw   d'60'   ; 73
+054A   343C           00942         retlw   d'60'   ; 74
+054B   343D           00943         retlw   d'61'   ; 75
+054C   343E           00944         retlw   d'62'   ; 76
+054D   343F           00945         retlw   d'63'   ; 77
+054E   3440           00946         retlw   d'64'   ; 78
+054F   3441           00947         retlw   d'65'   ; 79
+0550   3441           00948         retlw   d'65'   ; 80
+0551   3442           00949         retlw   d'66'   ; 81
+0552   3443           00950         retlw   d'67'   ; 82
+0553   3444           00951         retlw   d'68'   ; 83
+0554   3445           00952         retlw   d'69'   ; 84
+0555   3445           00953         retlw   d'69'   ; 85
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 19
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0556   3446           00954         retlw   d'70'   ; 86
+0557   3447           00955         retlw   d'71'   ; 87
+0558   3448           00956         retlw   d'72'   ; 88
+0559   3449           00957         retlw   d'73'   ; 89
+055A   3449           00958         retlw   d'73'   ; 90
+055B   344A           00959         retlw   d'74'   ; 91
+055C   344B           00960         retlw   d'75'   ; 92
+055D   344C           00961         retlw   d'76'   ; 93
+055E   344D           00962         retlw   d'77'   ; 94
+055F   344E           00963         retlw   d'78'   ; 95
+0560   344E           00964         retlw   d'78'   ; 96
+0561   344F           00965         retlw   d'79'   ; 97
+0562   3450           00966         retlw   d'80'   ; 98
+0563   3451           00967         retlw   d'81'   ; 99
+0564   3452           00968         retlw   d'82'   ; 100
+0565   3452           00969         retlw   d'82'   ; 101
+0566   3453           00970         retlw   d'83'   ; 102
+0567   3454           00971         retlw   d'84'   ; 103
+0568   3455           00972         retlw   d'85'   ; 104
+0569   3456           00973         retlw   d'86'   ; 105
+056A   3456           00974         retlw   d'86'   ; 106
+056B   3457           00975         retlw   d'87'   ; 107
+056C   3458           00976         retlw   d'88'   ; 108
+056D   3459           00977         retlw   d'89'   ; 109
+056E   345A           00978         retlw   d'90'   ; 110
+056F   345B           00979         retlw   d'91'   ; 111
+0570   345B           00980         retlw   d'91'   ; 112
+0571   345C           00981         retlw   d'92'   ; 113
+0572   345D           00982         retlw   d'93'   ; 114
+0573   345E           00983         retlw   d'94'   ; 115
+0574   345F           00984         retlw   d'95'   ; 116
+0575   345F           00985         retlw   d'95'   ; 117
+0576   3460           00986         retlw   d'96'   ; 118
+0577   3461           00987         retlw   d'97'   ; 119
+0578   3462           00988         retlw   d'98'   ; 120
+0579   3463           00989         retlw   d'99'   ; 121
+057A   3463           00990         retlw   d'99'   ; 122
+057B   3464           00991         retlw   d'100'  ; 123
+057C   3465           00992         retlw   d'101'  ; 124
+057D   3466           00993         retlw   d'102'  ; 125
+057E   3467           00994         retlw   d'103'  ; 126
+057F   3468           00995         retlw   d'104'  ; 127
+0580   3468           00996         retlw   d'104'  ; 128
+0581   3469           00997         retlw   d'105'  ; 129
+0582   346A           00998         retlw   d'106'  ; 130
+0583   346B           00999         retlw   d'107'  ; 131
+0584   346C           01000         retlw   d'108'  ; 132
+0585   346C           01001         retlw   d'108'  ; 133
+0586   346D           01002         retlw   d'109'  ; 134
+0587   346E           01003         retlw   d'110'  ; 135
+0588   346F           01004         retlw   d'111'  ; 136
+0589   3470           01005         retlw   d'112'  ; 137
+058A   3470           01006         retlw   d'112'  ; 138
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 20
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+058B   3471           01007         retlw   d'113'  ; 139
+058C   3472           01008         retlw   d'114'  ; 140
+058D   3473           01009         retlw   d'115'  ; 141
+058E   3474           01010         retlw   d'116'  ; 142
+058F   3475           01011         retlw   d'117'  ; 143
+0590   3475           01012         retlw   d'117'  ; 144
+0591   3476           01013         retlw   d'118'  ; 145
+0592   3477           01014         retlw   d'119'  ; 146
+0593   3478           01015         retlw   d'120'  ; 147
+0594   3479           01016         retlw   d'121'  ; 148
+0595   3479           01017         retlw   d'121'  ; 149
+0596   347A           01018         retlw   d'122'  ; 150
+0597   347B           01019         retlw   d'123'  ; 151
+0598   347C           01020         retlw   d'124'  ; 152
+0599   347D           01021         retlw   d'125'  ; 153
+059A   347D           01022         retlw   d'125'  ; 154
+059B   347E           01023         retlw   d'126'  ; 155
+059C   347F           01024         retlw   d'127'  ; 156
+059D   3480           01025         retlw   d'128'  ; 157
+059E   3481           01026         retlw   d'129'  ; 158
+059F   3482           01027         retlw   d'130'  ; 159
+05A0   3482           01028         retlw   d'130'  ; 160
+05A1   3483           01029         retlw   d'131'  ; 161
+05A2   3484           01030         retlw   d'132'  ; 162
+05A3   3485           01031         retlw   d'133'  ; 163
+05A4   3486           01032         retlw   d'134'  ; 164
+05A5   3486           01033         retlw   d'134'  ; 165
+05A6   3487           01034         retlw   d'135'  ; 166
+05A7   3488           01035         retlw   d'136'  ; 167
+05A8   3489           01036         retlw   d'137'  ; 168
+05A9   348A           01037         retlw   d'138'  ; 169
+05AA   348A           01038         retlw   d'138'  ; 170
+05AB   348B           01039         retlw   d'139'  ; 171
+05AC   348C           01040         retlw   d'140'  ; 172
+05AD   348D           01041         retlw   d'141'  ; 173
+05AE   348E           01042         retlw   d'142'  ; 174
+05AF   348F           01043         retlw   d'143'  ; 175
+05B0   348F           01044         retlw   d'143'  ; 176
+05B1   3490           01045         retlw   d'144'  ; 177
+05B2   3491           01046         retlw   d'145'  ; 178
+05B3   3492           01047         retlw   d'146'  ; 179
+05B4   3493           01048         retlw   d'147'  ; 180
+05B5   3493           01049         retlw   d'147'  ; 181
+05B6   3494           01050         retlw   d'148'  ; 182
+05B7   3495           01051         retlw   d'149'  ; 183
+05B8   3496           01052         retlw   d'150'  ; 184
+05B9   3497           01053         retlw   d'151'  ; 185
+05BA   3497           01054         retlw   d'151'  ; 186
+05BB   3498           01055         retlw   d'152'  ; 187
+05BC   3499           01056         retlw   d'153'  ; 188
+05BD   349A           01057         retlw   d'154'  ; 189
+05BE   349B           01058         retlw   d'155'  ; 190
+05BF   349C           01059         retlw   d'156'  ; 191
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 21
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+05C0   349C           01060         retlw   d'156'  ; 192
+05C1   349D           01061         retlw   d'157'  ; 193
+05C2   349E           01062         retlw   d'158'  ; 194
+05C3   349F           01063         retlw   d'159'  ; 195
+05C4   34A0           01064         retlw   d'160'  ; 196
+05C5   34A0           01065         retlw   d'160'  ; 197
+05C6   34A1           01066         retlw   d'161'  ; 198
+05C7   34A2           01067         retlw   d'162'  ; 199
+05C8   34A3           01068         retlw   d'163'  ; 200
+05C9   34A4           01069         retlw   d'164'  ; 201
+05CA   34A4           01070         retlw   d'164'  ; 202
+05CB   34A5           01071         retlw   d'165'  ; 203
+05CC   34A6           01072         retlw   d'166'  ; 204
+05CD   34A7           01073         retlw   d'167'  ; 205
+05CE   34A8           01074         retlw   d'168'  ; 206
+05CF   34A9           01075         retlw   d'169'  ; 207
+05D0   34A9           01076         retlw   d'169'  ; 208
+05D1   34AA           01077         retlw   d'170'  ; 209
+05D2   34AB           01078         retlw   d'171'  ; 210
+05D3   34AC           01079         retlw   d'172'  ; 211
+05D4   34AD           01080         retlw   d'173'  ; 212
+05D5   34AD           01081         retlw   d'173'  ; 213
+05D6   34AE           01082         retlw   d'174'  ; 214
+05D7   34AF           01083         retlw   d'175'  ; 215
+05D8   34B0           01084         retlw   d'176'  ; 216
+05D9   34B1           01085         retlw   d'177'  ; 217
+05DA   34B1           01086         retlw   d'177'  ; 218
+05DB   34B2           01087         retlw   d'178'  ; 219
+05DC   34B3           01088         retlw   d'179'  ; 220
+05DD   34B4           01089         retlw   d'180'  ; 221
+05DE   34B5           01090         retlw   d'181'  ; 222
+05DF   34B6           01091         retlw   d'182'  ; 223
+05E0   34B6           01092         retlw   d'182'  ; 224
+05E1   34B7           01093         retlw   d'183'  ; 225
+05E2   34B8           01094         retlw   d'184'  ; 226
+05E3   34B9           01095         retlw   d'185'  ; 227
+05E4   34BA           01096         retlw   d'186'  ; 228
+05E5   34BA           01097         retlw   d'186'  ; 229
+05E6   34BB           01098         retlw   d'187'  ; 230
+05E7   34BC           01099         retlw   d'188'  ; 231
+05E8   34BD           01100         retlw   d'189'  ; 232
+05E9   34BE           01101         retlw   d'190'  ; 233
+05EA   34BE           01102         retlw   d'190'  ; 234
+05EB   34BF           01103         retlw   d'191'  ; 235
+05EC   34C0           01104         retlw   d'192'  ; 236
+05ED   34C1           01105         retlw   d'193'  ; 237
+05EE   34C2           01106         retlw   d'194'  ; 238
+05EF   34C3           01107         retlw   d'195'  ; 239
+05F0   34C3           01108         retlw   d'195'  ; 240
+05F1   34C4           01109         retlw   d'196'  ; 241
+05F2   34C5           01110         retlw   d'197'  ; 242
+05F3   34C6           01111         retlw   d'198'  ; 243
+05F4   34C7           01112         retlw   d'199'  ; 244
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 22
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+05F5   34C7           01113         retlw   d'199'  ; 245
+05F6   34C8           01114         retlw   d'200'  ; 246
+05F7   34C9           01115         retlw   d'201'  ; 247
+05F8   34CA           01116         retlw   d'202'  ; 248
+05F9   34CB           01117         retlw   d'203'  ; 249
+05FA   34CB           01118         retlw   d'203'  ; 250
+05FB   34CC           01119         retlw   d'204'  ; 251
+05FC   34CD           01120         retlw   d'205'  ; 252
+05FD   34CE           01121         retlw   d'206'  ; 253
+05FE   34CF           01122         retlw   d'207'  ; 254
+05FF   34D0           01123         retlw   d'208'  ; 255
+                      01124 
+                      01125 ;***************************************************************************************************
+                      01126 ;***************************************************************************************************
+                      01127 ;***************************************************************************************************
+                      01128 ;***************************************************************************************************
+                      01129         END
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 23
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ADCON0                            1F
+ADCON1                            1F
+ADRESH                            1E
+ANSEL                             1B
+BEFEHL                            34
+BLAU_S                            62
+BOISR                             00000008
+CMCON                             1C
+COLOR_B                           3F
+COLOR_G                           3E
+COLOR_R                           3D
+Count_H                           25
+Count_L                           24
+CounterT                          76
+CounterWert                       77
+DEV_Adr                           22
+EOISR                             0000001F
+F                                 01
+FSR                               04
+GRUEN_S                           61
+H_Stellwert                       72
+Hilfs_RegH                        28
+Hilfs_RegL                        27
+INTCON                            0B
+Int_Frei                          78
+ON_Time                           20
+OSCCON                            0F
+OSCTUNE                           10
+PCL                               02
+PCLATH                            0A
+PCLATH_TEMP                       7F
+PIE1                              0C
+PIE2                              0D
+PIR1                              0C
+PIR2                              0D
+PORTA                             05
+PORTB                             06
+PWM                               79
+RCREG                             1A
+RCSTA                             18
+RGB_Wert                          71
+ROT_S                             60
+RS232                             0000009F
+RS232_Addr                        000000BD
+RS232_Adr                         000000BF
+RS232_CS                          000000DA
+RS232_CS_Sammel                   000000F5
+RS232_CS_warte                    000000EC
+RS232_Nullen                      000000CD
+RX_Buffer                         2F
+RX_CS                             30
+RX_Rotate                         2D
+RX_Status                         26
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 24
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+RX_TempC                          2E
+SOLL_B                            33
+SOLL_G                            32
+SOLL_R                            31
+SPBRG                             19
+STATUS                            03
+STATUS_TEMP                       7E
+StartTime                         d'208'
+StellWert                         74
+Stell_HW                          73
+T1CON                             10
+TEMP_B                            37
+TEMP_G                            36
+TEMP_G1                           39
+TEMP_G2                           3A
+TEMP_R                            35
+TEMP_R1                           38
+TMR0                              01
+TMR0_ISR                          00000011
+TMR0_ISRn                         00000015
+TMR1H                             0F
+TMR1L                             0E
+TMR_0                             23
+TXREG                             19
+TXSTA                             18
+Tab_Timer                         000004FF
+Tab_Wert                          000002FF
+W                                 00
+W_TEMP                            7D
+_CONFIG1                          00002007
+_CONFIG2                          00002008
+__16F88                           00000001
+delay_100us                       000000FD
+main                              00000079
+main_Stell                        0000008A
+start                             00000024
+
+
+MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
+
+0000 : XXX-XXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0040 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0080 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+00C0 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0100 : XXXX------------ ---------------- ---------------- ----------------
+02C0 : ---------------- ---------------- ---------------- ---------------X
+MPASM  5.01                          3582.ASM   7-18-2006  12:54:01         PAGE 25
+
+
+MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
+
+
+0300 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0340 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0380 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+03C0 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+04C0 : ---------------- ---------------- ---------------- ---------------X
+0500 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0540 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0580 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+05C0 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+2000 : XXXX---XX------- ---------------- ---------------- ----------------
+
+All other memory blocks unused.
+
+Program Memory Words Used:   773
+Program Memory Words Free:  3323
+
+
+Errors   :     0
+Warnings :     0 reported,     0 suppressed
+Messages :     0 reported,     0 suppressed
+
+

@@ -1,0 +1,28 @@
+SIGI FUER 1.0
+=============
+  * KachelPlayer.exe sollte
+    1.ein ledx auf Kommandozeile annehmen 'KachelPlayer.exe XXX.LEDX' und spielen
+    2.das ledx-Icon auch fuer die EXE selber benutzen, MFC ist doof
+  
+  * das letzte Verzeichnis fuer LED-Operationen
+    ist in einer extra INI 'LastPath.ini':
+      [LastPath]
+      lastledpath=D:\TexteNeu\LedWall\DELIVERY\led
+    die legt 'KachelEditor.exe' bei der ersten File-Op an
+  
+  * INSTALLER auf Wunsch,
+    ansonsten genuegt Anweisung zum Kopieren und REG-File
+    
+    ! WENN INSTALLER, DANN bitte die Funktion von KachelRegister.reg uebernehmen,
+      denn das funktioniert nur bei Installation in
+        C:\Program Files\LedKacheln
+      oder
+        C:\Programme\LedKacheln
+  
+  + Player crasht, wenn man ihn im Dialog "COM1 nicht gefunden"
+    stehen laesst und zu viel im Editor macht (Load,Play,...)
+  
+  + Player-Restart nach seinem Tod mittendrin verschluckt 1.Kachel ist geloest,
+    war auf meiner Seite seltsamer Bug der Socket-Library
+
+  * KachelPlayer minimiert als Icon starten

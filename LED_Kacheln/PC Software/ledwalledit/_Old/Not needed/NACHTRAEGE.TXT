@@ -1,0 +1,40 @@
+HOTKEYS
+=======
+  # alle Hotkeys (die Standards wie ^N ^O ^S und die gewuenschten)
+  # sind einfach mit "\tCtrl-?" den Menuepunkten zugefuegt
+  # das kann Sigi also jederzeit in PY aendern
+  
+  ^F  Farbpalette
+  ^C  Step duplizieren
+  ^X  Step loeschen   (dafuer fehlte der Vorschlag)
+  
+  ^H  Hori Grad	#hierfuer musste ich die englischen Buchstaben nehmen
+  ^V  Verti Grad	#  denn ^S fuer senkrecht ist schon "Save"
+  ^D  Diag Grad	#  und ^W ist oft "Fenster schliessen"
+  
+  + das waren die gewuenschten,
+    ausserdem gibt es die Standards wie ^N ^O ^S ...
+
+2 MOVE-TRICKS ZEIGEN
+====================
+  1.NUTZEN VON MOVE MIT VORGABEFARBE
+    Wischerblende alles rot -> alles gelb -> alles gruen...
+    grobe Schritte, feine Gradienten muesste man von Hand machen (naechster Punkt)
+  
+  2.4x4 PLUS VIRTUELLE 4x4
+    - neues 4x4
+    - resize auf 3 leerzeilen darunter 4x7
+    - lila-blau-cyan-gruen-gelb-rot-...
+    - 3 Punkte faerben, nach rechts fuellen, vertical 2x Gradient
+    
+    * 3mal kopieren und nach oben schieben
+    * dann kommt buttonfarbe unten rein, ein neuer punkt virtuell faerben
+    * einmal fuellen & gradient
+    
+    ! resize 4x4 nach kontrolle
+
+TCP/IP, PLAYER WOANDERS
+=======================
+  ! VORSICHT: remote player ja (TCP/IP), aber ganze programme dann nein, 
+    denn da kriegt er nur Filename => es sein denn fileserver ?
+

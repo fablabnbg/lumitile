@@ -1,0 +1,645 @@
+MPASM  4.02 Released                            3580-TEST.ASM   9-21-2005  12:34:43         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 ;       Processor 16F88
+                      00002 
+                      00003 ; ********************************************************************************************
+                      00004 ; **************************  LED-Wall RGB-Control  ******************************************
+                      00005 ; ********************************************************************************************
+                      00006 ; 14.09.2005
+                      00007 ;       -Baudrate 19,2kbit, 9bit + 1 Stopbit
+                      00008 ;       -9.Bit: 0=Wert 1=Adresse
+                      00009 ;       -Pause von > 6ms startet eine Sequenz
+                      00010 ;       -Sequenz: bis zu 128 mal (Adresse + R + G + B + Control)
+                      00011 ;       -Adresse 255 meint alle Kacheln
+                      00012 ; ********************************************************************************************
+                      00013         LIST P=16F88
+                      00014 ; ********************************************************************************************
+                      00015 #define W               00
+                      00016 #define F               01
+                      00017 #define TMR0            01
+                      00018 #define STATUS          03
+                      00019 #define FSR             04
+                      00020 #define PORTA           05
+                      00021 #define PORTB           06
+                      00022 #define PCLATH          0A
+                      00023 #define INTCON          0B
+                      00024 #define PIR1            0C
+                      00025 #define PIE1            0C
+                      00026 #define PIR2            0D
+                      00027 #define PIE2            0D
+                      00028 #define TMR1L           0E
+                      00029 #define TMR1H           0F
+                      00030 #define OSCCON          0F      ; Oszillator Control Register 8FH
+                      00031 
+                      00032 #define T1CON           10      ; T1Con Register
+                      00033 #define OSCTUNE         10      ; Oszi. 90H
+                      00034 #define TXSTA           18      ; Transmit Status Register
+                      00035 #define RCSTA           18
+                      00036 #define TXREG           19      ; Transmit-Register
+                      00037 #define RCREG           1A      ; Receive-Register
+                      00038 #define ANSEL           1B
+                      00039 #define CMCON           1C      ; Bank 1
+                      00040 #define ADRESH          1E
+                      00041 #define ADCON0          1F
+                      00042 #define ADCON1          1F      ; Bank 1
+                      00043 
+                      00044 #define ON_Time         20      ; Messung der EIN-Zeit
+                      00045 
+                      00046 #define DEV_Adr         22      ; lokale Adresse
+                      00047 #define TMR_0           23      ; Timer für seriellen Bus
+                      00048 #define Count_L         24      ; Counter für Byte-Gruppe
+                      00049 #define Count_H         25      ; Counter für Adresse
+                      00050 #define RX_Status       26
+                      00051 ;                       26.0    1=Adresse ok
+                      00052 
+                      00053 #define RX_Rotate       2D
+MPASM  4.02 Released                            3580-TEST.ASM   9-21-2005  12:34:43         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00054 #define RX_TempC        2E      ; Temp-RX_Buffer
+                      00055 #define RX_Buffer       2F
+                      00056 #define RX_CS           30      ; CS-Berechnung
+                      00057 #define SOLL_R          31      ; Sollwert für ROT
+                      00058 #define SOLL_G          32      ; Sollwert für GRUEN
+                      00059 #define SOLL_B          33      ; Sollwert für BLAU
+                      00060 #define BEFEHL          34      ; 4. Byte
+                      00061 #define TEMP_R          35      ; Reserve
+                      00062 #define TEMP_G          36      ; Reserve
+                      00063 #define TEMP_B          37      ; Reserve
+                      00064 #define TEMP_R1         38      ; Reserve
+                      00065 #define TEMP_G1         39      ; Reserve
+                      00066 #define TEMP_G2         3A      ; Reserve
+                      00067 #define COLOR_R         3B      ; Stellwert für Rot
+                      00068 #define COLOR_G         3C      ; Stellwert für Grün
+                      00069 #define COLOR_B         3D      ; Stellwert für Blau
+                      00070 
+                      00071 ; 70H .. 7FH in allen vier Bänken gleich!
+                      00072 
+                      00073 #define Stellwert       78      ; IST-Stellwert (über Rampe)
+                      00074 #define PWM             79      ; Hilfs Merker für PWM
+                      00075 #define PORT_B          7A
+                      00076 
+                      00077 
+                      00078 #define W_TEMP          7D
+                      00079 #define STATUS_TEMP     7E
+                      00080 #define PCLATH_TEMP     7F
+                      00081 
+                      00082 ; ********************************************************************************************
+                      00083 ; ********************************************************************************************
+                      00084 ;16F628-Configs---------------------------------------------------------------------
+2000   0003 0005 0008 00085         __IDLOCS        H'3580' ;       User ID
+       0000 
+                      00086 ;-----------------------------------------------------------------------------------
+                      00087 ;
+  00002007            00088 _CONFIG1        EQU     H'2007'                     
+  00002008            00089 _CONFIG2        EQU     H'2008' 
+                      00090                     
+2007   0F34           00091         __CONFIG        _CONFIG1,  B'00111100110100'
+                      00092 
+                      00093 ;                 B'10011100110100'
+                      00094 ;                   ||||||||||||||
+                      00095 ;                   |||||||||+||++---FOSC 1xx11=RC R+C an RA7, RA6=CLKOUT
+                      00096 ;                   |||||||||+||++---FOSC 1xx10=RC R+C an RA7
+                      00097 ;                   |||||||||+||++---FOSC 1xx01=INTOSC RA6=CLKOUT
+                      00098 ;                   |||||||||+||++---FOSC 1xx00=INTOSC
+                      00099 ;                   |||||||||+||++---FOSC 0xx11=EX
+                      00100 ;                   |||||||||+||++---FOSC 0xx10=HS      ***
+                      00101 ;                   |||||||||+||++---FOSC 0xx01=XT
+                      00102 ;                   |||||||||+||++---FOSC 0xx00=LP
+                      00103 ;                   ||||||||| ||     
+                      00104 ;                   ||||||||| |+-----WDTE 0=disa 1=ena
+                      00105 ;                   ||||||||| +------PWRT 0=ena  1=disa
+MPASM  4.02 Released                            3580-TEST.ASM   9-21-2005  12:34:43         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00106 ;                   ||||||||+--------MCLR 0=din  1=ena
+                      00107 ;                   |||||||+---------BOR  0=disa 1=ena
+                      00108 ;                   ||||||+----------LVP  0=HV   1=RB4 LVP
+                      00109 ;                   |||||+-----------CPD  0=prod 1=CPD off
+                      00110 ;                   |||++------------WRT  00= 000..FFF write protected
+                      00111 ;                   |||++------------WRT  01= 000..7FF write protected
+                      00112 ;                   |||++------------WRT  10= 000..0FF write protected
+                      00113 ;                   |||++------------WRT  11= Write prod. OFF
+                      00114 ;                   ||+--------------ICD  0=ena  1=dis
+                      00115 ;                   |+---------------CCP1 0=RB3  1=RB0
+                      00116 ;                   +----------------CP   0=prod 1=CPF off
+                      00117 ;
+2008   3FFE           00118         __CONFIG        _CONFIG2,  B'11111111111110'
+                      00119 ;
+                      00120 ;-----------------------------------------------------------------------------------
+                      00121 ;=============================================================================================
+                      00122 ; PROGRAMM
+                      00123 ;=============================================================================================
+                      00124 
+0000   0000           00125         NOP                     ; für ICD2 freihalten
+0001   0000           00126         NOP                     ; für ICD2 freihalten
+0002   2823           00127         goto    start
+                      00128 
+                      00129 ; ********************************************************************************************
+                      00130 ; ********************       ISR     *********************************************************
+                      00131 ; ********************************************************************************************
+0004                  00132         org     004
+                      00133 ; ********************************************************************************************
+0004   00FD           00134         MOVWF   W_TEMP          ;Copy W to TEMP register
+0005   0E03           00135         SWAPF   STATUS, W       ;Swap status to be saved into W
+0006   0183           00136         CLRF    STATUS          ;bank 0, regardless of current bank, Clears IRP,RP1,RP0
+0007   00FE           00137         MOVWF   STATUS_TEMP     ;Save status to bank zero STATUS_TEMP register
+                      00138 
+0008                  00139 BOISR
+0008   1F0D           00140         btfss   PIR2, 6
+0009   2813           00141         goto    TMR0_ISR        ; Timer0 INT
+                      00142 
+000A   1206           00143         bcf     PORTB, 4        ; ausschalten
+                      00144 
+000B   1683           00145         bsf     STATUS, 5
+000C   081C           00146         movf    CMCON, W
+000D   1283           00147         bcf     STATUS, 5
+                      00148 
+000E   0801           00149         movf    TMR0, W
+000F   00A0           00150         movwf   ON_Time
+                      00151 
+0010   130D           00152         bcf     PIR2, 6         ; Comparator Bit
+0011   1D0B           00153         btfss   INTCON, 2
+0012   281E           00154         goto    EOISR
+                      00155 
+0013                  00156 TMR0_ISR
+0013   1206           00157         bcf     PORTB, 4        ; spätestens jetzt ausschalten
+0014   30D0           00158         movlw   d'208'
+MPASM  4.02 Released                            3580-TEST.ASM   9-21-2005  12:34:43         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0015   0781           00159         addwf   TMR0, F
+0016   110B           00160         bcf     INTCON, 2       ; TMR0 INT
+                      00161 
+0017   0FA3           00162         incfsz  TMR_0, F
+0018   281A           00163         goto    TMR0_ISRn
+0019   03A3           00164         decf    TMR_0, F        ; 12,6ms bis 255
+                      00165 
+001A                  00166 TMR0_ISRn
+001A   0878           00167         movf    Stellwert, W
+001B   07F9           00168         addwf   PWM, F
+001C   1803           00169         btfsc   STATUS, 0       ; immer einschalten, wenn C
+001D   1606           00170         bsf     PORTB, 4        ; einschalten
+                      00171 
+001E                  00172 EOISR
+001E   0E7E           00173         SWAPF   STATUS_TEMP, W  ; Swap STATUS_TEMP register into W
+                      00174                                 ; (sets bank to original state)
+001F   0083           00175         MOVWF   STATUS          ; Move W into STATUS register
+0020   0EFD           00176         SWAPF   W_TEMP, F       ; Swap W_TEMP
+0021   0E7D           00177         SWAPF   W_TEMP, W       ; Swap W_TEMP into W
+0022   0009           00178         RETFIE                  ; sofort zurück nach INT
+                      00179 
+                      00180 ; ********************************************************************************************
+                      00181 ; ************** Initialisierung beginnt hier *******************
+                      00182 ; ********************************************************************************************
+                      00183 
+0023                  00184 start
+0023   0064           00185         clrwdt
+0024   0000           00186         nop
+                      00187 
+                      00188 ;=============================================================================================
+                      00189 ; Register 20H bis 7FH löschen
+                      00190 ;=============================================================================================
+0025   3020           00191         movlw   20      ; beginne bei Register 20H
+0026   0084           00192         movwf   FSR     ; FSR
+                      00193 
+                      00194 
+0027   0180           00195         clrf    0
+0028   0A84           00196         incf    FSR, F
+0029   1F84           00197         btfss   FSR, 7  ; wenn REGISTER 80H erreicht
+002A   2827           00198         goto    $-3
+                      00199 
+                      00200 ;=============================================================================================
+                      00201 ; INIT Ports, OPTIN, INTCON
+                      00202 ;=============================================================================================
+                      00203 
+                      00204 ;>>>    OSCCON (8Fh)
+                      00205         
+002B   1683           00206         BSF     STATUS, 5
+002C   307E           00207         movlw   b'01111110'
+002D   008F           00208         movwf   OSCCON
+002E   0190           00209         clrf    OSCTUNE         ; abgestimmt auf Mittenfrequenz
+002F   1283           00210         BCF     STATUS, 5
+                      00211 
+MPASM  4.02 Released                            3580-TEST.ASM   9-21-2005  12:34:43         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00212 ;>>>    OPTION (81H)
+                      00213 
+0030   1683           00214         bsf     STATUS, 5       ; Bank 1
+0031   3080           00215         movlw   b'10000000'     ; no RBPull-Up, falling edge, noWDT, 000=1:2
+0032   0081           00216         movwf   1
+0033   1283           00217         bcf     STATUS, 5       ; Bank 0
+                      00218 
+                      00219 ;>>>    INTCON (0BH)
+                      00220 
+0034   3060           00221         movlw   b'01100000'     ; PEIE, TMR0-Int
+0035   008B           00222         movwf   INTCON
+                      00223         
+                      00224 ;>>>    PIE1 (8CH)
+                      00225         
+0036   1683           00226         bsf     STATUS, 5
+0037   3000           00227         movlw   b'00000000'     ; 
+0038   008C           00228         movwf   PIE1
+0039   1283           00229         bcf     STATUS, 5
+                      00230         
+003A   018C           00231         clrf    PIR1
+                      00232 
+                      00233 ;>>>    PIE2 (8DH)
+                      00234         
+003B   1683           00235         bsf     STATUS, 5
+003C   3040           00236         movlw   b'01000000'     ; Comparator IE
+003D   008D           00237         movwf   PIE2
+003E   1283           00238         bcf     STATUS, 5
+                      00239 
+003F   018D           00240         clrf    PIR2
+                      00241 
+                      00242 ;>>>    Ports
+                      00243 
+                      00244 ;       >>> ANSEL
+0040   1683           00245         bsf     STATUS, 5
+0041   3016           00246         movlw   b'00010110'     ; AN4 = RA4
+0042   009B           00247         movwf   ANSEL           ; ANSEL
+0043   1283           00248         bcf     STATUS, 5
+                      00249 
+0044   0185           00250         clrf    PORTA           ; Port A
+0045   0186           00251         clrf    PORTB           ; Port B
+                      00252 
+                      00253 ; ADCON0        (1Fh)
+                      00254 
+0046   30A1           00255         movlw   b'10100001'     ; AN4, ON, FOSC/16
+0047   009F           00256         movwf   ADCON0
+                      00257 
+                      00258 ; ADCON1        (9Fh)
+                      00259 
+0048   1683           00260         bsf     STATUS, 5       ; Bank 1
+0049   3040           00261         movlw   b'01000000'     ; Left Adj., OSZ/2 REF=VDD + VSS
+004A   009F           00262         movwf   ADCON1
+                      00263 
+                      00264 ; TRISA         (85h)
+MPASM  4.02 Released                            3580-TEST.ASM   9-21-2005  12:34:43         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+004B   30FF           00265         movlw   b'11111111'     ; 
+004C   0085           00266         movwf   PORTA           ; RA0..RA4,RB6,RB7=IN  RB5=MCLR
+                      00267         
+004D   30EF           00268         movlw   b'11101111'     ; 
+004E   0086           00269         movwf   PORTB           ; RB4=OUT RB0..3,6,7=IN RB5=TX
+004F   1283           00270         bcf     STATUS, 5       ; Bank 0
+                      00271 
+0050   0185           00272         clrf    PORTA           ; Port A
+0051   0186           00273         clrf    PORTB           ; Port B
+                      00274 
+                      00275 ; CMCON         (9Ch)
+                      00276 
+0052   1683           00277         bsf     STATUS, 5
+0053   3025           00278         movlw   b'00100101'     ; V- = RA1, VRef = RA2
+0054   009C           00279         movwf   CMCON
+                      00280 
+                      00281 ; CVRON         (9Dh)
+                      00282 
+0055   3000           00283         movlw   b'00000000'
+0056   009D           00284         movwf   0x1D            ; CVRON
+0057   1283           00285         bcf     STATUS, 5
+                      00286 
+                      00287         ;>>> T1CON (10H)
+                      00288 
+0058   3025           00289         movlw   b'00100101'     ; OSZ/4, Prescaler 1:4, TMR1ON=1
+0059   0090           00290         movwf   T1CON
+                      00291 
+                      00292         ;>>> TXSTA (98H)
+                      00293         
+005A   1683           00294         bsf     STATUS, 5
+005B   3044           00295         movlw   b'01000100'     ; Transmit DIS, asynchron, 9-bit, high speed
+                      00296 ;       movlw   b'00000000'
+005C   0098           00297         movwf   TXSTA
+005D   1283           00298         bcf     STATUS, 5
+                      00299         
+                      00300         ;>>> RCSTA (18H)
+                      00301         
+005E   30C8           00302         movlw   b'11001000'     ; asychron, 9-bit, cont. Receive
+005F   0098           00303         movwf   RCSTA
+                      00304 
+                      00305         ;>>> SPBRG (99H)
+                      00306         
+0060   1683           00307         bsf     STATUS, 5
+0061   3019           00308         movlw   d'025'          ; Baudrate: 19,2kBaud
+0062   0099           00309         movwf   19
+0063   1283           00310         bcf     STATUS, 5
+                      00311 
+0064   178B           00312         bsf     INTCON, 7       ; Comparator als einziger Int.
+                      00313 
+                      00314 ; hier die eigene Adresse abfragen
+0065   307F           00315         movlw   0x7F
+0066   00A2           00316         movwf   DEV_Adr         ; alles auf HIGH setzen
+                      00317 
+MPASM  4.02 Released                            3580-TEST.ASM   9-21-2005  12:34:43         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0067   2876           00318         goto    main
+                      00319 
+0068   1D85           00320         btfss   PORTA, 3
+0069   1022           00321         bcf     DEV_Adr, 0
+006A   1C06           00322         btfss   PORTB, 0
+006B   10A2           00323         bcf     DEV_Adr, 1
+006C   1D06           00324         btfss   PORTB, 2
+006D   1122           00325         bcf     DEV_Adr, 2
+006E   1D86           00326         btfss   PORTB, 3
+006F   11A2           00327         bcf     DEV_Adr, 3
+                      00328 ;       btfss   PORTB, 4        ; geht nicht, da Schalt-Ausgang
+                      00329 ;       bcf     DEV_Adr, 4
+0070   1F86           00330         btfss   PORTB, 7
+0071   1222           00331         bcf     DEV_Adr, 4
+0072   1F06           00332         btfss   PORTB, 6
+0073   12A2           00333         bcf     DEV_Adr, 5
+0074   1C05           00334         btfss   PORTA, 0
+0075   1322           00335         bcf     DEV_Adr, 6
+                      00336 
+                      00337                 
+                      00338 ;***************************************************************************************************
+                      00339 ;***************************************************************************************************
+                      00340 ;***************************************************************************************************
+                      00341 
+                      00342 ; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                      00343 ; %%%%%% Hauptprogramm LOOP Begin  %%%%%%%%%
+                      00344 ; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                      00345 
+0076                  00346 main
+0076   0064           00347         clrwdt
+0077   0000           00348         nop
+                      00349 
+0078   307F           00350         movlw   0x7F            ; Test-Betrieb
+0079   0622           00351         xorwf   DEV_Adr, W
+                      00352 
+007A   1D03           00353         btfss   STATUS, 2
+007B   2886           00354         goto    RS232
+                      00355         
+007C   191F           00356         btfsc   ADCON0, 2
+007D   2876           00357         goto    main            ; AD-Wandlung noch nicht fertig
+                      00358 
+007E   081E           00359         movf    ADRESH, W
+007F   00BB           00360         movwf   COLOR_R
+0080   00BC           00361         movwf   COLOR_G
+0081   00BD           00362         movwf   COLOR_B
+                      00363 
+0082   151F           00364         bsf     ADCON0, 2       ; AD-Wandlung wieder starten
+                      00365         
+0083                  00366 main_Stell
+0083   083B           00367         movf    COLOR_R, W      ; ROT holen
+                      00368 ;       movf    COLOR_G, W      ; GRÜN holen
+                      00369 ;       movf    COLOR_B, W      ; BLAU holen
+0084   00F8           00370         movwf   Stellwert
+MPASM  4.02 Released                            3580-TEST.ASM   9-21-2005  12:34:43         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0085   2876           00371         goto    main            ; nichts tun
+                      00372         
+                      00373 
+                      00374 ;***************************************************************************************************
+                      00375 ; hierher nur, wenn DEV_Adr NICHT 255
+                      00376 ; Protokoll: Pause > 13ms, 1..127 mal vier Bytes
+                      00377 ; vier Bytes:   SOLL_R + SOLL_G + SOLL_B + Byte
+                      00378 ; Zeit: bei 19,2Baud -> ca. 0,5ms/Zeichen -> 2ms pro Adresse -> ca. 250ms/Loop
+                      00379 ; Zeit: bei 1m * 3m -> 4*12 = 48 Kacheln -> ca. 100ms/Loop
+                      00380 
+0086                  00381 RS232
+0086   1E8C           00382         btfss   PIR1, 5         ; wenn 1, dann Transfer eines Bytes ist komplett
+0087   2876           00383         goto    main
+                      00384 
+0088   081A           00385         movf    RCREG, W
+0089   00AF           00386         movwf   RX_Buffer       ; schon mal das Byte abholen
+                      00387 
+008A   1BA3           00388         btfsc   TMR_0, 7        ; TimeOut > 6,375ms
+008B   01A4           00389         clrf    Count_L         ; nach TimeOut den Zähler auf NULL setzen
+008C   01A3           00390         clrf    TMR_0
+                      00391 
+                      00392 ; kam eine Adresse?
+008D   1818           00393         btfsc   RCSTA, 0        ; wenn 9.Bit=HIGH, dann Adresse
+008E   20A4           00394         call    RS232_Adr
+                      00395         
+008F   1826           00396         btfsc   RX_Status, 0
+0090   2876           00397         goto    main            ; wenn eine Adresse kam, zurück 
+                      00398 
+0091   300B           00399         movlw   d'11'           ; maximal 10 Bytes sollen empfangen werden
+0092   0224           00400         subwf   Count_L, W
+0093   1803           00401         btfsc   STATUS, 0
+0094   2876           00402         goto    main            ; hier noch nicht stellen
+                      00403 
+0095   3031           00404         movlw   SOLL_R
+0096   0724           00405         addwf   Count_L, W
+0097   0084           00406         movwf   FSR
+                      00407         
+0098   3003           00408         movlw   d'03'           ; Anzahl der Nullen zählen
+0099   0224           00409         subwf   Count_L, W
+009A   1C03           00410         btfss   STATUS, 0
+009B   20AF           00411         call    RS232_Nullen    ; über R, G und B die Nullen zählen
+                      00412 
+009C   3003           00413         movlw   03
+009D   0624           00414         xorwf   Count_L, W      ; 4. Byte = CS
+009E   1903           00415         btfsc   STATUS, 2
+009F   20BC           00416         call    RS232_CS
+                      00417         
+00A0   082F           00418         movf    RX_Buffer, W
+00A1   0080           00419         movwf   0
+                      00420 
+00A2   0AA4           00421         incf    Count_L, F
+00A3   2883           00422         goto    main_Stell      ; 
+                      00423 
+MPASM  4.02 Released                            3580-TEST.ASM   9-21-2005  12:34:43         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00A4                  00424 RS232_Adr
+00A4   1026           00425         bcf     RX_Status, 0    ; Addr ok erst mal löschen
+00A5   01A4           00426         clrf    Count_L         ; Byte-Counter auf NULL setzen
+00A6   30FF           00427         movlw   0xFF            ; Sammel-Adresse
+00A7   062F           00428         xorwf   RX_Buffer, W
+00A8   1903           00429         btfsc   STATUS, 2
+00A9   1426           00430         bsf     RX_Status, 0    ; Adresse ist ok
+                      00431 
+00AA   0822           00432         movf    DEV_Adr, W      ; lokale Adresse holen
+00AB   062F           00433         xorwf   RX_Buffer, W
+00AC   1903           00434         btfsc   STATUS, 2
+00AD   1426           00435         bsf     RX_Status, 0    ; Adresse ist ok
+00AE   0008           00436         return
+                      00437 
+00AF                  00438 RS232_Nullen
+00AF   08A4           00439         movf    Count_L, F
+00B0   1903           00440         btfsc   STATUS, 2
+00B1   01B0           00441         clrf    RX_CS
+                      00442         
+00B2   082F           00443         movf    RX_Buffer, W
+00B3   00AE           00444         movwf   RX_TempC
+                      00445         
+00B4   3008           00446         movlw   0x08
+00B5   00AD           00447         movwf   RX_Rotate
+                      00448         
+00B6   0CAE           00449         RRF     RX_TempC, F
+00B7   1C03           00450         btfss   STATUS, 0
+00B8   0AB0           00451         incf    RX_CS, F        ; wenn kein C, dann NULL
+00B9   0BAD           00452         decfsz  RX_Rotate, F
+00BA   28B6           00453         goto    $-4
+00BB   0008           00454         return
+                      00455 
+00BC                  00456 RS232_CS
+00BC   082F           00457         movf    RX_Buffer, W
+00BD   391F           00458         andlw   b'00011111'     ; mit 31 verunden (kann nur kleiner 25 sein!)
+00BE   0630           00459         xorwf   RX_CS, W
+00BF   1D03           00460         btfss   STATUS, 2       ; wenn Anz. Nullen = CS, Daten übernehmen
+00C0   0008           00461         return
+                      00462         
+00C1   0831           00463         movf    SOLL_R, W
+00C2   00BB           00464         movwf   COLOR_R
+00C3   0832           00465         movf    SOLL_G, W
+00C4   00BC           00466         movwf   COLOR_G
+00C5   0833           00467         movf    SOLL_B, W
+00C6   00BD           00468         movwf   COLOR_B
+00C7   0008           00469         return  
+                      00470         
+                      00471 ;***************************************************************************************************
+                      00472 
+                      00473 ; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                      00474 ; %%%%%%  Hauptprogramm LOOP Ende  %%%%%%%%%
+                      00475 ; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                      00476 
+MPASM  4.02 Released                            3580-TEST.ASM   9-21-2005  12:34:43         PAGE 10
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00477 ;***************************************************************************************************
+                      00478 ;***************************************************************************************************
+                      00479 
+                      00480 ;***************************************************************************************************
+                      00481         END
+MPASM  4.02 Released                            3580-TEST.ASM   9-21-2005  12:34:43         PAGE 11
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ADCON0                            1F
+ADCON1                            1F
+ADRESH                            1E
+ANSEL                             1B
+BEFEHL                            34
+BOISR                             00000008
+CMCON                             1C
+COLOR_B                           3D
+COLOR_G                           3C
+COLOR_R                           3B
+Count_H                           25
+Count_L                           24
+DEV_Adr                           22
+EOISR                             0000001E
+F                                 01
+FSR                               04
+INTCON                            0B
+ON_Time                           20
+OSCCON                            0F
+OSCTUNE                           10
+PCLATH                            0A
+PCLATH_TEMP                       7F
+PIE1                              0C
+PIE2                              0D
+PIR1                              0C
+PIR2                              0D
+PORTA                             05
+PORTB                             06
+PORT_B                            7A
+PWM                               79
+RCREG                             1A
+RCSTA                             18
+RS232                             00000086
+RS232_Adr                         000000A4
+RS232_CS                          000000BC
+RS232_Nullen                      000000AF
+RX_Buffer                         2F
+RX_CS                             30
+RX_Rotate                         2D
+RX_Status                         26
+RX_TempC                          2E
+SOLL_B                            33
+SOLL_G                            32
+SOLL_R                            31
+STATUS                            03
+STATUS_TEMP                       7E
+Stellwert                         78
+T1CON                             10
+TEMP_B                            37
+TEMP_G                            36
+TEMP_G1                           39
+TEMP_G2                           3A
+TEMP_R                            35
+MPASM  4.02 Released                            3580-TEST.ASM   9-21-2005  12:34:43         PAGE 12
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TEMP_R1                           38
+TMR0                              01
+TMR0_ISR                          00000013
+TMR0_ISRn                         0000001A
+TMR1H                             0F
+TMR1L                             0E
+TMR_0                             23
+TXREG                             19
+TXSTA                             18
+W                                 00
+W_TEMP                            7D
+_CONFIG1                          00002007
+_CONFIG2                          00002008
+__16F88                           00000001
+main                              00000076
+main_Stell                        00000083
+start                             00000023
+
+
+MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
+
+0000 : XXX-XXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0040 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0080 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+00C0 : XXXXXXXX-------- ---------------- ---------------- ----------------
+2000 : XXXX---XX------- ---------------- ---------------- ----------------
+
+All other memory blocks unused.
+
+Program Memory Words Used:   199
+Program Memory Words Free:  3897
+
+
+Errors   :     0
+Warnings :     0 reported,     0 suppressed
+Messages :     0 reported,     0 suppressed
+
+

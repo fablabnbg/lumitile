@@ -1,0 +1,388 @@
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		GRAFISCHE GUI FUER LED WALL
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #EXE-NAMEN: LED-EDIT.EXE und LED-PLAY.EXE
+  
+  '@@@@@PROTOTYP: BILDEDITOR MIT WX.GRID
+  '     ohne Stress, ich habe Krankheit und badsect gemeldet
+
+----------------------------------------------------------------------
+EDITOR FEATURES
+---------------
+
+  BITMAPS GUT SELBER EDITIEREN
+  ============================
+    - Hintertuer nach BMP oder Clipboard ist ja ganz nett,
+      der Editor soll aber das meiste Zeug selber koennen:
+      - Pixel und Flaechen faerben
+      - Uebergaenge in verschiedenen Richtungen
+      - Farbauswahl per Regler etc
+      + Farbe von woanders auf dem Bildschirm holen als kleine Hintertuer
+    
+    ! wichtig, weil die Farben auf dem Screen
+      womoeglich sehr von der Wall abweichen,
+      man muss also u.U. sehr interaktiv arbeiten,
+      so dass die Wall alles gleich nachvollzieht
+  
+    + trotzdem Hintertuer, weil kein Aufwand:
+      - Grafik-Files ueber PIL
+        - Import natuerlich meine Maske anwenden,
+          wenn es zu gross ist nehme ich links oben
+          das grosse Bitmap zu beschneiden ist nicht mein Job
+        - Export am besten Formate mit eingebauter Transparenz
+          das sind die ungueltigen Zellen
+      + ##LATER Clipboard, das ist aber Windows
+    
+    ! GRAFIK-PROGRAMM das ist der KERN DES EDITORS
+      das soll ein Grafiker mit ueblichen Werkzeugen koennen
+      die Programmierung ueber die Zeitschiene soll einfach bleiben,
+      ~~> siehe next para
+    
+    * MEHR ALS GRAFIK-PROGRAMM: Meta-Infos aufheben
+      - wenn ich einen Farbgradient von li ob nach re unt mache,
+        dann aendere ich nicht nur das BMP,
+        sondern merke mir auch, dass es ein Uebergang war
+      
+      - ein bisschen als waere es Vektorformat statt nur BMP
+      - das ist die Basis fuer Parametrisierbarkeit :-)
+  
+  BASISLAYOUT fuer diese "Bitmaps"
+  ================================
+    ! DAS IST BESONDERER LAYOUT-GRID IN DER GUI
+    ! DAS IST SO ALS OB MAN IN DB-PROGRAMM DIE TABELLENDEFINITION AENDERT
+    
+    - Rahmen-Groesse 5*3 natuerlich bei NEW eingeben
+    - einzelne Zellen killen (x darin) wenn kein volles Rechteck
+    - jede aktive Zelle muss hier gleich ihre ID bekommen
+      + BLINKEN: alle weiss, diese rot genuegt,
+        direkt nach unten an Player geben, damit man die richtige erwischt
+        :-) das ist der ideale Platz in der GUI
+            fuer die Hilfe bei der Adressierung
+            (die Adressierung selber passiert mit DIP Switches auf den Kacheln)
+      
+      + ZELLENGRUPPEN: werden auch damit gemacht,
+        die bekommen immer die gleiche Farbe
+        (damit muss man 5 Spalten a 3 gleichen Zellen nicht 
+         als 5 x 1 modellieren, sondern kann es wirklich sehen)
+    
+    ! ##KEINE krummen Formen und Kachel-Verschiebungen um 1/2 Schritte
+    
+    - spaeter noch aenderbar, fuer alle Szenen
+      + INS: Farbe zum Auffuellen ist aktuelle HG-Farbe
+        (Rechteck waechst, wenn neue Zeile/Spalte angefangen,
+         vielleicht sollte dafuer immer ein toter Rahmen drumrum sein)
+      + COPY: in jeder Szene jeweils Farbe aus Zelle x nehmen
+        (das beginnt keine Zellgruppe, Copy ist Convenience)
+      + LINK: neue Zelle der gleichen Gruppe
+        (das kann man aber auch spaeter noch editieren)
+      + DEL: zellenweise Loeschen mit Warnung
+        (Rechteck schrumpft wenn in Zeile/Spalte keine mehr sind)
+
+  ZEITSCHIENE SEHR EINFACH
+  ========================
+    - ##kein zellulaerer Automat
+    - ##kein Animationsprogramm, kein Director
+    
+    ! die SZENEN sind RGB-Bilder fuer alle Kacheln
+      die UEBERGAENGE sind [jetzt] nur reine Mischungen
+      in bestimmter Geschwindigkeit
+    
+    ! die ganze Komplexitaet von Schieben und Blenden
+      liegt oben im Bitmat-Editing der einzelnen Szenen,
+      das ist machbar, weil es eh` so wenige Pixel sind
+    
+    * weitere UEBERGAENGE:
+      es gibt bereits 2 Uebergaenge 'Mischen in x Sekunden'
+      und 'Hart,Sofort', aber das laesst sich ueber die Zeit einstellen
+      + ich wuerde trotzdem gern ein Flag 'Art des Uebergangs'
+        vorsehen, damit der alte Player neuere Files
+        ohne Crash abspielt
+    
+    * RUN,SIMULATION:
+      - fuer vollwertiges RUN ganzes Programm
+        nach unten an den Player geben
+      - ausserdem simuliertes RUN in der Oberflaeche
+        (wobei ueber Einzelbefehle Player mitlaeuft ?)
+    
+    * trotzdem ein Zeit-Strahl-Widget
+      ich brauche sowieso eine Auswahl der vielen Szenen,
+      dann gleich richtig
+      - vielleicht noch ein Grid oder eine Liste
+      - nur die Keyframes und die Timing-Befehle,
+        die Zwischenfarben entstehen erst bei Run (?)
+
+  INTERAKTION MIT EVENTS
+  ======================
+    '@@@@@THINK NOW...
+    # *WER* es behandelt (player.exe) siehe unten bei Technik,
+    # hier geht es um die Einbindung in die Programmlogik
+    
+    * auf jeden Fall 2 Events generieren: AN & AUS
+    + eventuell auch direkt IF abfragbar machen ?
+    
+    * mit obiger "IMMER GANZE BITMAPS" Metapher
+      sind die Reaktionen beschraenkt auf die Zeit:
+      - Anhalten und Fortsetzen
+      - Springen zu Szenen
+      - Veraenderung von Tempo
+    
+    * Zustandsuebergaenge wie in endlichem Automat
+      gehen nur fuer ganze fertige Programme
+      - es laeuft Programm grau0
+      - bei Event1-AN geht es auf rot1 ueber
+      - bei Event1-AUS wieder zurueck
+    
+    @@@KLAEREN: besonders dafuer LED-PROGRAMME
+      mehr wie eine Programmiersprache sehen
+      ! das waere aber weg von der "IMMER GANZE BITMAPS" Metapher
+      ! es ist SCHWACH, wenn da ein voller PC ist und 
+        wir ihn nur wie eine kleine schwarze Box programmieren
+      
+      - Unterprogramme, die bei gleichem Muster und
+        Tempo noch in der Farbe parametrisierbar sind
+      - ausser Spruengen auch Call und Return
+      - wie bei animated GIFs auch nur Bereiche tauschen/animieren
+        #zB. auch 2 von 5 Saeulen einschalten, wenn da 2 Menschen stehen, 
+        #    ohne das es 2^5 volle Bilder braucht
+      - wenn Farben austauschbar sind, darf ich Uebergaenge 
+        nicht vor-rendern sondern das entsteht Live
+
+  INPUT
+  *****
+    @@@INPUT: ZEICHENPROGRAMME, besonders fuer Icons
+    @@@INPUT: ANIMATIONSPROGRAMME, auch Ani GIF
+
+
+----------------------------------------------------------------------
+TECHNIK
+-------
+
+  IMMER UEBER PC
+  **************
+    die Moeglichkeiten muessen nicht auf das eingeschraenkt werden,
+    was man in die Box an den Panels programmieren kann;
+    die Box ist nur Elektronik, keine Logik
+      (sie hat war einfache Logik fuer die Ansteuerung von 16 Szenen, 
+       in dieser Konfig schleift sie aber nur durch)
+
+  TRENNUNG IN 2 EXES
+  ==================
+    ! Trennung der 2 EXEs ist akzeptiert
+      - wichtig fuer STABILITAET
+      - gute Trennung von PY oben und C unten
+      - nur der untere Teil muss fuer Mac und Linux neu entstehen
+    
+    ! EDITOR.EXE oben, KANAL.EXE unten
+      EDITOR aeussert nur einen reinen Wunsch und 
+        hat keine Einschraenkungen auf die Machbarkeit 
+        ueber einen Kanal einer bestimmten Geschwindigkeit
+      
+      KANAL nimmt die Wuensche und teilt
+        sie in kleine Schritte auf, die genau so fein sind,
+        wie er es fuer so viele Kacheln ueber einen so dicken Draht
+        genau noch drueber bringt
+      
+      ##LATER: dass der Editor auch ohne den KANAL
+        darunter eine echte Simulation des ruckelnden oder ruckfreien
+        Ablaufs realisiert, ist nicht Version 1.0,
+        weil er dafuer wieder Kanalwissen haben muesste
+  
+  VERMARKTUNG, LIZENZEN
+  =====================
+    # diese Trennung ist sogar fuer VERMARKTUNG WICHTIG
+    
+    - der reine Player soll frei sein, wenn man die Kacheln kauft
+      das waere KANAL.EXE oder vielleicht PLAYER.EXE
+      sie bekommt die Wuensche normalerweise direkt vom EDITOR,
+      dann kann sie sie sicher auch aus einem File lesen...
+    
+    - der EDITOR soll Geld kosten
+      ! ausserdem diesen bitte sogar per Nummer der Netzwerkkarte
+        auf eine bestimmte Seriennummer blockieren,
+        aber nur simpel, nicht hackersicher...
+      
+      - Groessenordnung 100E .. 1Kachel ?
+      - ab X Kacheln frei dazu ?
+  
+  KANAL.EXE -> VOLLWERTIGE PLAYER.EXE
+  ===================================
+    @@@KLAEREN: fuer getrennten Vertrieb muss KANAL.EXE 
+      alle Features eines Players haben, sonst wuerden es 3 EXES:
+      A)man kriegt gegen Geld EDITOR -> KANAL
+        und kostenlos EDITOR-DUMMY -> KANAL
+      B)oder kostenlos ist PLAYER -> KANAL
+        und die volle Version EDITOR -> PLAYER -> KANAL
+    
+    * dritte, getrennte PLAYER.EXE haette aber auch 1-2 Vorteile:
+      - man hat auch ohne Editor die Moeglichkeit hat, 
+        die Programme am PC zu simulieren
+        ##ABER wer selbst fuer die 100EU Editor zu geizig ist,
+        ##sollte genau diese Moeglichkeit eben nicht haben
+      - wenn wir komplexe Interaktionen durch die Hintertuer
+        PY programmieren, dann kann das KANAL.EXE nicht mehr...
+    
+    * ein voller Player muss ausser FARBEN+ZEITEN
+      auch EVENTS verstehen
+      - das gehoert dazu wenn er die Programme selbststaendig
+        ohne Anwesenheit des Editors auffuehren soll
+      - das hat den Vorteil, dass wir keinen TCP-Rueckkanal brauchen, 
+        um die Events nach oben zu melden,
+        die den Editor ja nix mehr angehen
+
+  VERBINDUNG EDITOR->KANAL/PLAYER
+  ===============================
+    * das LOGISCHE LEVEL der Verbindung ist "LED-PROGRAMM"
+      - LED-Programm aus Farbwerten und Zeiten
+        ~~>siehe unten
+      - einzelne Anweisung (ein Bitmap)
+        fuer das Refresh der Anzeige, waehrend editiert wird
+        ist wohl eine Sonderfall eines Programms
+    
+    * die TECHNISCHE VERBINDUNG sie TCP/IP
+      - damit koennte ein EDITOR sogar mehrere KANAL.EXE
+        auf verschiedenen Rechner ansteuern :-)
+      - aber kein http, reines TCP/IP ueber Socket,
+
+  FENSTERBIBLIOTHEK
+  =================
+    * PY + PYQT /oder/ wxPYTHON passt
+      - QT ist kommerziell teuerer als erwartet:
+        1500-2500 EU fuer QT selber,
+        250 Pfund fuer PyQT
+      
+      ! WX scheint komplett frei, auch fuer PY
+        @@@KLAEREN Sigi: wo war Hinweis auf Kosten ?
+      ! WX mag an manchen Stellen noch in Entwicklung sein,
+        gewinnt aber stark an Popularitaet,
+        das ist die Zukunft
+      ! PROTOTYP IN WX IST OKAY
+    
+    * PLATFORMEN:
+      - beide fuer diverse Windows-Systeme
+      - beide fuer Mac nur OS/X
+      - beide Linuxe, fuer WX allerdings GTK nicht sehr stabil
+
+  @@@KLAEREN: ETWAS SCHLAUERE KACHELN ?
+  -------------------------------------
+    - ist mir fuer EDITOR egal, das betrifft KANAL -> Kacheln
+    - die Kacheln haben doch schon etwas Logik,
+      um die Pakete fuer sich zu erkennen und gemeinsam zu schalten
+    
+    * sind sie nicht schlau genug, dass man ihnen im voraus
+      sagt von "xxx bis yyy wechsle auf Farbe zzz"
+      und sie selber die feinen Schritte machen
+    
+    ! damit waere der Kanal von Farbuebergaengen komplett entlastet
+      und harte Verschiebungen sollen ja hart sein...
+    
+    ! damit die Teile dennoch SYNCHRON bleiben,
+      genuegt es, wenn KANAL.EXE regelmaessige TAKT-Pakete schickt
+        (das entspricht etwas den jetzigen Abschlussmarkern,
+         die auch das Zeichen zum Farbwechsel fuer alle sind)
+
+
+----------------------------------------------------------------------
+LED-PROGRAMME
+-------------
+  @@@KLAEREN: GRUNDFORMAT XML/TEXT/BIN ?
+    - muss es binaer geschlossen sein, damit User die den EDITOR
+      nicht kaufen, gar nix damit machen koennen ?
+      ->eher nicht, EDITOR ist nur Bequemlichkeit
+    
+    - kann die KANAL.EXE/PLAYER.EXE in C++
+      einfaches XML lesen, 
+      damit wir uns kein neues Textformat ausdenken muessen ?
+    
+    - oder soll es wie bei DIR->DCR, FLA->SWF, PSP->TIF, C++->EXE
+      ein offenes Textformat und ein geschlossenes binaeres geben ?
+    - oder zumindest eine Art 'STRIP'
+      das die High Level Infos entfernt ?
+
+  LOW LEVEL: FARBWERTE + ZEITANGABEN
+    das ist der Kern eines LED-Programms
+    und das ist das einzige was PLAYER/KANAL liest
+  
+  HIGH LEVEL: 'NOTIZEN' DES EDITORS
+    auch die gehoeren mit in das Programm,
+    und werden vom Player ignoriert
+    - Szenen-Gruppen, die eine grosse Transition machen
+    - Layout Metainformationen: ein 5*3 gleiche Programm
+      ist ja Low Level ein 5*1 Programm
+
+  + Filename *.LED, bekommen ein Icon von uns dazu
+  + Versionsnummer im Header ist wichtig, 'graceful degradation'
+
+
+----------------------------------------------------------------------
+ORGA
+----
+
+  KONTAKT
+  =======
+    * Systemtechnik Leber GmbH
+      Friedenstrasse 33
+      90571 Schwaig
+      0911/540 64 71
+    
+    - S1 Richtung Lauf bis Schwaig, 
+      am Bahndamm zurueck,
+      weit nach links, links Gang hinter
+    
+    - CHEF Dieter Leber, 0172/91 30 711, dleber@powercontact.de
+    - ERSTKONTAKT Sigi Gassner, 09131/33 600
+  
+  MY TASK, BEZAHLUNG
+  ==================
+    * MINDESTENS v0.2 guter Proof of Concept mit der Fensterbibo
+      - Grid
+      - Farbpicker
+      - Menues
+    
+    * MAXIMAL v1.0 ganze EDITOR.EXE
+      + aber auch dann Uebertragung von Wissen an 'Sigi'
+    
+    * GENEHMIGUNG VON MARTIN FELDMANN schriftlich am 16.11.05, 
+      ausserdem Interesse an Panels als Filmlicht
+    
+    * STUNDENSATZ 
+      - 40 .. 100 angekuendigt
+      - Vorschlag 2 Level:
+        teuer 70:	Transfer,Kernprog,Kernkonzept
+        		#IDEE: 2 STUNDEN KONZEPTANTEIL
+        		#      + 3 TAGE KERN-PROTOTYP
+        		#      FEST 2000 = 4..5 PANELS + BOX + MONTAGE/COVER
+        normal 50:	falls weitere Prog gewuenscht
+      - 50 .. 70 telefonisch am 19.11.05 angekuendigt, okay
+    
+    * kein Steuerproblem, Bezahlung in Naturalien
+      PANELS A 400 EURO !!!
+
+  STUNDEN BISHER
+  ==============
+    12.11.05	2.5	#nicht berechnen, Verkaufsgespraech
+    13.11.05	2.0	Anteil an konzeptioneller Nacharbeit
+  
+  PYTHON CD
+  =========
+    '@@@erstmal fuer mich beim abgleich
+    '   dann CD + my code + scite + doku machen
+    
+    * PYTHON
+      ActiveState	2.4.2	(else 2.3.5)
+
+    * MODULE
+      PIL		1.1.5	fuer 2.3 oder 2.4
+      wx		2.6.1.0	fuer 2.3 oder 2.4
+    
+    * EDITOREN
+      SciTE             '@@@meine 1.62 dazu oder 1.66 neu
+      SPE               0.8 NEU
+    
+    * DOKU
+      '@@@later fuer seine CDR dazu
+      - eBooks + Tutorial von Alex
+      - eBook eben selber gefunden
+      - eBook von neuen URL, die fuer mich nix waren
+      - eBooks + Tutorials von python.org
+

@@ -1,0 +1,895 @@
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		AUF SPAETERE VERSIONEN VERSCHOBEN
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #* einiges war einfach 'nice to have'
+  #* oft erst mit Nutzungserfahrung zu entscheiden
+  #* manches ist so gut wie verworfen
+
+----------------------------------------------------------------------
+VARIOUS...
+----------
+
+  MEHR UNDO & REDO
+  ================
+    # einfaches UNDO und UNDO von UNDO ist schon in V1.0
+    # allerdings nur innerhalb des Grid
+    
+    ! Undo auch ueber Gridgrenzen hinweg im Programm,
+      in der linken Liste...
+    
+    * 1.REDO: Umkehrung von Undo
+      (nur noetig, wenn es mehr als 1 Undoschritt gibt)
+    * 2.REDO: fertig gebundene Action des Menueitems kann
+      fuer viele Funktionen (die sich entsprechend anmelden)
+      auch nochmal gerufen werden
+      + auch die Selektion mit merken,
+        wenn ich in einer neuen Szene bin und es keine neue Sel gibt,
+        dann gilt die auch noch (auf diese weise gleiche op bei allen)
+  
+  MODULE ?
+  ========
+    AUFTEILUNG IN 3 MODULE
+    - conn
+    - data
+    - main (inkl widgets)
+    
+    =>GEWUENSCHT ???
+    =>VORTEILE UND HAKEN...
+
+  MENUES + TOOLBARS AKTUELL HALTEN
+  ================================
+    ! mit Praedikat siehe Robana GUI
+      - Save erst wenn need MainProg.needsave (aber was ist mit Aenderung im Grid selber ?)
+      - Undo nur wenn da was ist !!!
+      - Fill-Operationen nur wenn die Selektion dafuer passt, FillCheck() fragen
+    
+    - ORGA:
+      alle Icons auch inaktiv malen
+      MyToolAdd ein optionales weiteres Bild
+    
+    * wenn ich schon die Selektion beobachten wuerde,
+      um Menueops zu deaktivieren, dann koennte ich auch noch deren Icon drehen,
+      wenn die Selecktion rechts oder/und unten anfaengt...
+  
+  OFFENES FORMAT *.LEDP
+  =====================
+    # das jetzige Python war nur zur Bequemlichkeit, minimaler Aufwand R/W
+    ! DIE INHALTE BLEIBEN: Variablen, 2D Meta-Szene, Liste von 2D Szenen
+    
+    ! FORMAT KOENNTE MAN NOCHMAL UEBERLEGEN, 
+      das kriegen Kaeufer der vollen GUI als Files zu sehen
+      - einfach PYTHON lassen, ist gut lesbar...
+      - eventuell XML, Lizenz fuer Library pruefen
+      - oder TAB-SEPARATED zum Weitereditieren in Excel ?
+  
+  SAUBERE LINKE HBMP
+  ==================
+    * tote ------ transparent:
+      # DAS IST NICHT DAS GLEICHE WIE WEISS (LISTEN-HG), beim Selekten sieht man das !
+      # VIRTUELLE FARBE WAERE HIER UNVERSTAENDLICH...
+      
+      - schon bei der Anfrage GetImage von der Szene unten
+      - leider schwierig SetRGB geht nicht mit -1 wie bei Resize
+        ich muesste also Maskenfarbe selber finden und setzen
+          #find unused colour -> setting this as mask colour -> paint those pixels
+        oder ich trage frech alpha nach ?
+          #das ist neu, kommt das in hbmp an ???
+        oder SetMaskFromImage
+          #das Maskenbitmap dafuer koennte ich einmalig aus Meta-Infos berechnen
+          #(wegwerfen wenn sich meta aendert...)
+      
+      - Szene.GetImage liefert fuer BMP Export virtuelle Farben 
+        der toten Zellen, das muss man also per Parameter entscheiden
+    
+    * saubere Skalierung um festen Faktor
+      # DER FEHLER IST IN Rescale, ICH HABE DIE PIXELWERTE GEPRUEFT
+      
+      - insgesamt mit GetData -> SetData
+      - einfach in den Zeilen N * die Pixel und dann N * die Zeilen
+      
+      ? genaugenommen macht Rescale nur 1 Fehler:
+        rechts/unten sind es N-1, links/oben dafuer N+1;
+        wenn es sicher so waere, wuerde einfache Verschiebung reichen
+  
+  WEITERE OPERATIONEN		###LATER ?
+  ===================
+    /Paint ?/... TYPISCHE FUNKTIONEN VON ZEICHENPROGRAMMEN
+    /Image ?/...
+      * 2 Spiegel, 90 Drehen
+        #Selektion: gehen auch ohne, dann alles
+      
+      + ###NEIN: weitere Grafikprimitive ?
+        ##NO: Viereck - ist schon Fill
+        ##LATER: Linie, Kreis, Text - es ist einfach zu klein
+    
+    /Color/Enhance: Farbveraenderungen alla Irfan Shift-G
+      * plus/minus H S V oder R G B
+      * Formel fuer H S V hatte ich nur in Farbraum-Forschung, nicht in Code ?
+      
+      <-SELEKTION:
+        STEPS: SINGLE, MULTI
+        GRID: KEINE (=alle), BOX, DISJUNKT (voellig egal)
+    
+    /Fill/Random: volles Random ist wenig nuetzlich
+    /Fill/Random Range: parametrisierbarer Zufall
+      man muss die Flaeche vorher loeschen und 2..n Farbbeispiele reinlegen
+      der zufall nimmt das als Spielraum/als gueltige Spanne
+      fuer die Werte von h,s,v
+      * HUE 1.) Farben mit Saettigung 0 (b/w,grau) liefern keine hue-vorgabe
+      * HUE 2.) Hue ist ein Kreis, von lila nach gelb geht ueber die Grenze
+                wie Sommerzeit auf Suedhalbkugel
+      * HUE 3.) wenn 3 Punkte mehr als 180 Grad umfassen, dann voller Kreis
+      
+      - ###NOT r,g,b: es braucht nur pures rot & gruen drin sein und schon darf er alles
+    
+    ? SUCHEN&ERSETZEN: die aktuelle Zellfarbe durch die Masterfarbe rechts
+    ? ZAUBERSTAB-Markierung: alle gleiche Farbe mit aktueller Zelle die dranhaengen
+
+  TYPEN/EIGENSCHAFTEN VON OPERATIONEN
+  ===================================
+    """
+    zB. Moves
+      # SELEKTION: GRID nur box, LISTE multi unpraktisch (wechselnde Schiebefarbe ?)
+      # META: wichtig, STEP-BILDEND: nuetzlich :-)
+    """
+    
+    * GRUNDVERHALTEN
+      - PAINT
+      + recycling 1=META
+      ##LATER + recycling 2=AUTOSTEP
+    
+    * SELEKTION IN STEP-LISTE:
+      # KEINE IST NICHT RELEVANT
+      - SINGLE
+      - MULTI
+        + ##TEST das muss erst noch getestet werden
+          ##  gibt es ein Pivot element, was dem Grid entspricht
+        + ist hier zusammenhaengend oder disjunkt relevant
+        + auch wenn ich multi mache, unselect der letzten verhindern
+        
+        + /ODER/ wx.LC_SINGLE_SEL lassen; 5 Steps anders BEGIN+END markieren:
+          wxListCtrl::SetItemBackgroundColour :-)
+    
+    * SELECTION IM GRID:
+      - KEINE, NUR AKTUELLER PUNKT
+        =>fuer manche OPS unmoeglich;
+          zB. 3 Buttons fuer 8 Richtungen brauchen die Orientierung der Selektion
+        =>fuer andere OPS kein Problem;
+          zB. fuer /Color/Enhance sogar der Normalfall
+      
+      * BOX (kann auch Alles sein, jetziger Normalfall fuer Fill)
+      
+      - GETRENNT
+        + ###NEU: einige OPS gehen locker auch so, sogar Fill selber
+          <-ich kriege [Pivot gemerkt+Einzelliste+Arealiste] alle zusammen
+    
+    ! die KOMBINATION DER 2 SELECTIONS ist unabhaengig !
+      eine Operation wie Fill kann durchaus eine Selection im Grid verlangen,
+      dann aber in Multi Steps arbeiten (und jeweils gleiche Grid-Selection annehmen)
+
+  SYSTEMNAH, CLIPBOARD, BMP-TRICKS		###LATER ...
+  ================================
+    + Farbe von woanders auf dem Bildschirm holen als kleine Hintertuer
+    + CLIPBOARD: copy & paste von Bildern und auch Hexwerte-Tabellen
+      wxTheClipboard sollte beide Typen 
+      wxTextDataObject, wxBitmapDataObject beherrschen
+    + DRAG&DROP: nur fuer Bilder, gleiches Schema...
+    
+    + als kleiner Bruder fuer Hex koennte jede Masterbutton Operation
+      auch ins Clipboard stellen...
+    
+    + 1 BMP als VIELE SZENEN importieren:
+      - meine 5x5 Pixel wie ein Fenster ueber das grosse Bild wandern lassen,
+      + Wanderkoordinaten (normalerweise x+1, y umbruch) angeben
+
+  MEHR ANREGUNGEN/INPUT
+  =====================
+    # je nachdem, wohin noch Ausbau gewuenscht wird...
+    
+    * FUER ZEICHNEN: PSP, MicroAngelo
+    * FUER ANIMATION: Director, Flash, Animated GIF Maker ?
+    * FUER CODESCHRITTE: Assembler ?, Endlicher Automat
+  
+  OOP CLEANUP
+  ===========
+    * Zellen objekte ?
+      - dann koennte ich fuer alle einer Kette das gleiche verwenden,
+        eine einmal eingetragene Farbe waere automatisch in allen
+      - die Sache mit den virtuellen Farben waere auch leichter,
+        das Setzen sowieso, und die Anfragen wuerden verschieden
+        antworten je nachdem ob ich ------ will oder rgb ?
+    
+    * Programm zwischenzeitlich nur in der Liste ?
+      - wenn jedes Item in den SetData den Link
+        auf die eigene LedSzene haette, haette ich viel Aerger vermieden !
+      - die Szenen bleiben, aber die Listenitems links
+        uebernehmen die Ownership; fuer volles Programm wieder zusammenbauen
+
+  VOLLE PALETTE RECHTS ?
+  ======================
+    ##NEIN, zu aufwendig
+    - fuer mich genuegt der Colorbutton...
+    - netter waere statt ColourSelect mit Popup 
+      rechts wie in PSP gleich die Palette;
+      leider ist PyColourChooser nicht so leicht anpassbar...
+
+  IDEE: ETWAS SCHLAUERE KACHELN ?
+  -------------------------------
+    ' JETZT NICHT, 3 PROZESSOREN SIND VOLL
+    
+    - ist mir fuer EDITOR egal, das betrifft PLAYER -> Kacheln
+    - die Kacheln haben doch schon etwas Logik,
+      um die Pakete fuer sich zu erkennen und gemeinsam zu schalten
+    
+    * sind sie nicht schlau genug, dass man ihnen im voraus
+      sagt von "xxx bis yyy wechsle auf Farbe zzz"
+      und sie selber die feinen Schritte machen
+    
+    ! damit waere der Player von Farbuebergaengen komplett entlastet
+      und harte Verschiebungen sollen ja hart sein...
+    
+    ! damit die Teile dennoch SYNCHRON bleiben,
+      genuegt es, wenn PLAYER.EXE regelmaessige TAKT-Pakete schickt
+        (das entspricht etwas den jetzigen Abschlussmarkern,
+         die auch das Zeichen zum Farbwechsel fuer alle sind)
+
+  EDITOR AN NETZWERKKARTE BINDEN
+  ==============================
+    ##VERSION 2.0, wir gehen auch den Weg freeware->shareware->box
+    
+    - NUR MANIPULATIONS-SICHER, NICHT HACKERSICHER !
+    
+    - Netzwerk-MAC-Adresse ? oder an was sonst ? CPUID ? ... ?
+    - wenn der Player schon das ganze TCPIP macht,
+      waere es logisch ihn auch dafuer zu fragen:
+      + Vorteil: niemand sieht dass editor danach fragt
+      + kein Nachteil: man kann fordern das Player da ist
+    
+    - ABLAUF:
+      - abfragen und 1x scrambeln zur kontrolle
+      - wenn nicht gut (oder neu) dann 1x gescrambeltes anzeigen fuer telefonat/email
+      - er bekommt 2x gescrambelten key von uns und gibt ihn ein
+
+  MAC
+  ===
+    ! als MAC "exe" einpacken waere easy, Python gibt es fuer Mac;
+      aber wx fuer Mac ist kritisch, zumindest Testaufwand
+      - ###version 2
+      - erstmal mein PY unter Linux und OS-X probieren
+      - dann macht Sigi den Player...
+
+  DOPPELKLICK vs. EDITING
+  =======================
+    # das Zusammenspiel von Doppelklick und direktem Editieren der Zellen 
+    # durch Eingeben der Zahlenwerte wie in Excel ist teilweise verwirrend
+    
+    1.DOPPELKLICK in bereits editierende Zelle
+      ! KEIN BUG, FEATURE !!!
+      =>KEINE CHANCE,
+        um hier einzugreifen muesste man tief unten
+        im C++ Code des Grids eingreifen
+      =>KEIN PROBLEM,
+        der User sieht sofort, dass der Doppelklick
+        einen Effekt im editierten Text hat
+    
+    2.DOPPELKLICK in aktuelle Zelle
+      * VERWIRRENDES BEHAVIOR, ABER EBENFALLS ABSICHT ...
+      =>AUFWAND, RISIKO
+        hier koennte man eventuell auf Python-Level etwas tricksen,
+        das PROBLEM ist aber, das schon der ERSTE WEITERE KLICK
+        in die aktive Zelle den Editor oeffnet, ALSO SCHWIERIG:
+        
+        - das erste OnEditorShown macht ein Veto und stoesst
+          den Timer fuers eigentliche Editorzeigen an
+        - das Veto reicht, damit ein eventueller Doppelklick
+          auch zum Doppelklickevent fuehrt,
+          sollte das kommen, wird der Timer gekillt/deaktiviert
+        - ansonsten stoesst der Timer das eigentliche Edit an
+          ? aber wie, GetCellEditor -> BeginEdit kracht !
+          ? und wuerde das erneut ins offene Messer des Veto laufen ?
+      
+      ->das ist aber UNSCHOEN, selbst wenn es ginge,
+        denn das Editieren *SOLL* hier beim erste Klick anfangen
+    
+    + AKTUELL SIND 2 PRAGMATISCHE LOESUNGEN IMPLEMENTIERT
+      - Hotkey ^F geht immer, auch bei Editing und wilden Selections
+      - per INI laesst sich Edit ueber Maus ausschalten,
+        das ist gar nicht so sinnlos, da Edit ja eh die Tastatur braucht
+
+  BILDER MIT IN DER EXE ?
+  =======================
+    * Bilder als grosses ZIP einpacken, mit ZIP-Routinen zu binaerem Strom kommen
+    
+    * dieses ZIP kann dann als binaere Resource mit rein in die EXE
+      http://starship.python.net/crew/theller/moin.cgi/Py2Exe
+      CustomDataInExe Add custom data in the executable
+    
+    * ich muss feststellen wenn ich nicht in EXE laufe und das ZIP direkt nutzen
+      HowToDetermineIfRunningFromExe Simple functions to determine if you're in an .exe or .py
+  
+  WIN9x FUER EDITOR.EXE
+  =====================
+    ! LoadLibrary von Win9x kann nicht alle Tricks von py2exe,
+      die grosse EXE 'KachelEditor.exe' waere statt 5MB nur noch 400KB
+      und es muessten statt 3 Files hier 3+10 geliefert werden:
+      
+       618496 _controls_.pyd
+       688128 _core_.pyd
+       356352 _gdi_.pyd
+       319488 _grid.pyd
+       479232 _misc_.pyd
+        49152 _socket.pyd
+       548864 _windows_.pyd
+      1867776 python24.dll
+      4714496 wxmsw26h_vc.dll
+        69632 zlib.pyd
+      
+      das ist doppelt so viel (10MB) und PYTHON ist erkennbar,
+      was niemand was angeht
+    
+    =>WIN9X AUSGESCHLOSSEN, nur NT Systeme (NT,2K,XP)
+    ->koennte jederzeit laut Kommentar in KachelEditorMake.py
+      zugefuegt und vielleicht im Editor unterschieden werden
+
+  KLEINKRAM
+  ---------
+    * geheime Debugoption 'DebugStartAlways' in der INI,
+      leider aufwendiger weil nach Exception im Konstruktor
+      gar kein Verbindungsobjekt da ist, mit dem ich reden koennte
+    
+    * den Szenenname mit ins LEDX schreiben ?
+      vielleicht sigi selber anpassen ? oder beispiel schicken wegen format ?
+
+
+----------------------------------------------------------------------
+META-EDITING			(in v1.0 pur, jetzt alle Szenen miteditieren)
+------------
+
+  KLEINER BRUDER VON "SOFORT MITZIEHEN"
+  =====================================
+    * "UEBER KACHELNUMMERN"
+    - wenn 2 Zellen durch gleiche Kachelnummer
+      vereint werden, ist die Siegerfarbe zufaellig (bzw. nach xy)
+    ! korrekt waere aber Sieger dessen Kachelnummer sieger war
+    
+    * dazu muesste ich [NUR] das alte Meta aufheben,
+      die Szenen kachelnummernweise auslesen und kachelnummernweise
+      wieder fuellen und die neuen sind weiss ?
+    ! auf diese Weise koennte man doch wieder durch Move in den Nummern
+      alle Zellen moven !
+
+  ALLE SZENEN SOFORT MITZIEHEN
+  ============================
+    # BESSER als nur die SIMPLE OPERATIONS:
+    ! wie in einem modernen DB-Programm sollten sich Schema
+      Aenderungen auch sofort auf die Datensaetze auswirken
+    ! ausserdem sind durch diese Live-Mit-Aenderung auch 
+      interessante Tricks mit den Vorgabefarben fuer neue Zellen moeglich
+    
+    * der Farbbutton rechts
+      liefert nicht nur ein Kachelnummer, was im Meta-Modus sein Job ist
+      sondern auch noch die Vorgabefarbe fuer neu angelegte Zellen
+      
+      a)wenn die Farbe ueber den weiterhin existierenden Farbdialog
+        gewaehlt wird, ist sie fest "FF00AA"
+        # das war frueher als INS mit Vorgabefarbe geplant
+      
+      b)wenn er mit Ctrl-Rightklick aus einer Zelle gefuellt wird,
+        merkt er sich die Zelle
+        :-) dann kann die Fuellfarbe in jeder Szene anders sein !
+        # das war frueher als COPY anderer Zelle geplant
+      
+      er zeigt also ausser/unter der Kachelnummer noch
+      a)die hexfarbe oder b)die Zellkoordinaten
+    
+    * die meisten Operationen FILL,GRAD,MOVE,MIRROR,...
+      ziehen die Szenebilder mit
+      + die Verwendung von GRAD zum Zahlenfuellen, die eh schon ein Trick war,
+        bekaeme noch einen kleinen Bonus: so kommt die Fuellfarbe fuer die neuen Zellen
+        in jeder Szene aus der Pivotzelle der Markierung !
+    
+    * auch die einfachen Operationen INS und DEL
+      durch Eintippen der Nummern laufen anders
+      - INS verwendet die Vorgabefarbe aus dem Button :-)
+        es sei denn es ist LINK (ich geben eine bestehende Nummer ein)
+      - DEL ist so gefaehrlicher, weil es sofort alle Zellen aendert
+        ~~>siehe VIRTUELLE FARBE, das waere hier die Rettung
+    
+    ! in dem Falle muessen sich Meta-Operationen SOFORT auf die Szenen auswirken,
+      sonst gehen Infos verloren
+      ###LATER: Backup, Undo etc hilfreich
+      ###FUTURE: in Szenenliste links sofort sehen, wie es auf alle Zellen wirkt,
+        wenn ich nach jeder Aenderungsschleife die hbmp updaten wuerde
+  
+  INS/DEL VON ZEILEN UND SPALTEN
+  ==============================
+    * INS: neue Zeilen&Spalten mit -1=tot gefuellt aussen anlegen
+    * DEL: komplett -1=tote Zeilen&Spalten aussen loeschen
+    
+    :-) die Bedienung waere ganz einfach Doppelklick auf eine
+      aeussere Zeilen oder Spaltenueberschrift im Metamodus
+      - wenn sie ganz leer=-1 ist, dann heisst das DEL,
+        dann brauche ich da ja nicht noch eine leere
+      - ansonsten heisst das INS
+    
+    ! natuerlich nur in META, nicht im normalen Farbediting !
+    
+    + das genuegt jetzt, fuer schwierigere Kombinationen
+      muss das mit MOVE Ops kombiniert werden
+    + ###LATER: waeren im Excel-Sinne noch viele weitere Ops moeglich:
+      - ausser NEW auch COPY und MOVE von Spalten
+      - nicht nur aussen sondern auch mittendrin
+    
+
+----------------------------------------------------------------------
+EDITOR-INTERNES "PLAY"		(in v1.0 gar nicht - nur ueber PLAY.EXE)
+----------------------
+
+  ARGUMENTATION ???
+  =================
+    die 'untere' Exe, der Player muss die volle Faehigkeit haben,
+    ein LED-Programmfile einzulesen und auf den Kacheln abzuspielen,
+    denn das ist ihr Job wenn sie alleine ausgeliefert wird,
+    
+    die PLAY-Faehigkeit auch in den Editor zur Programmeingabe
+    als eine Art interne Simulation einzubauen hat seinen Preis
+    und muss ueberlegt werden:
+    
+    NACHTEIL: AUFWAND
+      (-) DOPPLUNG zwischen Player und GUI;
+        die Mischtransformation "schrittweiser allmaehlicher Farbuebergang"
+        muss in beiden programmiert werden;
+        ebenso auch alle zukuenftigen Transformationen
+      
+      (-) VERGEWALTIGUNG der GUI-Widgets
+        die Fensterbibliothek ist [wie alle anderen]
+        fuer typische GUI Interaktionen gedacht: User tut was,
+        Daten aendern sich, Anzeige aendert sich, warten...;
+        sie tun sich mit einer Animation womoeglich schwer
+        
+        ##VERGLEICH MIT EXCEL: bisher haben wir den Grid so genutzt wie Excel,
+        ##  es gab Zellen mit Werten und bestimmte Farbeinstellungen fuer Zellen, ganz normal
+        ##  =>jetzt woellten wir in Excel mit den Zellfarben eine Animation machen !
+    
+    VORTEILE: SAUBERE TRENNUNG
+      (+) das braucht keinen Player und insbesondere keine Kacheln !
+      (+) wenn die Programme mal komplizierter werden,
+          waere das fast wie ein DEBUGGER, weil man nicht nur sehen kann,
+          welche Farben das Grid annehmen wird, sondern auch warum,
+          also in welchem Schritt (Szene,Blende) man sich da befindet
+      
+      (+) die harte Variante mit Player und Kacheln bleibt aber immer noch als Alternative
+      (+) so sind auch Unterschiede zwischen Theorie (soft, so war es gemeint)
+          und Praxis (hard, soviel schafft der Bus) zu erkennen
+    
+    Ich neige dazu, trotz des Aufwands die GUI um dieses eigene Play
+    zu erweitern, kleinere Alternativen waeren:
+      1.MINIMAL: in der GUI selber keinerlei Animation,
+        dh. die Farbwerte und Bilder und Uebergaenge werden eingestellt,
+        abgespielt werden sie aber nur auf den Kacheln,
+        waehrend die die Szenen wechseln und Blenden machen bleibt die GUI still
+      
+      2.PLAYER RECHNEN LASSEN:
+        um zumindest den ersten Nachteil der Dopplung zu umgehen,
+        koennte der Editor dem Player/Kanal das komplette Programm geben
+        und ihn spielen lassen und ihn dabei staendig nach der aktuellen
+        Anzeige fragen
+    
+    Die 2.Alternative ist leider immer noch recht aufwendig (zweiter Nachteil)
+    und dazu kommt, dass die GUI die Szenenwechsel nicht reflektieren kann.
+    Wenn man jetzt auf das volle Play verzichten will, sollte man
+    den harten Schnitt "1.MINIMAL" ziehen...
+  
+  GUI FUER 'INTERNES PLAY'		<=falls ja
+  ========================
+    * SOFTES,INTERNES PLAY: simuliert in der Oberflaeche
+      - die Widgets sind nicht bedienbar, der Inhalt aendert im Lauf der Animation
+      - PLAYER.EXE laeuft im 'MONITOR MODE' mit,
+        dh. jede Aenderung wird als Einzelschritt runtergegeben
+    
+    #ausserdem gibt es noch: HARTES,REALES PLAY: 
+    #  * ganzes Programm ueber gleichen Kanal runter an PLAYER.EXE geben
+    #  * die Oberflaeche wird stillgelegt, Widgets ohne Inhalte und ohne Eventreaktion
+    #
+    #  ? am besten gar nicht da, nur ein Hinweis ?
+    #  ? wie wird das abgebrochen ?
+    
+    * keine Eventreaktion in den Widgets
+    * Markierung links in der SZENENLISTE laeuft durchs Programm
+    * der GRID zeigt die wechselnden Farben ohne Hex-Texte
+      + ###OPTI: in diesem Modus gar keine Hextexte erst setzen
+        und die HG-Farbe direkt als R,G,B akzeptieren ?
+      + statt in SetLedXxxx jedesmal if zu fragen,
+        koennte ich die Funktion bei Moduswechsel umhaengen :-)
+    
+    * 3 Buttons PLAY,PAUSE,STOP
+      - am liebsten nur auf dem Tab fuer den Play Modus
+        ? aber einen Toolbar kann man nicht an Unterfenster binden ?
+      - sonst eventuell als Buttons auf dem Tab (rechts im Sonderframe)
+        oder als Buttons im normalen Toolbar, die jeweils Play-Mode aktivieren
+      + ###SVEN: Buttons mit Bitmap, eigene Klasse dafuer machen und aufheben
+    
+    * darunter/darueber/daneben die Zeit ab Start in 
+      LED Control anzeigen :-)
+    
+    ! neuer MODUS 'P'=PLAY
+    ! PLUS GRUENER HINTERGRUND in der Liste, KEINE EVENTREAKTION
+    
+    + derzeit nur in realer Zeit	###LATER mit Faktor oder virtuell wie in Simulation
+    + noch keine Events			###LATER siehe Events...
+  
+  ###INTERN: zur Simulation...
+  ============================
+    - 1 schritt so schnell es auf der CPU geht:
+      neuen Grid berechnen, Grid fuellen, Update erzwingen, 1ms pause?
+      ###TEST: zum thema update erzwingen: einfach mal Grid 10 sec lang
+        mit Aenderungen ueberschuetten und zusehen...
+    - danach gucken wieviel Zeit real vergangen ist und weiter
+    
+    - bei PLAY nach Pause fortsetzen (mitten in Transition)
+      oder bei aktueller Markierung anfangen
+    - bei PAUSE genau hier stehenbleiben und auf PLAY oder STOP warten
+    - bei STOP beenden, Reset nach oben
+    
+    * PLAY fuer ganze SzeneList:
+      - immer Szenen wechseln (wirklich Markierung weitersetzen)
+        wenn ich laut Zeit nicht mehr darin bin
+      - sonst Play fuer aktuelle Szene,
+        sie kriegt die Zeiten xxx von yyy fuer sich vorgekaut,
+        die 2D Farbliste (vorher,aktuell,nachher) kann sie sich selber holen
+      
+      ! ich will idiotische Sequenzen wie Blende am Anfang
+        oder Szene,Blende,Blende,Szene zwischenzeitlich beim Edit erlauben,
+        damit ich Sachen manipulieren kann,
+        =>DAS HEISST ABER, DASS PLAY AUCH SCHIEFGEHEN KANN !!!
+    
+    * PLAY fuer eine Szene:
+      - ich werde von oben gefragt wie meine Farbwerte sind (ganze 2D Liste)
+        wenn xxx von yyy Zentelsekunden vergangen sind
+      - die Formel fuer die Farbwerte ist unten im Programmobjekt LedSchritt
+        fuer LedSzene: immer die gleichen Farbwerte aus self
+        fuer LedBlende: keine eigenen Farbwerte, er muss in vorher und nachher gucken
+          (vorkauen oder selber nachsehen ?)
+          jede Blende implementiert ihre eigene Formel
+          2dvorher,2dnachher,xxx,yyy => 2djetzt
+    
+    + WENN ICH DAS SCHON HABE,
+      dann kann ich im Grid fuer Blenden im 'N'ormal Modus 
+      auch den 50% status anzeigen -> einfach die Formel nach vorher,nachher,1,2 fragen
+      ! ###LATER nicht animieren, aber ein Regler der anfangs auf 50% ist,
+        koennte die Stelle waehlen :-)
+
+
+----------------------------------------------------------------------
+HAUPT-MODI, OP RECYCLING	(in v1.0 meta/normal ohne wx.Notebook)
+------------------------
+
+  TABFENSTER OBENDRUEBER FUER GROSSE MODI
+  =======================================
+    '###WAIT: erst mit vollerem Metaedit und internem Play relevant
+    
+    		ICON			HGCOLOR
+    		====			=======
+    1.META:	leerer Grid		rot fuer Gefahr
+    2.EDIT:	bunter Grid mit Farben	grau/normal
+      		aus 'lededit.ico'
+    3.PLAY:	leerer Grid + green >	leicht gruen
+    
+    + 4?.EXECUTE: hartes Play unten im Player.EXE
+      die GUI soll tot sein, passiert das ueber Modi ???
+    
+    - leider muss ich dadurch die Widgets jedesmal killen & konstruieren lassen,
+      das heisst aber nicht dass ich nicht immer die gleichen Widgetklassen
+      verwende und die durch eine Flag steuere
+    + wenn ich kille und konstruiere, wuerde ich die aktuelle Zeile links
+      gerne uebertragen, die aktuelle Selection in Grid aber nicht
+    
+    * ich kann mir von aussen wuenschen, wo ich anfangen will,
+      nach NEW: auf meta
+      nach LOAD: auf edit
+    
+    + LedGrid.showhex haengt vom Modus ab
+      ###LATER: nur im Toolbar, nicht im Menu
+        toggle Schalter Code von XML Auto holen,
+        LedGrid.showhex umschalten und kleines,rechtes Update anstossen
+    
+    ? so wie Grid-Refresh aus der Liste angestossen wird,
+      koennte das wiederum VON OBEN VON MEINEM MASTER,
+      dem wx.Notebook fuer die Umschaltung der Modes meta|edit|play kommen,
+      denn der muss sowieso alle Widgets killen und neu fuellen
+  
+  "OPERATION RECYCLING 2: Auto-Step"
+  ==================================
+    '###WAIT: Copy links ist einfach, Motivation und verstaendlichkeit unsicher
+    
+    mit OPERATION RECYCLING ist hier gemeint, die gleichen Operationen
+    je nach Context mit recht verschiedener Bedeutung wiederzuverwenden
+    
+    # OPERATION RECYCLING 1 waren die Operationen auf Meta-Ebene, siehe dort
+    
+    * OPERATION RECYCLING 2 "Auto Step"
+      ist kein voller Modus sondern nur eine Bedien-Variante von EDIT:
+        viele Operationen die sonst einfach den aktuellen Grid aendern,
+        koennen auch "STEP-BILDEND" verwendet werden;
+        dh. die Operation wird ausgefuehrt aber das Ergebnis
+          in den Nachfolgestep abgelegt, der bekommt den Fokus
+    
+    * VORTEILE :-)
+      - zum Bsp BMP-Import waere in neuen Frame schoener
+      - so koennte man eine 5 Schritte Schiebe-Blende
+        mit 5 ganz leichten Schritten direkt anlegen
+      - ...
+    
+    ? PREISFRAGE IST DIE BEDIENUNG
+      - ###NO: bitte kein extra roter Button dafuer
+      * einfach Ctrl druecken waere nett (Ctrl heisst oft Copy oder Mehr...)
+      - oder nach Tastaturfokus entscheiden ?
+        - in LISTE war die OP als Listenop gemeint (Auto Step)
+        - in GRID war die OP fuer Grid gemeint (normal)
+        koennte aber tueckisch sein und auch mit multi-listen-ops kollidieren ?
+    
+    - ###LATER PLUS BLENDENSCHRITT: wenn es echte LedBlendeXxxx Zwischenschritte
+      gibt (siehe dort), koennten bestimmte Ops auch gleich den richtigen 
+      Zwischenschritt mit den richtigen Einstellungen zur Folge haben
+        (weniger relevant, da auch Move durch Mischung zu machen ist)
+  
+  ###NOCH SPAETER: OPERATION RECYCLING 3++
+  ========================================
+    # 1,2 und vielleicht 3 sollten implementiert sein, es gaenge noch mehr...
+    
+    z.B. fuer MOVE waere dutzende Modi denkbar
+    1 SELEKTION einer normalen Szene
+    - ganze SZENE (braucht aber 8 statt 3 Ops oder eindeutige Pivotstellung)
+    2 META-Selektion und alle Szenen darunter
+    3 aktuelle Szene/Selektion, erzeugt BLENDE+NEUE SZENE
+    + MEHRERE SZENEN LINKS (braucht Mehrfachmarkierung...)
+  
+
+----------------------------------------------------------------------
+AUSSER SZENEN AUCH BLENDEN	! zu spaet !
+--------------------------
+  # HIER WURDE DAS MODELL GESCHLOSSEN, IST WOHL ZU SPAET
+  
+  ' DAS PROBLEM WAR:
+    - Player wird noch komplexer
+    - vieles muss in Player und Editor gedoppelt werden
+    - die schoensten 5 Blendeffekte koennten leicht als Makro
+      in die GUI Einzug halten, auch wenn das reale Zwischenszenen erzeugt
+    - ausserdem ist es fuer ein einfaches Move wieder Erwarten 
+      nicht noetig, dafuer genuegt Mischen
+
+  UEBERLEGUNG
+  ===========
+    * es ist klar dass es jetzt nur 1 Art von Blende 
+      zwischen den Szenen geben wird: "MIX = schrittweise Farbmischung"
+    
+    * die Frage ist, ob das Modell fuer weitere Blendenarten offen bleiben soll
+      oder "fuer immer" auf eine festgelegt wird
+      
+      OFFEN: 
+        in der grossen Szenenliste sind ausser LedSzenen (= Bitmaps)
+        auch LedBlenden (= programmierte Uebergaenge);
+        LedBlendeMix ist derzeitig aber die einzige
+        
+        (-) einiger AUFWAND, der jetzt gar nicht genutzt wird
+        (-) wenn die weiteren Szenen dazukommen,
+            ist das auch fuer den PLAYER ein rechter Aufwand
+      
+      FEST:
+        jede Szene bekommt 2 Zeitangaben zugefuegt
+        1.Stop mit konstantem Bild
+        2.Dauer des Uebergangs aufs naechste
+        
+        (-) das wird tief in der Denke von Editor und Player(!) verankert
+            und ist spaeter kaum noch zu aendern
+        (-) wenn schon immer ein Computer fuer die LED Wall 
+            gebraucht wird, dann brauchen wir ihn nicht so unter Wert schlagen
+            und uns auf etwas beschraenken was der BasicTiger auch koennte
+  
+  MOEGLICHE WEITERE BLENDEN
+  =========================
+    ! der WITZ waere, selbst mit einfachen Szenen (alles rot,blau,weiss...)
+      und wenig Aufwand tolle Animationen zu schaffen
+    ! man kann mit der EXE kaum fertige Programme mitliefern,
+      eine grosse Bibliothek von Blenden aber schon,
+      die Formeln sind von der Feldgroesse unabhaengig
+    
+    - Mischung: als einzige fest eingebaut, siehe oben
+    - Verschieben: ist nix anderes als Mischung wenn
+      das naechste Bild die verschobene Szene ist (erstaunlich !)
+    
+    * Vorhaenge...
+    * Aufpixeln, Random...
+    + weitere Anregungen von Flash oder Director...
+  
+  ###ALTERNATIVE: BLENDEN NUR ALS GUI-MAKROS
+  ==========================================
+    (+) DIE MEISTEN VORTEILE VON OBEN
+        (von Groesse unabhaengig, wird als Bibliothek mitgeliefert)
+        MUSS ABER NUR IM PLAYER IMPLEMENTIERT WERDEN
+    
+    (-) natuerlich werden die Programme groesser
+    
+    * Menuepunkte in neuem Menue die aus 2 Szenen
+      Anfang+Ende -> eine ganze Folge fuer den Uebergang machen
+    * vielleicht in der linken Liste/im Programm
+      Szenengruppen markieren
+  
+  ###INTERN: FALLS ECHTE BLENDENOBJEKTE
+  =====================================
+    =>SUCHE 'class LedSzene':
+      - darueber abstrakte Oberklasse LedSchritt
+      
+      - darunter Bruderklassen LedBlende (bleibt abstract)
+        und LedBlendeMix (REAL...)
+        + auch wieder mit Name und Zeitdauer, nur statt BMP andere Infos
+        + wird im speicherformat und auch im GUI Strahl mit Szenen vermischt,
+          also aufpassen
+    
+    * offene Konstruktion aus Textfile vielleicht wieder mit Factory
+      for szenedict in szenen:
+        #den Rest erledigt der Konstruktor...
+        szene = LedSzene(self, **szenedict)
+      
+      ->nicht einfach nur Konstruktor, erstmal anhand der Daten
+        die richtige Unterklasse von LedSchritt (LedBlende...) finden
+    
+    
+    * LedBlende->LedBlendeMix: die UEBERGAENGE sind [jetzt] nur reine Mischungen
+      in bestimmter Geschwindigkeit
+    
+    + ###LATER LedBlende->LedBlendeXxxxx weitere UEBERGAENGE:
+      - derzeit gibt es harte Uebergaenge (Szenen mit Zeitdauer, ohne Luecken)
+      - und LedBlendeMix mit Zeitdauer = 'Mischen in x Sekunden'
+      
+      + spaeter soll es mehr Blenden-Namen/Blenden-Klassen geben,
+        der Player ignoriert ihm unbekannte (damit er neuere Files spielt...)
+    
+    * Blende in Liste und Grid:
+      - deren Icons in der Folge links mit extremem muster, 
+        das aus Malerei sehr unwahrscheinlich ist: 'spec-step.gif'
+      - die 2..3 Parameter/Eigenschaften lassen sich mit doppelklick
+        im Propertiesdialog der Szene -> Blende einstellen
+        (es sollte inzwischen einen allgemeinen Record-editing Dialog geben...)
+  
+      - der Grid bleibt erstmal weiss, r/o,
+        + ###LATER ist er der 50% Zustand, siehe Mischformel bei eigenem Play
+        + ###NOT animieren, das gehoert nicht hierher
+    
+    - Szenen haben wieder nur 1 Zeit: Dauer des Stops
+
+
+----------------------------------------------------------------------
+INPUT EVENTS
+------------
+
+  @@@KONZEPTION, TODO: alle moeglichen Effekte/Reaktionen sammeln
+  @@@EINFACHER CODE: CALL+RETURN schon bald, auch ohne Events ?
+  
+  _/ VOM EDITOR FESTGEHALTEN, VOM PLAYER AUSGEWERTET
+     UNKLAR IST DIE GENAUE LOGIK...
+  
+  !! ACHTUNG: im Internen Play Events ueber Checkboxen simulieren
+  
+  TEST-SCHRITTE ODER GLOBALE EVENTHANDLER ?
+  =========================================
+    TEST-SCHRITTE: damit gaebe es links 
+      noch einen moeglichen LedStep (ausser LedSzene & LedBlende):
+      
+      + LedCode: IF, ELSE...
+        - an einfachsten Assembler denken, was den Lauf durchs Prog betrifft
+          (bedingte Spruenge +/- X, Call & Return, ...)
+        - fuer die Ausdruecke selber aber eval in Python
+    
+    EVENTS:
+      * auf jeden Fall 2 Events generieren: AN & AUS
+      + eventuell auch direkt IF abfragbar machen ?
+      
+      * Zustandsuebergaenge wie in endlichem Automat
+        gehen nur fuer ganze fertige Programme
+        - es laeuft Programm grau0
+        - bei Event1-AN geht es auf rot1 ueber
+        - bei Event1-AUS wieder zurueck
+  
+  GANZE SZENEN ODER FEINER ?
+  ==========================
+    * mit obiger "IMMER GANZE BITMAPS" Metapher
+      sind die Reaktionen beschraenkt auf die Zeit:
+      - Anhalten und Fortsetzen
+      - Springen zu Szenen
+      - Veraenderung von Tempo
+    
+    =>HIN ZU PARAMETRISIERBARKEIT:
+      LED-PROGRAMME mehr wie eine Programmiersprache sehen
+      ! das waere aber weg von der "IMMER GANZE BITMAPS" Metapher
+      ! es ist SCHWACH, wenn da ein voller PC ist und 
+        wir ihn nur wie eine kleine schwarze Box programmieren
+      
+      - Unterprogramme, die bei gleichem Muster und
+        Tempo noch in der Farbe parametrisierbar sind
+      - ausser Spruengen auch Call und Return
+      - wie bei animated GIFs auch nur Bereiche tauschen/animieren
+        #zB. einzeln 3 von 5 Saeulen einschalten, wenn da 3 Menschen stehen, 
+        #    ohne das es 2^5 volle Bilder braucht
+      - wenn Farben austauschbar sind, darf ich Uebergaenge 
+        nicht vor-rendern sondern das entsteht Live
+  
+  PARAMETRISIERBARKEIT VON PROGRAMMEN
+  ===================================
+    - MEHR ALS GRAFIK-PROGRAMM, GEHT FAST IN RICHTUNG VEKTOR-GRAFIK
+    
+    - ein weiterer MODUS :-) ein weiteres OP RECYCLING :-)
+    ! schwer zu verstehen und zu entwerfen, VERSION 3.0 !!!
+    
+    - Grundidee ist "Meta-Infos aufheben"
+    - wenn ich einen Farbgradient von li ob nach re unt mache,
+      dann aendere ich nicht nur das BMP,
+      sondern merke mir auch, dass es ein Uebergang war
+    
+    - ein bisschen als waere es Vektorformat statt nur BMP
+    - das ist die Basis fuer Parametrisierbarkeit :-)
+    
+    ! das ist Version 2.0 oder 3.0, erstmal muss es was geben, 
+      bevor es parametrisierbar wird
+      + mit meinen Actionen in der GUI nicht feste Farben
+        anlegen sondern, Formeln (vielleicht auf Wunsch so oder so)
+      + das Grid als kleiner Bruder von XL hat sogar
+        schon ein Batch-Feature, so koennte ich alle formeln updaten
+      + feste Zellen (rot, weiss, 3F0CD4...) oder
+        variable (Gradient, Invers von x, ...)
+    
+    + so koennte man parametrisierbare Funktionen
+      sogar als LedBlendeProg Schritte verwenden :-)
+
+
+----------------------------------------------------------------------
+IDEEN GANZ NEUE CLIENTS
+-----------------------
+
+  SCREEN-SHOT ==> SCREEN-KAMERA
+  =============================
+    ! nicht mehr einfacher Screenshot sondern volle Kamera "MITLAUFEN",
+      das waere im Zusammenspiel mit USB-Kamera die Loesung fuer die Blaue Nacht gewesen
+    
+    - wie Zoomin aus VStudio Tools, aber nicht [eventuell auch !] auf 1 grosses Pixel
+      sondern auf die Kacheln
+    
+    ! MIT ZOOM: nicht mischen, einfach nur jeweils 1 Punkt aus 5x5 nehmen
+      - als Punktraster zeigen
+      - mit 2 Reglern fuer X und Y und nochmal 2 fuer Offset
+      - oder halbdurchsichtiges Fenster draggen ?
+    
+    ! PLUS "FORMELN" fuer gezielte Verfremdung:
+      - INPUTVARIABLEN r,g,b, h,s,v eventuell jpeg...
+      - OUTPUTFORMELN  am liebsten 3 von 6 (rgb hsv) und dann selber suchen
+      
+      + Schwellwerte, Stretchen, Verschiebungen, lineare Formeln...
+        koennte man als Formeln mit den obigen 6 Varis formulieren
+    
+    + damit koennte man Animationen in Flash machen ;-)
+    + ueber Screenshot-API ?
+
+  BITMAP-CURSOR
+  =============
+    einfach einen Wand-foermigen 'Kursor' ueber
+    ein grosses BITMAP laufen lassen
+    
+    Einstellungen:
+    - SCHRITT: delay, offset
+    - X-WRAP: formel (x=0, y+5)
+    - Y-WRAP: formel (x=0, y=0)
+    - ZOOM: 1x1, 2x2, 3x3, ... Pixel zu einer Kachel machen
+  
+  LICHT-ORGEL
+  ===========
+    siehe:
+    - WinAmp, WinMediaPlayer
+    - Fraktale Freeware in ct
+    - ...
+    + Source fuer Soundanalyse aus alter Win32 Demo von Reliable oder so
+    
+    Einstellungen:
+    - Grundfarben ?
+    - Farbe je Frequenzband ?
+    - ...

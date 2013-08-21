@@ -1,0 +1,28 @@
+V=1.00
+S(10,10) {
+  001=40,00,40
+  002=5f,2a,5f
+  003=7f,55,7f
+  004=9f,7f,9f
+  005=ff,ff,ff
+  006=5f,2a,5f
+  007=7f,55,7f
+  008=9f,7f,9f
+  009=bf,aa,bf
+  010=ff,ff,ff
+  011=7f,55,7f
+  012=9f,7f,9f
+  013=bf,aa,bf
+  014=df,d4,df
+  015=ff,ff,ff
+  016=9f,7f,9f
+  017=bf,aa,bf
+  018=df,d4,df
+  019=ff,ff,ff
+  020=ff,ff,ff
+  021=ff,ff,ff
+  022=ff,ff,ff
+  023=ff,ff,ff
+  024=ff,ff,ff
+  025=ff,ff,ff
+}

@@ -1,0 +1,30 @@
+#LED-Programm direkt als Pythondaten, vorsichtig editieren !
+{
+#DIE METASZENE...
+'size': (5, 5) ,
+'meta': [
+    [  1,  2,  3,  4,  5, ],
+    [  6,  7, 16,  8,  9, ],
+    [ 20, 10, 17, 11, 23, ],
+    [ 21, 12, 18, 13, 24, ],
+    [ 22, 14, 19, 15, 25, ],
+  ],
+
+#USER DEFINED PROPERTIES
+'QuadratSize': 50,
+
+#LISTE VON SZENEN
+'ablauf': [
+    { 
+      'name': 'Weiss',
+      'dauer': 100,
+      'farben': [
+        ['FF0000', 'FF3F3F', '7FFF7F', '3FFF3F', '00FF00'],
+        ['FF3F3F', 'FF7F7F', 'BFFFBF', '7FFF7F', '3FFF3F'],
+        ['FF7F7F', 'FFBFBF', 'FFFFFF', 'FFFFBF', 'FFFF7F'],
+        ['3F3FFF', '7F7FFF', 'BFBFFF', 'FFFF7F', 'FFFF3F'],
+        ['0000FF', '3F3FFF', '7F7FFF', 'FFFF3F', 'FFFF00'],
+      ],
+    } ,
+  ],
+}

@@ -1,0 +1,48 @@
+<html>
+<body>
+<pre>
+<h1>Erstellungsprotokoll</h1>
+<h3>
+--------------------Konfiguration: ESCollect - Win32 Debug--------------------
+</h3>
+<h3>Befehlszeilen</h3>
+Erstellen der temporären Datei  "C:\DOKUME~1\DIL~1.POW\LOKALE~1\Temp\RSP88.tmp" mit Inhalten
+[
+/nologo /subsystem:windows /incremental:yes /pdb:"Debug/KachelPlayer.pdb" /debug /machine:I386 /out:"Debug/KachelPlayer.exe" /pdbtype:sept 
+".\Debug\CMyAsyncSocket.obj"
+".\Debug\CommClass.obj"
+".\Debug\ESCollect.obj"
+".\Debug\ESCollectDlg.obj"
+".\Debug\FirmwareUpdate.obj"
+".\Debug\Parameter.obj"
+".\Debug\PlayerClass.obj"
+".\Debug\StdAfx.obj"
+".\Debug\Str_.obj"
+".\Debug\ESCollect.res"
+]
+Erstellen der Befehlzeile "link.exe @C:\DOKUME~1\DIL~1.POW\LOKALE~1\Temp\RSP88.tmp"
+<h3>Ausgabefenster</h3>
+Linker-Vorgang läuft...
+Erstellen der temporären Datei  "C:\DOKUME~1\DIL~1.POW\LOKALE~1\Temp\RSP8A.tmp" mit Inhalten
+[
+/nologo /o"Debug/ESCollect.bsc" 
+".\Debug\StdAfx.sbr"
+".\Debug\CMyAsyncSocket.sbr"
+".\Debug\CommClass.sbr"
+".\Debug\ESCollect.sbr"
+".\Debug\ESCollectDlg.sbr"
+".\Debug\FirmwareUpdate.sbr"
+".\Debug\Parameter.sbr"
+".\Debug\PlayerClass.sbr"
+".\Debug\Str_.sbr"]
+Erstellen der Befehlzeile "bscmake.exe @C:\DOKUME~1\DIL~1.POW\LOKALE~1\Temp\RSP8A.tmp"
+Browse-Informationsdatei wird erstellt...
+<h3>Ausgabefenster</h3>
+
+
+
+<h3>Ergebnisse</h3>
+KachelPlayer.exe - 0 Fehler, 0 Warnung(en)
+</pre>
+</body>
+</html>

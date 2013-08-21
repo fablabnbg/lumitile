@@ -1,0 +1,46 @@
+REGEDIT4
+
+#---------------------------------------------------------------------
+#2 Kachelprogrammformate 
+#  LEDP = Programm, offen UND LEDX = eXecutable, geschlossen
+
+#! Dieses REG-File funktioniert nur mit Installationspfad
+#    C:\Program Files\LedKacheln
+#  oder 
+#    C:\Programme\LedKacheln
+
+[HKEY_CLASSES_ROOT\.ledp]
+@="LedKachel.Programm"
+
+[HKEY_CLASSES_ROOT\.ledx]
+@="LedKachel.Executable"
+
+
+[HKEY_CLASSES_ROOT\LedKachel.Programm]
+@="LedKachel Programm"
+
+[HKEY_CLASSES_ROOT\LedKachel.Programm\shell]
+
+[HKEY_CLASSES_ROOT\LedKachel.Programm\shell\open]
+@=""
+
+[HKEY_CLASSES_ROOT\LedKachel.Programm\shell\open\command]
+@="C:\\PROGRA~1\\LedKacheln\\KachelEditor.exe \"%1\""
+
+[HKEY_CLASSES_ROOT\LedKachel.Programm\DefaultIcon]
+@="C:\\PROGRA~1\\LedKacheln\\icons\\ledp.ico"
+
+
+[HKEY_CLASSES_ROOT\LedKachel.Executable]
+@="LedKachel Executable"
+
+[HKEY_CLASSES_ROOT\LedKachel.Executable\shell]
+
+[HKEY_CLASSES_ROOT\LedKachel.Executable\shell\open]
+@=""
+
+[HKEY_CLASSES_ROOT\LedKachel.Executable\shell\open\command]
+@="C:\\PROGRA~1\\LedKacheln\\KachelPlayer.exe \"%1\""
+
+[HKEY_CLASSES_ROOT\LedKachel.Executable\DefaultIcon]
+@="C:\\PROGRA~1\\LedKacheln\\icons\\ledx.ico"

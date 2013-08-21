@@ -1,0 +1,3784 @@
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001         Processor 16F914
+                      00002 
+                      00003 #include P16F914.inc   
+                      00001         LIST
+                      00002 ; P16F914.INC  Standard Header File, Version 1.00    Microchip Technology, Inc.
+                      00842         LIST
+                      00004 ;******************************************************************
+                      00005 ; History
+                      00006 ;******************************************************************
+                      00007 ; Version 1.21  03.10.2005 Ga
+                      00008 ; - Gateway für PC eingebaut
+                      00009  
+                      00010 ; Version 1.22  05.10.2005 Ga
+                      00011 ; - Rundungsfehler (?) beseitigt, zählte bei hohen Farbunterschieden immer +2 bzw -2
+                      00012 
+                      00013 ; Version 1.23  10.10.2005 Ga
+                      00014 ; - Default-Programm in Wahlschalterstellung 1 (Wiedergabe-Modus) ist jetzt Programm 4,
+                      00015 ;   das individuelle erstellte Farbverlaufprogramm 
+                      00016 ; - Fehler im Wiedergabemodus nach Reset (kein automatischer Anlauf) beseitigt
+                      00017 
+                      00018 ;******************************************************************
+                      00019 ; Definitions
+                      00020 ;******************************************************************
+                      00021 ;
+                      00022 
+                      00023 ;------------------------------------------------------------------
+                      00024 ; Register Definitions
+                      00025 ;
+  00000021            00026 PCLATH_TEMP     equ     0x21 ; Stack für PLATH-Register
+                      00027 
+  00000022            00028 TIM1_10MS       equ 0x22
+  00000023            00029 TIM2_10MS       equ     0x23
+                      00030 
+  00000024            00031 AD0                             equ     0x24    ; Rot
+  00000025            00032 AD1                             equ     0x25    ; Grün
+  00000026            00033 AD2                             equ     0x26    ; Blau
+  00000027            00034 AD3                             equ     0x27    ; Speed
+                      00035 
+                      00036 
+  00000028            00037 TASTE_AKT               equ     0x28    ; aktuell gedrückte Taste, Bit 7 = 1 wenn 
+                      00038                                                         ; Drücken entdeckt, bei Repeat Bit 6=1
+  00000029            00039 TASTE_LAST              equ     0x29    ; zuletzt gedrückte Taste
+  0000002A            00040 TASTE_IDX               equ     0x2a    ; Wert, der 10%, 30%, 40% usw in eine Zahl 0,1,2 usw wandelt
+                      00041                                                         ; wird von TAST_DISPATCH beschrieben
+                      00042 
+                      00043 
+  0000002B            00044 TEMP                    equ 0x2b        ; temporäre Speicherplatz, nur in einem
+                      00045                                         ; call geschützt
+                      00046 
+  0000002C            00047 TEMP1                   equ 0x2c
+  0000002D            00048 TEMP2                   equ 0x2d
+                      00049 
+  0000002E            00050 SEKUNDEN_WERT           equ 0x2e        ; Zeit bis zum nöchsten Farbtripel aus Tabelle
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+  0000002F            00051 SEKUNDEN_COUNT          equ 0x2f        ; Zeit bis zum nöchsten Farbtripel aus Tabelle
+                      00052 
+  00000030            00053 DISP_CNT                equ     0x30    ; enthält die ANzahl auf Disp zu schreibende Zeichen
+  00000031            00054 DISP_Z_FLAG             equ     0x31    ; Bit0-> Zeile 1
+                      00055                                                         ; Bit1-> Zeile 2 usw.
+  00000032            00056 DISP_STAT               equ     0x32    ; Bit3-> DisplayAusgabe steht an
+                      00057 
+  00000033            00058 ACC1_0                  equ     0x33    ;Rechenregister
+  00000034            00059 ACC1_H                  equ     0x34    ;Rechenregister
+  00000035            00060 ACC1_L                  equ     0x35
+                      00061 
+  00000036            00062 ACC2_0                  equ     0x36    ;Rechenregister
+  00000037            00063 ACC2_H                  equ     0x37
+  00000038            00064 ACC2_L                  equ     0x38
+                      00065 
+  00000039            00066 TEMPFLAG                equ     0x39    ; Temporäres Bitregister
+                      00067 
+  0000003A            00068 DELAY                   equ     0x3a
+                      00069                                                         ; Bit6-> Anzeige On/Off 
+  0000003B            00070 TEMP3                   equ     0x3b
+  0000003C            00071 TEMP4                   equ     0x3c
+  0000003D            00072 TEMP5                   equ     0x3d
+  0000003F            00073 AD_STATUS               equ 0x3f        ; Bit 0-2 --> Neuer AD-Wert Kanal 0-2
+                      00074 
+  000000A0            00075 FARBTAB                 equ 0xA0        ; 5 Farbtripel zum anfahren + Zeit
+                      00076                                         ; !!!! Registerbank 1 !!!
+  00000040            00077 TASTBUFF                equ 0x40
+                      00078 
+  00000050            00079 DISP_BUFF               equ     0x50    ; Display Buffer, 16 chars!!
+                      00080 
+  00000060            00081 ITOA_BUFF               equ     0x60    ; Achtung!! 6 Bytes lang!!!!
+                      00082 
+  00000066            00083 TIMECOUNT               equ     0x66
+  00000068            00084 HEX_AKT                 equ     0x68    ; Bit 0-3-> aktuelle Hex-Schalter Stellung
+  00000069            00085 HEX_LAST                equ     0x69    ; Bit 7=1-> Schalterstellung geändert
+                      00086 
+  0000006A            00087 FARB_IDX_AKT            equ     0x6a
+  0000006B            00088 FARB_IDX_NEXT           equ     0x6b
+  0000006C            00089 FARB_COUNT              equ     0x6c
+  0000006D            00090 FARB_SPEICHER_IDX       equ     0x6d
+  0000006E            00091 TASTBUFF_IDX            equ     0x6e
+  0000006F            00092 RX_COUNT                        equ     0x6f
+  0000007E            00093 W_TEMP                  equ     0x7e ; Stack für W-register im Interrupt
+  0000007F            00094 STATUS_TEMP             equ     0x7f ; stack für STATUS im Interrupt
+                      00095 
+                      00096 
+                      00097 
+                      00098 ;===================================
+  00000006            00099 PORT_TASTOUT    equ     PORTB   ; TastaturSCan Out
+  00000008            00100 PORT_TASTIN             equ     PORTD   ; TastaturScan IN
+  00000003            00101 ETX                             equ 0x3
+  00000002            00102 STX                             equ 0x2
+                      00103 
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00104 
+                      00105 
+                      00106 ;16F914-Configs---------------------------------------------------------------------
+                      00107 ;       __IDLOCS        H'3012' ;       User ID
+                      00108 ;-----------------------------------------------------------------------------------
+                      00109 ;16F914 ************************************************************************
+2007   20E2           00110         __CONFIG  B'10000011100010'             ;zum debuggen
+                      00111 ;       __CONFIG  B'11000000100010'             
+                      00112 ;                   ||||||||||||||
+                      00113 ;                   |||||||||||+++---FOSC 111=RC R+C an RA5, RA4=CLKOUT
+                      00114 ;                   |||||||||||+++---FOSC 110=RC R+C an RA5
+                      00115 ;                   |||||||||||+++---FOSC 101=INTOSC RA4=CLKOUT
+                      00116 ;                   |||||||||||+++---FOSC 100=INTOSC RA4, RA5 = I/O
+                      00117 ;                   |||||||||||+++---FOSC 011=EC
+                      00118 ;                   |||||||||||+++---FOSC 010=HS
+                      00119 ;                   |||||||||||+++---FOSC 001=XT
+                      00120 ;                   |||||||||||+++---FOSC 000=LP
+                      00121 ;                   |||||||||||     
+                      00122 ;                   ||||||||||+------WDTE 0=disa 1=ena
+                      00123 ;                   |||||||||+-------PWRT 0=ena  1=disa
+                      00124 ;                   ||||||||+--------MCLR 0=din  1=ena
+                      00125 ;                   |||||||+---------CP  ROM 0=CPena 1=CPdis
+                      00126 ;                   ||||||+----------CPD RAM 0=CPena 1=CPdis
+                      00127 ;                   ||||++-----------BOR 00=BOR disabled
+                      00128 ;                   ||||++-----------BOR 01=BOR controlled by SBOREN
+                      00129 ;                   ||||++-----------BOR 10=BOR enabled: operation dis.: sleep
+                      00130 ;                   ||||++-----------BOR 11=BOR enabled
+                      00131 ;                   |||+-------------IESO 0=dis   1=ena
+                      00132 ;                   ||+--------------FCMEN 0=dis  1=ena
+                      00133 ;                   |+---------------DEBUG 0=ena  1=dis
+                      00134 ;
+                      00135 ;***************************************************************
+                      00136 ;
+                      00137         IFNDEF __16F914
+                      00138            MESSG "Eingestellter Prozessor ist nicht 16F914 - Überprüfe Einstellungen"
+                      00139         ENDIF
+                      00140 ;=============================================================================================
+                      00141 ; PROGRAMM
+                      00142 ;=============================================================================================
+0000                  00143         org     000
+                      00144 ;RST CODE 0x0
+0000   018A           00145         clrf PCLATH
+                      00146 
+                      00147 
+                      00148 ;,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+0001   282A           00149         goto    start
+                      00150 
+                      00151 ;=============================================================================================
+                      00152 ; ISR
+                      00153 ;=============================================================================================
+                      00154 
+                      00155 ;=============================================================================================
+                      00156 ;IV CODE 0x4
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0004                  00157         org     004
+0004   2808           00158         goto    Interrupt               
+                      00159 
+                      00160 ; ****************************************************************************
+                      00161 
+                      00162 ;TAB CODE 0x8
+0008                  00163         org     008
+                      00164 
+0008                  00165 Interrupt
+                      00166 
+0008   00FE           00167         movwf   W_TEMP          ; Accu sichern
+0009   0E03           00168         swapf   STATUS,W        ; Status nach Accu laden
+000A   0183           00169         clrf    STATUS          ; nach Bank 0 umschalten
+000B   00FF           00170         movwf   STATUS_TEMP     ; Status im Temp-Register ablegen
+                      00171 
+000C   080A           00172         movfw   PCLATH
+000D   00A1           00173         movwf   PCLATH_TEMP
+000E   018A           00174         clrf    PCLATH
+                      00175 
+000F   1283           00176         bcf     STATUS,RP0
+0010   1303           00177         bcf     STATUS,RP1
+                      00178 
+                      00179 
+0011   188C           00180         btfsc   PIR1, TMR2IF
+0012   2819           00181         goto    Timer2Int
+0013   180C           00182         btfsc   PIR1, TMR1IF
+0014   2816           00183         goto    Timer1Int
+0015   2823           00184         goto    EndInt
+                      00185 
+                      00186 ;---------------------------------------        
+0016                  00187 Timer1Int                       ; PWM-Timer
+                      00188 
+                      00189 
+0016                  00190 EndTimer1Int
+0016   100C           00191         bcf             PIR1, TMR1IF
+0017   1410           00192         bsf             T1CON,  TMR1ON
+0018   2823           00193         goto    EndInt
+                      00194 ;----------------------------------------
+0019                  00195 Timer2Int                       ; 10msec-Timer
+0019   1407           00196         bsf     PORTC,0
+001A   108C           00197         bcf             PIR1,TMR2IF
+001B   08A2           00198         movf    TIM1_10MS,F             ; TEst auf 0
+001C   1D03           00199         btfss   STATUS,Z
+001D   03A2           00200         decf    TIM1_10MS,F
+                      00201 
+001E   08A3           00202         movf    TIM2_10MS,F             ; TEst auf 0
+001F   1D03           00203         btfss   STATUS,Z
+0020   03A3           00204         decf    TIM2_10MS,F
+0021   1007           00205         bcf     PORTC,0
+                      00206 
+                      00207         
+                      00208         
+0022   2823           00209         goto    EndInt  
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00210 ;----------------------------------------
+0023                  00211 EndInt
+                      00212 
+0023   0821           00213         movfw   PCLATH_TEMP
+0024   008A           00214         movwf   PCLATH
+0025   0E7F           00215         swapf   STATUS_TEMP,W
+0026   0083           00216         movwf   STATUS
+0027   0EFE           00217         swapf   W_TEMP,F
+0028   0E7E           00218         swapf   W_TEMP,W        
+                      00219 
+0029   0009           00220         retfie
+                      00221 
+                      00222 
+                      00223 
+                      00224 
+                      00225 ;==================================================
+                      00226 ;INIT CODE 
+                      00227 ;==================================================
+                      00228 
+002A                  00229 start
+                      00230 
+                      00231 
+002A   0064           00232         clrwdt
+002B   0000           00233         nop
+                      00234 
+                      00235 ;====== Register 20H bis 7FH löschen ======
+                      00236 
+002C   3020           00237         movlw   20      ; beginne bei Register 20H
+002D   0084           00238         movwf   04      ; FSR
+                      00239 
+002E                  00240 loop_1
+002E   0180           00241         clrf    0
+002F   0A84           00242         incf    04,1
+0030   1F84           00243         btfss   04,7    ; wenn REGISTER 80H erreicht
+0031   282E           00244         goto loop_1
+                      00245 
+0032   0064           00246         clrwdt
+0033   0000           00247         nop
+                      00248 
+                      00249 ;======= Timer 2 INIT ========
+                      00250 
+0034   304E           00251         movlw   b'1001110'      ; T2on, Prescale 16, Postscale 10
+0035   0092           00252         movwf   T2CON
+0036   1683           00253         bsf     STATUS,RP0                      ; Bank 1
+0037   148C           00254         bsf     PIE1, TMR2IE    ; Timer 2 Interrupt enable
+0038   30FA           00255         movlw   d'250'                  ; 
+0039   0092           00256         movwf   PR2
+003A   1283           00257         bcf             STATUS,RP0                      ; Bank 1
+                      00258 
+                      00259 
+                      00260 ;======== Timer 1 INIT =========
+003B   1283           00261         bcf             3,5
+003C   3021           00262         movlw   b'100001'
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+003D   0090           00263         movwf   T1CON
+                      00264 
+                      00265         
+003E   1683           00266         bsf             3,5
+                      00267 ;       bsf             PIE1, TMR1IE
+003F   100C           00268         bcf             PIE1, TMR1IE
+                      00269 
+                      00270 ;======= Port A init =============
+0040   1205           00271         bcf             TRISA,4         ; D0 für Display
+                      00272 
+                      00273 ;======= Port D init =============
+                      00274 
+                      00275 ;       movlw   b'000000000'    ; Alles Ausgänge
+0041   30F8           00276         movlw   b'11111000'             ; Bit 0-2 = Controlbits für Display
+0042   0088           00277         movwf   TRISD
+                      00278 
+                      00279 ;======== Port B init ============
+                      00280 
+                      00281 ;       movlw   b'11000110'             ; Tastatur Scanner
+0043   30C0           00282         movlw   b'11000000'             ; Bit 0-5 = D2-7 für Display
+0044   0086           00283         movwf   TRISB
+0045   1781           00284         bsf             OPTION_REG, 7   ; Pull-Ups für PORT B einschalten
+                      00285 
+                      00286 ;======== Port C init ============
+                      00287 
+                      00288 ;       movlw   b'00111000'             ; Daten CS-Generator '138 (Bit 0-2)
+                      00289                                         ; PWM-IN (Bit 3-5)
+0046   30EF           00290         movlw   b'11101111'     ; Alles Eingänge
+0047   0087           00291         movwf   TRISC
+0048   1283           00292         BCF     STATUS,RP0      ;Bank 2
+0049   1703           00293         BSF     STATUS,RP1      ;
+004A   0187           00294         CLRF    LCDCON          ;Disable VLCD<3:1>
+004B   1683           00295         BSF     STATUS,RP0      ;Bank 0
+004C   1303           00296         BCF     STATUS,RP1
+                      00297 ;======== Port E init ============
+                      00298 
+                      00299 ;       movlw   b'00000000'             ; Daten für Display
+004D   30FB           00300         movlw   b'11111011'             ; Bit 2 = D1 für Display
+004E   0089           00301         movwf   TRISE
+                      00302 
+                      00303 
+                      00304 ;======== Serial Port Init ============
+                      00305 
+004F   3033           00306         movlw   d'51'
+0050   0099           00307         movwf   SPBRG                   ; Serial Port Baudrategenerator (Wert aus Tabelle = 19200 Baud)
+                      00308 
+                      00309 
+0051   3065           00310         movlw   b'01100101'             ; 8Bit-Transm., TxEnable, Asynch.Mode, High Baudrate
+0052   0098           00311         movwf   TXSTA                   ; TRANSMIT STATUS AND CONTROL REGISTER 
+                      00312 
+0053   1283           00313         bcf             3,5
+0054   3090           00314         movlw   b'10010000'             ; SerialPort Enable. CREN ena (Continues Receive), 8Bit receive 
+                            (wg. PC)
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0055   0098           00315         movwf   RCSTA                   ; ;RCSTA: RECEIVE STATUS AND CONTROL REGISTER
+                      00316 
+                      00317 
+                      00318 ;=========  A/D-Wandler INIT =====
+                      00319 
+0056   1683           00320         bsf             3,5
+                      00321 
+0057   300F           00322         movlw   b'00001111'             ; Kanal AN0-3 sind benutzt
+0058   0091           00323         movwf   ANSEL
+                      00324 
+0059   3060           00325         movlw   b'01100000'             ; Fosc /64
+005A   009F           00326         movwf   ADCON1
+                      00327         
+                      00328 
+005B   1283           00329         bcf             3,5
+005C   1303           00330         bcf             3,6
+                      00331 
+005D   3001           00332         movlw   b'00000001'             ; Left justified, VREF=Versorgung, ADON
+005E   009F           00333         movwf   ADCON0
+                      00334 
+005F   170B           00335         bsf             INTCON, PEIE
+0060   178B           00336         bsf             INTCON, GIE
+                      00337 
+0061   01BF           00338         clrf    AD_STATUS       ; = kein neuer AD-Wert da
+                      00339 
+0062   3004           00340         movlw   0x4
+0063   00AA           00341         movwf   TASTE_IDX
+0064   3005           00342         movlw   0x5
+0065   00A9           00343         movwf   TASTE_LAST
+                      00344 
+0066   01A4           00345         clrf    AD0
+0067   01A5           00346         clrf    AD1
+0068   1607           00347         bsf     PORTC,4         ; Data Enable für RS485-Transceiver
+                      00348         
+0069   24D8           00349         call    display_init
+006A   01B2           00350         clrf    DISP_STAT
+006B   1732           00351         bsf     DISP_STAT,6             ; Display on
+006C   2497           00352         call    display
+                      00353 
+006D   301E           00354         movlw   d'30'
+006E   00A3           00355         movwf   TIM2_10MS
+                      00356 
+006F                  00357 DispInitLoop    
+006F   08A3           00358         movf    TIM2_10MS,F
+0070   1D03           00359         btfss   STATUS,Z
+0071   286F           00360         goto    DispInitLoop    
+                      00361 
+0072   208C           00362         call    DispVersion
+0073   30C8           00363         movlw   d'200'
+0074   00A3           00364         movwf   TIM2_10MS
+                      00365         
+0075                  00366 VersLoop
+0075   08A3           00367         movf    TIM2_10MS,F
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0076   1D03           00368         btfss   STATUS,Z
+0077   2875           00369         goto    VersLoop
+                      00370 
+0078   3000           00371         movlw   0
+0079   00E8           00372         movwf   HEX_AKT
+007A   00ED           00373         movwf   FARB_SPEICHER_IDX
+                      00374 
+007B   30C0           00375         movlw   0xC0            ; Eigenes Farbprogramm
+007C   2545           00376         call    EEpromRead
+007D   01EA           00377         clrf    FARB_IDX_AKT
+007E   01EB           00378         clrf    FARB_IDX_NEXT
+007F   0AEB           00379         incf    FARB_IDX_NEXT,F
+0080   01AF           00380         clrf    SEKUNDEN_COUNT
+0081   01A3           00381         clrf    TIM2_10MS
+0082   01E6           00382         clrf    TIMECOUNT
+                      00383 
+                      00384 
+0083   2511           00385         call    ClearTastBuff
+                      00386 
+                      00387 
+                      00388 
+                      00389 ;==========MainLoop
+                      00390 
+0084                  00391 main
+0084   2409           00392         call    HexScan                         ; HEx-Schalter nach HEX_AKT einlesen
+0085   23AC           00393         call    TastScan                        ; Tastatur-Sac, Wert nach TASTE_AKT
+0086   2451           00394         call    ADconv                          ; AD.Wandlung beider Kanäle, Wert nach AD0 und AD1
+0087   2165           00395         call    HEX1_Dispatch           ; Automatik-Modus
+0088   21C0           00396         call    HEX2_Dispatch           ; Gateway Funktion
+0089   2234           00397         call    TastDispatch
+                      00398 ;       call    display
+008A   2133           00399         call    AdDispatch                      ; Wenn sich einer der D-Wert geändert hat
+                      00400 
+                      00401 ;       movlw   #2
+                      00402 ;       movwf   TIM1_10MS
+                      00403 
+008B                  00404 MainWaitLoop    
+                      00405 ;       movf    TIM1_10MS,F
+                      00406 ;       btfss   STATUS,Z
+                      00407 ;       goto    MainWaitLoop
+                      00408 
+                      00409 
+008B   2884           00410         goto    main
+                      00411 
+                      00412 
+                      00413 ;===================================================
+                      00414 ; DispVersion
+                      00415 ;===================================================
+008C                  00416 DispVersion
+008C   01AB           00417         clrf    TEMP                    ; als ByteCount
+008D   3050           00418         movlw   DISP_BUFF
+008E   0084           00419         movwf   FSR                     ; 4
+008F                  00420 DispVersion_1
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+008F   3007           00421         movlw   HIGH VersionData
+0090   008A           00422         movwf   PCLATH
+0091   082B           00423         movfw   TEMP
+0092   2722           00424         call    VersionData
+0093   018A           00425         clrf    PCLATH
+0094   0080           00426         movwf   INDF
+0095   0A84           00427         incf    FSR,F
+0096   0AAB           00428         incf    TEMP,F
+0097   1E2B           00429         btfss   TEMP,4
+0098   288F           00430         goto    DispVersion_1
+                      00431 
+0099   1431           00432         bsf     DISP_Z_FLAG,0
+009A   2497           00433         call    display
+                      00434 
+009B   0008           00435         return
+                      00436 ;===================================================
+                      00437 ; DispGateway
+                      00438 ;===================================================
+009C                  00439 DispGateway
+009C   01AB           00440         clrf    TEMP                    ; als ByteCount
+009D   3050           00441         movlw   DISP_BUFF
+009E   0084           00442         movwf   FSR                     ; 4
+009F                  00443 DispGateway_1
+009F   3007           00444         movlw   HIGH GatewayData
+00A0   008A           00445         movwf   PCLATH
+00A1   082B           00446         movfw   TEMP
+00A2   2744           00447         call    GatewayData
+00A3   018A           00448         clrf    PCLATH
+00A4   0080           00449         movwf   INDF
+00A5   0A84           00450         incf    FSR,F
+00A6   0AAB           00451         incf    TEMP,F
+00A7   1E2B           00452         btfss   TEMP,4
+00A8   289F           00453         goto    DispGateway_1
+00A9   1431           00454         bsf     DISP_Z_FLAG,0
+00AA   2497           00455         call    display
+00AB   0008           00456         return
+                      00457 ;===================================================
+                      00458 ; DispMainParam
+                      00459 ;===================================================
+00AC                  00460 DispMainParam
+00AC   01AB           00461         clrf    TEMP                    ; als ByteCount
+00AD   3050           00462         movlw   DISP_BUFF
+00AE   0084           00463         movwf   FSR                     ; 4
+00AF                  00464 DispMainParam_1
+00AF   3007           00465         movlw   HIGH MainParamData
+00B0   008A           00466         movwf   PCLATH
+00B1   082B           00467         movfw   TEMP
+00B2   2733           00468         call    MainParamData
+00B3   018A           00469         clrf    PCLATH
+00B4   0080           00470         movwf   INDF
+00B5   0A84           00471         incf    FSR,F
+00B6   0AAB           00472         incf    TEMP,F
+00B7   1E2B           00473         btfss   TEMP,4
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 10
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00B8   28AF           00474         goto    DispMainParam_1
+00B9   1431           00475         bsf     DISP_Z_FLAG,0
+00BA   2497           00476         call    display
+                      00477 
+00BB   2507           00478         call    ClearDispBuff
+                      00479 
+00BC   0824           00480         movfw   AD0
+00BD   00AB           00481         movwf   TEMP
+00BE   3050           00482         movlw   DISP_BUFF+0
+00BF   0084           00483         movwf   FSR
+00C0   233A           00484         call    sutoa
+                      00485 
+00C1   0825           00486         movfw   AD1
+00C2   00AB           00487         movwf   TEMP
+00C3   3054           00488         movlw   DISP_BUFF+4
+00C4   0084           00489         movwf   FSR
+00C5   233A           00490         call    sutoa
+                      00491 
+00C6   0826           00492         movfw   AD2
+00C7   00AB           00493         movwf   TEMP
+00C8   3058           00494         movlw   DISP_BUFF+d'8'
+00C9   0084           00495         movwf   FSR
+00CA   233A           00496         call    sutoa
+                      00497 
+                      00498 
+00CB   0827           00499         movfw   AD3
+00CC   00AB           00500         movwf   TEMP
+00CD   305C           00501         movlw   DISP_BUFF+d'12'
+00CE   0084           00502         movwf   FSR
+00CF   233A           00503         call    sutoa
+                      00504 
+                      00505 
+00D0   14B1           00506         bsf     DISP_Z_FLAG,1
+00D1   2497           00507         call    display
+                      00508 
+00D2   0008           00509         return
+                      00510 
+                      00511 ;----------------------------------------
+00D3                  00512 wait_3ms
+00D3   20D6           00513         call    wait_750us
+00D4                  00514 wait_22zms
+00D4   20D6           00515         call    wait_750us
+                      00516 
+00D5                  00517 wait_15zms
+00D5   20D6           00518         call    wait_750us
+00D6                  00519 wait_750us
+00D6   1010           00520         bcf     T1CON,0         ; Timer1 stoppen        
+00D7   018E           00521         clrf    TMR1L           ; TMR1L                 
+00D8   018F           00522         clrf    TMR1H           ; TMR1H                 
+00D9   1410           00523         bsf     T1CON,0         ; Timer1 starten        
+00DA   3003           00524         movlw   d'3'
+00DB   020F           00525         subwf   TMR1H,0
+00DC   1D03           00526         btfss   STATUS,2        ; 
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 11
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00DD   28DB           00527         goto    $-2             ; auf Bit warten        
+00DE   0008           00528         return                  ; mit Aufruf            
+                      00529 
+                      00530 
+                      00531 
+                      00532 ;===================================================
+                      00533 ; V24Send
+                      00534 ; Gibt WREG an TX-Buffer aus und wartet 3ms
+                      00535 ;===================================================
+                      00536 
+00DF                  00537 V24Send
+00DF   1683           00538         bsf     3,5
+00E0                  00539 WaitTxBufferleer
+00E0   1C98           00540         btfss   TXSTA,TRMT
+00E1   28E0           00541         goto    WaitTxBufferleer
+00E2   1283           00542         bcf     3,5
+00E3   0099           00543         movwf   TXREG
+                      00544 
+00E4   0008           00545         return
+                      00546 
+                      00547 ;===================================================
+                      00548 ; MoveToDispBuff
+                      00549 ; Verschiebt ab Adresse in WREG 16 Bytes nach DispBuff
+                      00550 ;===================================================
+                      00551 
+00E5                  00552 MoveToDispBuff
+00E5   00AB           00553         movwf   TEMP            ; LeseAdresse
+00E6   3050           00554         movlw   DISP_BUFF
+00E7   00AC           00555         movwf   TEMP1           ; Schreibadresse
+00E8   3010           00556         movlw   0x10            ; Zähler
+00E9   00AD           00557         movwf   TEMP2
+                      00558 
+00EA                  00559 MoveToDispBuff1
+                      00560 
+00EA   082B           00561         movfw   TEMP            ; Lese-Adresse
+00EB   0084           00562         movwf   FSR
+00EC   0800           00563         movfw   INDF
+00ED   00BB           00564         movwf   TEMP3           ; gelesenes Byte
+                      00565 
+00EE   0A84           00566         incf    FSR,F
+00EF   0804           00567         movfw   FSR
+00F0   00AB           00568         movwf   TEMP            ; Leseadresse speichern
+00F1   082C           00569         movfw   TEMP1           ; Schreibadr.
+00F2   0084           00570         movwf   FSR
+00F3   083B           00571         movfw   TEMP3           ; gelesenes Byte
+00F4   0080           00572         movwf   INDF
+00F5   0A84           00573         incf    FSR,F
+00F6   0804           00574         movfw   FSR             ; Schreibadr
+00F7   00AC           00575         movwf   TEMP1   
+                      00576 
+00F8   0BAD           00577         decfsz  TEMP2,F
+00F9   28EA           00578         goto    MoveToDispBuff1
+                      00579 
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 12
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00FA   0008           00580         return
+                      00581 
+                      00582 ;===================================================
+                      00583 ; BinToHex8
+                      00584 ; Wandelt 8 Bytes ab Adress (WREG) in ASCII HEX nach DISP_BUFF
+                      00585 ;===================================================
+                      00586 
+00FB                  00587 BinToHex8
+00FB   00AB           00588         movwf   TEMP            ; LeseAdresse
+00FC   3050           00589         movlw   DISP_BUFF
+00FD   00AC           00590         movwf   TEMP1           ; Schreibadresse
+00FE   3008           00591         movlw   0x8             ; Zähler
+00FF   00AD           00592         movwf   TEMP2
+                      00593 
+0100                  00594 BinToHex81
+                      00595 
+0100   082B           00596         movfw   TEMP            ; Lese-Adresse
+0101   0084           00597         movwf   FSR
+0102   1683           00598         bsf     STATUS,RP0
+0103   0800           00599         movfw   INDF
+0104   1283           00600         bcf     STATUS,RP0
+0105   00BB           00601         movwf   TEMP3           ; gelesenes Byte
+0106   0A84           00602         incf    FSR,F
+0107   0804           00603         movfw   FSR
+0108   00AB           00604         movwf   TEMP            ; Leseadresse speicher
+0109   082C           00605         movfw   TEMP1           ; Schreibadr.
+010A   0084           00606         movwf   FSR
+                      00607 
+010B   0E3B           00608         swapf   TEMP3,W         ; gelesenes Byte, High Nibble
+010C   390F           00609         andlw   0xf     
+010D   211C           00610         call    BinToHex
+010E   20DF           00611         call    V24Send
+                      00612 
+010F   0080           00613         movwf   INDF
+0110   0A84           00614         incf    FSR,F
+                      00615 
+0111   083B           00616         movfw   TEMP3           ; gelesenes Byte Low Nibble
+0112   390F           00617         andlw   0xf     
+0113   211C           00618         call    BinToHex
+0114   20DF           00619         call    V24Send
+                      00620 
+0115   0080           00621         movwf   INDF
+0116   0A84           00622         incf    FSR,F
+                      00623 
+                      00624 
+0117   0804           00625         movfw   FSR             ; Schreibadr
+0118   00AC           00626         movwf   TEMP1   
+                      00627 
+0119   0BAD           00628         decfsz  TEMP2,F
+011A   2900           00629         goto    BinToHex81
+                      00630 
+011B   0008           00631         return
+                      00632 
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 13
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00633 
+                      00634 
+011C                  00635 BinToHex
+011C   00BC           00636         movwf   TEMP4
+                      00637 
+011D   3007           00638         movlw   HIGH BinToHexTab
+011E   008A           00639         movwf   PCLATH
+011F   083C           00640         movfw   TEMP4
+0120   2711           00641         call    BinToHexTab
+0121   018A           00642         clrf    PCLATH
+                      00643 
+                      00644 
+0122   0008           00645         return
+                      00646 
+                      00647 ;===================================================
+                      00648 ; Zeigt den Text "Keine Funktion in Zeile 1 an
+                      00649 ;===================================================
+                      00650 
+0123                  00651 DispKeineFunktion
+                      00652 ; ZEile 1
+0123   01AB           00653         clrf    TEMP                    ; als ByteCount
+0124   3050           00654         movlw   DISP_BUFF
+0125   0084           00655         movwf   FSR                     ; 4
+0126                  00656 DispKeineFunktionLoop   
+0126   3007           00657         movlw   HIGH DatenKeineFunktion
+0127   008A           00658         movwf   PCLATH
+0128   082B           00659         movfw   TEMP
+                      00660 
+0129   2700           00661         call    DatenKeineFunktion
+012A   018A           00662         clrf    PCLATH
+012B   0080           00663         movwf   INDF
+012C   0A84           00664         incf    FSR,F
+012D   0AAB           00665         incf    TEMP,F
+012E   1E2B           00666         btfss   TEMP,4
+012F   2926           00667         goto    DispKeineFunktionLoop
+                      00668 
+0130   1431           00669         bsf     DISP_Z_FLAG,0
+0131   2497           00670         call    display
+0132   0008           00671         return
+                      00672 
+                      00673 
+                      00674 
+                      00675 ;===================================================
+                      00676 ; AdDispatch
+                      00677 ; ADconv (mainloop) signalisiert in AD0 und AD1 Bit 7 = 1,
+                      00678 ; daß sich ein Wert verändert hat.
+                      00679 ;===================================================
+0133                  00680 AdDispatch
+                      00681         
+0133   0868           00682         movfw   HEX_AKT
+0134   390F           00683         andlw   0xf
+0135   3C02           00684         sublw   2                       ; Hex =2 --> Gateway-Funktion
+0136   1903           00685         btfsc   STATUS,Z
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 14
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0137   0008           00686         return
+                      00687 
+                      00688 
+                      00689 ;--------  HEX-Drehschalters = 0 ? -------------
+                      00690 
+0138   0868           00691         movfw   HEX_AKT
+0139   390F           00692         andlw   0xf
+013A   3C00           00693         sublw   0
+013B   1D03           00694         btfss   STATUS,Z
+013C   0008           00695         return
+013D   08BF           00696         movf    AD_STATUS
+013E   1903           00697         btfsc   STATUS,Z
+013F   0008           00698         return
+                      00699 
+0140   01BF           00700         clrf    AD_STATUS       
+                      00701 
+0141   2144           00702         call    SendNewColor
+0142   20AC           00703         call    DispMainParam
+0143   0008           00704         return
+                      00705 
+                      00706 ;===================================================
+                      00707 ; SendNewColor gibt die neue Farbe an die Kachel aus
+                      00708 ;===================================================
+0144                  00709 SendNewColor
+0144   30FF           00710         movlw   0xFF            ; Adresse Broadcast
+0145   1683           00711         bsf     3,5
+0146   1418           00712         bsf     TXSTA, TX9D     ; 9. Bit (= Adressabyte) setzen
+0147   1283           00713         bcf     3,5
+0148   20DF           00714         call    V24Send
+                      00715 
+0149   0824           00716         movfw   AD0             ; ROT-Wert
+014A   1683           00717         bsf     3,5
+014B   1018           00718         bcf     TXSTA, TX9D     ; 9. Bit (= Adressabyte) setzen
+014C   1283           00719         bcf     3,5
+014D   20DF           00720         call    V24Send
+                      00721 
+014E   0825           00722         movfw   AD1             ; Gruen-Wert
+014F   20DF           00723         call    V24Send
+                      00724 
+0150   0826           00725         movfw   AD2             ; Gruen-Wert
+0151   20DF           00726         call    V24Send
+                      00727 
+0152   01AB           00728         clrf    TEMP
+                      00729         
+0153   0824           00730         movfw   AD0
+0154   215C           00731         call    ZeroCount
+                      00732 
+0155   0825           00733         movfw   AD1
+0156   215C           00734         call    ZeroCount
+                      00735 
+0157   0826           00736         movfw   AD2
+0158   215C           00737         call    ZeroCount
+                      00738 
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 15
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0159   082B           00739         movfw   TEMP
+015A   20DF           00740         call    V24Send
+                      00741 
+015B   0008           00742         return
+                      00743 
+                      00744 ;----
+015C                  00745 ZeroCount
+015C   00AC           00746         movwf   TEMP1           ; Byte, in dem die Nullen gezählt werden
+015D   3008           00747         movlw   #8
+015E   00AD           00748         movwf   TEMP2           ;Schleifenzähler        
+015F                  00749 ZeroCountLoop
+015F   0CAC           00750         rrf     TEMP1
+0160   1C03           00751         btfss   STATUS,C
+0161   0AAB           00752         incf    TEMP            ; Zähler für die Nullen
+                      00753 
+0162   0BAD           00754         decfsz  TEMP2
+0163   295F           00755         goto    ZeroCountLoop
+0164   0008           00756         return
+                      00757 
+                      00758 ;===================================================
+                      00759 ; Dispatch_Hex1 für Drehschalter in STellung 1 (Automatik-Modus)
+                      00760 ;===================================================
+0165                  00761 HEX1_Dispatch
+                      00762         
+                      00763 
+                      00764 ;--------  HEX-Drehschalters = 1 ? -------------
+                      00765 
+0165   0868           00766         movfw   HEX_AKT
+0166   390F           00767         andlw   0xf
+0167   3C01           00768         sublw   1
+0168   1D03           00769         btfss   STATUS,Z
+0169   0008           00770         return
+                      00771 
+016A   08A3           00772         movf    TIM2_10MS
+016B   1D03           00773         btfss   STATUS,Z
+016C   0008           00774         return
+                      00775 
+016D   0827           00776         movfw   AD3             ; Speed
+016E   00A3           00777         movwf   TIM2_10MS       
+                      00778 
+016F   03AF           00779         decf    SEKUNDEN_COUNT,F
+0170   1D03           00780         btfss   STATUS,Z
+0171   0008           00781         return
+                      00782 
+0172   082E           00783         movfw   SEKUNDEN_WERT
+0173   00AF           00784         movwf   SEKUNDEN_COUNT
+                      00785 
+                      00786 
+                      00787         
+0174   0AE6           00788         incf    TIMECOUNT,F
+                      00789 ;       btfss   TIMECOUNT,7     ; erweitert auf 8 bit mit nächster Zeile
+0175   1D03           00790         btfss   STATUS,Z
+0176   29B4           00791         goto    NormalWeiter
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 16
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00792 
+0177   01E6           00793         clrf    TIMECOUNT
+                      00794 
+0178   0AEA           00795         incf    FARB_IDX_AKT,F
+0179   0AEB           00796         incf    FARB_IDX_NEXT,F
+                      00797 
+                      00798 ; Ab hier neuen Farbwert ansteuern
+                      00799 ; erst Index evtl. auf 0 setzen
+017A   3010           00800         movlw   0x10
+017B   026A           00801         subwf   FARB_IDX_AKT,W
+017C   1903           00802         btfsc   STATUS,Z
+017D   01EA           00803         clrf    FARB_IDX_AKT
+                      00804 
+017E   3010           00805         movlw   0x10
+017F   026B           00806         subwf   FARB_IDX_NEXT,W
+0180   1903           00807         btfsc   STATUS,Z
+0181   01EB           00808         clrf    FARB_IDX_NEXT
+                      00809 
+                      00810 ; Wenn Zeit für FARB_IDX_NEXT = 7F, Dann FARB_IDX_NEXT = 0 (7F = Ende)
+0182   3004           00811         movlw   4
+0183   00AB           00812         movwf   TEMP
+0184   01B5           00813         clrf    ACC1_L
+0185   01B4           00814         clrf    ACC1_H
+0186   01B7           00815         clrf    ACC2_H
+0187   086B           00816         movfw   FARB_IDX_NEXT
+0188   00B8           00817         movwf   ACC2_L
+0189   2326           00818         call    AddAccRep       
+018A   30A0           00819         movlw   FARBTAB
+018B   0735           00820         addwf   ACC1_L,W
+018C   3E03           00821         addlw   3                               ; Zeit-Index
+018D   0084           00822         movwf   FSR
+018E   1683           00823         bsf     STATUS,RP0                      ; Bank 1
+018F   0800           00824         movfw   INDF
+0190   1283           00825         bcf     STATUS,RP0                      ; Bank 0
+0191   3C7F           00826         sublw   0x7f
+0192   1D03           00827         btfss   STATUS,Z
+0193   2995           00828         goto    ZEIT_FidxAktholen
+0194   01EB           00829         clrf    FARB_IDX_NEXT
+                      00830 
+                      00831 ; Zeit in SEKUNDEN_WERT transferieren
+0195                  00832 ZEIT_FidxAktholen
+0195   3004           00833         movlw   4
+0196   00AB           00834         movwf   TEMP
+0197   01B5           00835         clrf    ACC1_L
+0198   01B4           00836         clrf    ACC1_H
+0199   01B7           00837         clrf    ACC2_H
+019A   086A           00838         movfw   FARB_IDX_AKT
+019B   00B8           00839         movwf   ACC2_L
+019C   2326           00840         call    AddAccRep       
+                      00841 
+                      00842 ; neue Farbe in Acc
+019D   30A0           00843         movlw   FARBTAB
+019E   0735           00844         addwf   ACC1_L,W
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 17
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+019F   3E03           00845         addlw   3                               ; Zeit-Index
+01A0   0084           00846         movwf   FSR
+01A1   1683           00847         bsf     STATUS,RP0                      ; Bank 1
+01A2   0800           00848         movfw   INDF
+01A3   1283           00849         bcf     STATUS,RP0                      ; Bank 0
+01A4   00AE           00850         movwf   SEKUNDEN_WERT
+01A5   00AF           00851         movwf   SEKUNDEN_COUNT
+01A6   3C7F           00852         sublw   0x7f
+01A7   1D03           00853         btfss   STATUS,Z
+01A8   29AB           00854         goto    Weiter_FIDX
+01A9   01EA           00855         clrf    FARB_IDX_AKT
+01AA   2995           00856         goto    ZEIT_FidxAktholen
+01AB                  00857 Weiter_FIDX
+01AB   2222           00858         call    LadeSekundenWert
+01AC   08AE           00859         movf    SEKUNDEN_WERT,F
+01AD   1D03           00860         btfss   STATUS,Z
+01AE   29B4           00861         goto    NormalWeiter
+                      00862 
+01AF   3001           00863         movlw   1
+01B0   00A3           00864         movwf   TIM2_10MS
+01B1   00AF           00865         movwf   SEKUNDEN_COUNT
+01B2   307F           00866         movlw   0x7F
+01B3   00E6           00867         movwf   TIMECOUNT
+                      00868 
+                      00869 ; hier noch Index auf Farbtab Akt und Next ändern
+                      00870 
+01B4                  00871 NormalWeiter    ; 
+01B4   01EC           00872         clrf    FARB_COUNT
+01B5   21EC           00873         call    FarbeSteppen
+01B6   00A4           00874         movwf   AD0
+                      00875         
+01B7   0AEC           00876         incf    FARB_COUNT,F
+01B8   21EC           00877         call    FarbeSteppen
+01B9   00A5           00878         movwf   AD1
+                      00879         
+01BA   0AEC           00880         incf    FARB_COUNT,F
+01BB   21EC           00881         call    FarbeSteppen
+01BC   00A6           00882         movwf   AD2
+                      00883 
+                      00884 
+01BD   2144           00885         call    SendNewColor
+01BE   20AC           00886         call    DispMainParam
+                      00887 
+                      00888 
+                      00889         
+01BF                  00890 NormalDispatchEnd
+                      00891 
+01BF   0008           00892         return
+                      00893 
+                      00894 
+                      00895 ;===================================================
+                      00896 ; Dispatch_Hex1 für Drehschalter in Stllung 2 (Gateway)
+                      00897 ;===================================================
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 18
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+01C0                  00898 HEX2_Dispatch
+                      00899         
+                      00900 
+                      00901 ;--------  HEX-Drehschalters = 2? -------------
+                      00902 
+01C0   0868           00903         movfw   HEX_AKT
+01C1   390F           00904         andlw   0xf
+01C2   3C02           00905         sublw   2
+01C3   1D03           00906         btfss   STATUS,Z
+01C4   0008           00907         return
+                      00908 
+01C5   1A8C           00909         btfsc   PIR1, RCIF
+01C6   29CD           00910         goto    RecByteAvailable        
+                      00911         
+                      00912 
+01C7   1C98           00913         btfss   RCSTA, OERR
+01C8   0008           00914         return
+01C9   01EF           00915         clrf    RX_COUNT
+01CA   1218           00916         bcf             RCSTA, CREN     ; Reset evtl. Overflow
+01CB   1618           00917         bsf             RCSTA, CREN
+01CC   0008           00918         return
+                      00919 
+01CD                  00920 RecByteAvailable
+                      00921 
+01CD   128C           00922         bcf             PIR1, RCIF  
+01CE   08A3           00923         movf    TIM2_10MS,F     ; Timeout?
+01CF   1903           00924         btfsc   STATUS,Z
+01D0   01EF           00925         clrf    RX_COUNT
+                      00926 
+01D1   3002           00927         movlw   2
+01D2   00A3           00928         movwf   TIM2_10MS       ; Timeout-Counter (30msec)
+                      00929 
+                      00930         
+01D3   3040           00931         movlw   TASTBUFF
+01D4   076F           00932         addwf   RX_COUNT,W
+01D5   0084           00933         movwf   FSR
+                      00934 
+01D6   081A           00935         movfw   RCREG
+01D7   00AB           00936         movwf   TEMP
+                      00937 
+01D8   0080           00938         movwf   INDF
+01D9   0AEF           00939         incf    RX_COUNT,F
+01DA   086F           00940         movfw   RX_COUNT
+01DB   3C06           00941         sublw   0x6
+01DC   1D03           00942         btfss   STATUS,Z
+01DD   0008           00943         return  
+                      00944 ; gerade Empfangenes Byte = ETX?
+                      00945 
+01DE   082B           00946         movfw   TEMP
+01DF   3C03           00947         sublw   ETX
+01E0   1903           00948         btfsc   STATUS,Z
+01E1   29E4           00949         goto    SendToKachel
+01E2   01EF           00950         clrf    RX_COUNT        
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 19
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+01E3   0008           00951         return
+01E4                  00952 SendToKachel
+01E4   0842           00953         movfw   TASTBUFF+2
+01E5   00A4           00954         movwf   AD0
+01E6   0843           00955         movfw   TASTBUFF+3
+01E7   00A5           00956         movwf   AD1
+01E8   0844           00957         movfw   TASTBUFF+4
+01E9   00A6           00958         movwf   AD2
+                      00959         
+01EA   2144           00960         call    SendNewColor
+01EB   0008           00961         return
+                      00962 ;===================================================
+                      00963 
+01EC                  00964 FarbeSteppen
+                      00965 
+01EC   3004           00966         movlw   4
+01ED   00AB           00967         movwf   TEMP
+01EE   01B5           00968         clrf    ACC1_L
+01EF   01B4           00969         clrf    ACC1_H
+01F0   01B7           00970         clrf    ACC2_H
+01F1   086A           00971         movfw   FARB_IDX_AKT
+01F2   00B8           00972         movwf   ACC2_L
+01F3   2326           00973         call    AddAccRep       
+                      00974 
+                      00975 ; neue Farbe in Acc
+01F4   30A0           00976         movlw   FARBTAB
+01F5   0735           00977         addwf   ACC1_L,W
+01F6   076C           00978         addwf   FARB_COUNT,W
+01F7   0084           00979         movwf   FSR
+01F8   1683           00980         bsf     STATUS,RP0                      ; Bank 1
+01F9   0800           00981         movfw   INDF
+01FA   1283           00982         bcf     STATUS,RP0                      ; Bank 0
+01FB   00AD           00983         movwf   TEMP2   ; Farbe aKT
+                      00984         
+                      00985 ; ------ NÄCHSTE fARBE  
+01FC   3004           00986         movlw   4
+01FD   00AB           00987         movwf   TEMP
+01FE   01B5           00988         clrf    ACC1_L
+01FF   01B4           00989         clrf    ACC1_H
+0200   01B7           00990         clrf    ACC2_H
+0201   086B           00991         movfw   FARB_IDX_NEXT
+0202   00B8           00992         movwf   ACC2_L
+0203   2326           00993         call    AddAccRep       
+                      00994 
+                      00995 ; neue Farbe in Acc
+0204   30A0           00996         movlw   FARBTAB
+0205   0735           00997         addwf   ACC1_L,W
+0206   076C           00998         addwf   FARB_COUNT,W
+0207   0084           00999         movwf   FSR
+0208   1683           01000         bsf     STATUS,RP0                      ; Bank 1
+                      01001 
+0209   0800           01002         movfw   INDF
+020A   1283           01003         bcf     STATUS,RP0                      ; Bank 0
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 20
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+020B   00BB           01004         movwf   TEMP3   ; Farbe Next
+                      01005 
+020C   12B9           01006         bcf     TEMPFLAG,5      ; Merker ob Differnez addiert o. subtr. werden muß
+                      01007                 
+                      01008 
+020D   082D           01009         movfw   TEMP2
+020E   023B           01010         subwf   TEMP3,W
+020F   1803           01011         btfsc   STATUS,C
+0210   2A14           01012         goto    KeinSwap
+                      01013 
+0211   083B           01014         movfw   TEMP3           ; TEMP2 ist größer TEMP3
+0212   022D           01015         subwf   TEMP2,W
+0213   16B9           01016         bsf     TEMPFLAG,5
+0214                  01017 KeinSwap
+                      01018 
+0214   00B8           01019         movwf   ACC2_L
+0215   01B7           01020         clrf    ACC2_H
+0216   01B5           01021         clrf    ACC1_L
+0217   01B4           01022         clrf    ACC1_H
+0218   0866           01023         movfw   TIMECOUNT
+0219   00AB           01024         movwf   TEMP
+021A   2326           01025         call    AddAccRep
+                      01026 ;       rlf     ACC1_L,F
+                      01027 ;       rlf     ACC1_H,F
+                      01028         
+                      01029         
+021B   0834           01030         movfw   ACC1_H
+021C   1EB9           01031         btfss   TEMPFLAG,5
+021D   2A20           01032         goto    AddDifferenz
+021E   022D           01033         subwf   TEMP2,W
+021F   2A21           01034         goto EndDifferenz
+0220                  01035 AddDifferenz
+0220   072D           01036         addwf   TEMP2,W
+0221                  01037 EndDifferenz
+                      01038 
+0221   0008           01039         return
+                      01040 
+                      01041 
+                      01042 
+                      01043 
+                      01044 
+                      01045 
+                      01046 
+0222                  01047 LadeSekundenWert
+                      01048 
+                      01049 ; Zeit in SEKUNDEN_WERT transferieren
+0222   3004           01050         movlw   4
+0223   00AB           01051         movwf   TEMP
+0224   01B5           01052         clrf    ACC1_L
+0225   01B4           01053         clrf    ACC1_H
+0226   01B7           01054         clrf    ACC2_H
+0227   086A           01055         movfw   FARB_IDX_AKT
+0228   00B8           01056         movwf   ACC2_L
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 21
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0229   2326           01057         call    AddAccRep       
+                      01058 
+                      01059 ; neue Farbe in Acc
+022A   30A0           01060         movlw   FARBTAB
+022B   0735           01061         addwf   ACC1_L,W
+022C   3E03           01062         addlw   3                               ; Zeit-Index
+022D   0084           01063         movwf   FSR
+022E   1683           01064         bsf     STATUS,RP0                      ; Bank 1
+022F   0800           01065         movfw   INDF
+0230   1283           01066         bcf     STATUS,RP0                      ; Bank 0
+0231   00AE           01067         movwf   SEKUNDEN_WERT
+0232   00AF           01068         movwf   SEKUNDEN_COUNT
+                      01069 
+                      01070 
+0233   0008           01071         return
+                      01072 
+                      01073 
+                      01074 
+                      01075 
+                      01076 
+                      01077 
+                      01078 ;===================================================
+                      01079 ; TastDispatch
+                      01080 ;===================================================
+                      01081 
+0234                  01082 TastDispatch
+                      01083         
+0234   0868           01084         movfw   HEX_AKT
+0235   390F           01085         andlw   0xf
+0236   3C02           01086         sublw   2                       ; Hex =2 --> Gateway-Funktion
+0237   1903           01087         btfsc   STATUS,Z
+0238   0008           01088         return
+                      01089 
+                      01090 
+                      01091 ;--------  HEX-Drehschalters = 1 ? -------------
+                      01092 
+                      01093 
+                      01094 
+0239   0868           01095         movfw   HEX_AKT
+023A   390F           01096         andlw   0xf
+023B   3C01           01097         sublw   1
+023C   1D03           01098         btfss   STATUS,Z
+023D   2A5C           01099         goto    TestHex_0
+                      01100 
+023E   1FA8           01101         btfss   TASTE_AKT,7
+023F   0008           01102         return
+                      01103 
+0240   13A8           01104         bcf     TASTE_AKT,7
+0241   1328           01105         bcf     TASTE_AKT,6
+0242   0828           01106         movfw   TASTE_AKT
+                      01107 
+0243   3001           01108         movlw   1
+0244   0228           01109         subwf   TASTE_AKT,W
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 22
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0245   1D03           01110         btfss   STATUS,Z
+0246   2A49           01111         goto    TestTaste_2
+                      01112 
+0247   22C3           01113         call    Farbprogramm_1
+0248   2AA1           01114         goto    EndTastDispatch
+                      01115 
+0249                  01116 TestTaste_2
+0249   3002           01117         movlw   2
+024A   0228           01118         subwf   TASTE_AKT,W
+024B   1D03           01119         btfss   STATUS,Z
+024C   2A4F           01120         goto    TestTaste_3
+                      01121 
+024D   22CC           01122         call    Farbprogramm_2
+024E   2AA1           01123         goto    EndTastDispatch
+                      01124 
+                      01125 
+024F                  01126 TestTaste_3
+024F   3003           01127         movlw   3
+0250   0228           01128         subwf   TASTE_AKT,W
+0251   1D03           01129         btfss   STATUS,Z
+0252   2A55           01130         goto    TestTaste_4
+                      01131 
+0253   22D5           01132         call    Farbprogramm_3
+0254   2AA1           01133         goto    EndTastDispatch
+0255                  01134 TestTaste_4
+0255   3004           01135         movlw   4
+0256   0228           01136         subwf   TASTE_AKT,W
+0257   1D03           01137         btfss   STATUS,Z
+0258   2A5B           01138         goto    TestTaste_5
+                      01139 
+0259   22DE           01140         call    Farbprogramm_4
+025A   2AA1           01141         goto    EndTastDispatch
+025B                  01142 TestTaste_5
+                      01143 
+025B   2AA1           01144         goto    EndTastDispatch
+                      01145 
+                      01146 
+                      01147 ;--------------------- Stellung HEX=0---------------
+025C                  01148 TestHex_0
+025C   0868           01149         movfw   HEX_AKT
+025D   390F           01150         andlw   0xf
+025E   3C00           01151         sublw   0
+025F   1D03           01152         btfss   STATUS,Z
+0260   2AA1           01153         goto    EndTastDispatch
+                      01154 
+0261   1FA8           01155         btfss   TASTE_AKT,7
+0262   0008           01156         return
+                      01157 
+0263   13A8           01158         bcf     TASTE_AKT,7
+0264   1328           01159         bcf     TASTE_AKT,6
+0265   0828           01160         movfw   TASTE_AKT
+                      01161 
+0266   3C00           01162         sublw   0
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 23
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0267   1903           01163         btfsc   STATUS,Z
+0268   0008           01164         return  
+                      01165 
+0269   0828           01166         movfw   TASTE_AKT
+026A   3C09           01167         sublw   0x9
+026B   1C03           01168         btfss   STATUS,C
+026C   2A70           01169         goto    TestTaste_null
+                      01170 
+                      01171 ;Taste 1-9
+026D   0828           01172         movfw   TASTE_AKT
+026E   22B0           01173         call    AddTastBuff
+026F   2AA1           01174         goto    EndTastDispatch
+                      01175 
+0270                  01176 TestTaste_null
+                      01177 
+0270   300A           01178         movlw   0xa
+0271   0228           01179         subwf   TASTE_AKT,W
+0272   1D03           01180         btfss   STATUS,Z
+0273   2A77           01181         goto    TestTaste_plus
+0274   3000           01182         movlw   0
+0275   22B0           01183         call    AddTastBuff
+                      01184 
+0276   2AA1           01185         goto    EndTastDispatch
+                      01186 
+                      01187 
+0277                  01188 TestTaste_plus
+0277   302B           01189         movlw   "+"
+0278   0228           01190         subwf   TASTE_AKT,W
+0279   1D03           01191         btfss   STATUS,Z
+027A   2A9B           01192         goto    TestTaste_C
+                      01193 
+027B   22A2           01194         call    AtoiDec
+027C   00B8           01195         movwf   ACC2_L
+027D   01B5           01196         clrf    ACC1_L
+027E   01B4           01197         clrf    ACC1_H
+027F   01B7           01198         clrf    ACC2_H
+0280   3004           01199         movlw   4
+0281   00AB           01200         movwf   TEMP
+0282   2326           01201         call    AddAccRep
+0283   30A0           01202         movlw   FARBTAB
+0284   0735           01203         addwf   ACC1_L,W
+0285   0084           01204         movwf   FSR
+0286   0824           01205         movfw   AD0                             ; rot
+0287   1683           01206         bsf     STATUS,RP0                      ; Bank 1
+0288   0080           01207         movwf   INDF
+0289   1283           01208         bcf     STATUS,RP0                      ; Bank 0
+028A   0A84           01209         incf    FSR,F
+                      01210 
+028B   0825           01211         movfw   AD1                             ; grün
+028C   1683           01212         bsf     STATUS,RP0                      ; Bank 1
+028D   0080           01213         movwf   INDF
+028E   1283           01214         bcf     STATUS,RP0                      ; Bank 0
+028F   0A84           01215         incf    FSR,F
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 24
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      01216 
+0290   0826           01217         movfw   AD2                             ; blau
+0291   1683           01218         bsf     STATUS,RP0                      ; Bank 1
+0292   0080           01219         movwf   INDF
+0293   1283           01220         bcf     STATUS,RP0                      ; Bank 
+0294   0A84           01221         incf    FSR,F
+                      01222 
+0295   0827           01223         movfw   AD3                             ; Speed
+0296   1683           01224         bsf     STATUS,RP0                      ; Bank 1
+0297   0080           01225         movwf   INDF
+0298   1283           01226         bcf     STATUS,RP0                      ; Bank 
+0299   0A84           01227         incf    FSR,F
+                      01228 
+                      01229 
+                      01230 
+029A   2AA1           01231         goto    EndTastDispatch
+                      01232 
+029B                  01233 TestTaste_C
+029B   3023           01234         movlw   0x23
+029C   0228           01235         subwf   TASTE_AKT,W
+029D   1D03           01236         btfss   STATUS,Z
+029E   2AA1           01237         goto    EndTastDispatch                 ; bzw. zu Test_nächste Taste
+                      01238 
+029F   251B           01239         call    EEpromWrite
+                      01240 
+02A0   2AA1           01241         goto    EndTastDispatch
+                      01242 
+02A1                  01243 EndTastDispatch
+02A1   0008           01244         return
+                      01245 
+                      01246 ;---------------------------
+02A2                  01247 AtoiDec         ; wandelt TasBuff in Integer und decrementiert um
+02A2   3030           01248         movlw   0x30
+02A3   0240           01249         subwf   TASTBUFF,W
+02A4   00AB           01250         movwf   TEMP
+02A5   01B5           01251         clrf    ACC1_L
+                      01252 
+02A6   01B4           01253         clrf    ACC1_H
+02A7   300A           01254         movlw   0xa
+02A8   00B8           01255         movwf   ACC2_L
+02A9   01B7           01256         clrf    ACC2_H
+02AA   2326           01257         call    AddAccRep
+02AB   3030           01258         movlw   0x30
+02AC   0241           01259         subwf   TASTBUFF+1,W
+02AD   03B5           01260         decf    ACC1_L,F        ; !!!!
+02AE   0735           01261         addwf   ACC1_L,W
+02AF   0008           01262         return
+                      01263 ;---------------------------
+02B0                  01264 AddTastBuff
+02B0   3E30           01265         addlw   0x30
+02B1   00AB           01266         movwf   TEMP
+                      01267 
+02B2   086E           01268         movfw   TASTBUFF_IDX
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 25
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+02B3   3C02           01269         sublw   2
+02B4   1D03           01270         btfss   STATUS,Z
+02B5   2AB8           01271         goto    NoIdxReset
+02B6   01EE           01272         clrf    TASTBUFF_IDX
+02B7   2511           01273         call    ClearTastBuff
+02B8                  01274 NoIdxReset
+02B8   086E           01275         movfw   TASTBUFF_IDX
+02B9   3E40           01276         addlw   TASTBUFF
+02BA   0084           01277         movwf   FSR
+                      01278 
+02BB   082B           01279         movfw   TEMP
+02BC   0080           01280         movwf   INDF    
+02BD   0AEE           01281         incf    TASTBUFF_IDX,F
+02BE   3040           01282         movlw   TASTBUFF
+02BF   20E5           01283         call    MoveToDispBuff
+02C0   1531           01284         bsf     DISP_Z_FLAG,2
+02C1   2497           01285         call    display
+                      01286         
+02C2   0008           01287         return
+                      01288 
+                      01289 ;---------------------------
+                      01290 
+02C3                  01291 Farbprogramm_1
+02C3   3000           01292         movlw   0x0
+02C4   2545           01293         call    EEpromRead
+                      01294                 
+02C5   01EA           01295         clrf    FARB_IDX_AKT
+02C6   01EB           01296         clrf    FARB_IDX_NEXT
+02C7   0AEB           01297         incf    FARB_IDX_NEXT,F
+02C8   01AF           01298         clrf    SEKUNDEN_COUNT
+02C9   01A3           01299         clrf    TIM2_10MS
+02CA   01E6           01300         clrf    TIMECOUNT
+                      01301 
+                      01302 
+                      01303 
+02CB   0008           01304         return
+                      01305 
+                      01306 
+02CC                  01307 Farbprogramm_2
+02CC   3040           01308         movlw   0x40
+02CD   2545           01309         call    EEpromRead
+02CE   01EA           01310         clrf    FARB_IDX_AKT
+02CF   01EB           01311         clrf    FARB_IDX_NEXT
+02D0   0AEB           01312         incf    FARB_IDX_NEXT,F
+02D1   01AF           01313         clrf    SEKUNDEN_COUNT
+02D2   01A3           01314         clrf    TIM2_10MS
+02D3   01E6           01315         clrf    TIMECOUNT
+                      01316 
+02D4   0008           01317         return
+                      01318 
+                      01319 
+                      01320 
+                      01321 
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 26
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+02D5                  01322 Farbprogramm_3
+02D5   3080           01323         movlw   0x80
+02D6   2545           01324         call    EEpromRead
+02D7   01EA           01325         clrf    FARB_IDX_AKT
+02D8   01EB           01326         clrf    FARB_IDX_NEXT
+02D9   0AEB           01327         incf    FARB_IDX_NEXT,F
+02DA   01AF           01328         clrf    SEKUNDEN_COUNT
+02DB   01A3           01329         clrf    TIM2_10MS
+02DC   01E6           01330         clrf    TIMECOUNT
+02DD   0008           01331         return
+                      01332 
+02DE                  01333 Farbprogramm_4
+02DE   30C0           01334         movlw   0xC0
+02DF   2545           01335         call    EEpromRead
+02E0   01EA           01336         clrf    FARB_IDX_AKT
+02E1   01EB           01337         clrf    FARB_IDX_NEXT
+02E2   0AEB           01338         incf    FARB_IDX_NEXT,F
+02E3   01AF           01339         clrf    SEKUNDEN_COUNT
+02E4   01A3           01340         clrf    TIM2_10MS
+02E5   01E6           01341         clrf    TIMECOUNT
+02E6   0008           01342         return
+                      01343 
+                      01344 
+                      01345 
+                      01346 ;
+                      01347 
+                      01348 ;===================================================
+                      01349 ; AddAcc
+                      01350 ; Addiert die 16Bit Accus ACC1 und ACC1 
+                      01351 ; Ergebnis in ACC1
+                      01352 ; ACC2 bleibt unverändert
+                      01353 ; Caryy wird gesetzt
+                      01354 ;===================================================
+02E7                  01355 AddAcc
+                      01356 
+02E7   0838           01357         movfw   ACC2_L
+02E8   07B5           01358         addwf   ACC1_L,F
+02E9   1803           01359         btfsc   STATUS,C        
+02EA   0AB4           01360         incf    ACC1_H,F
+                      01361         
+02EB   0837           01362         movfw   ACC2_H
+02EC   07B4           01363         addwf   ACC1_H,F
+                      01364         
+02ED   0008           01365         return
+                      01366 ;===================================================
+                      01367 ; dAddAcc
+                      01368 ; Addiert die 24Bit Accus ACC1 und ACC2 
+                      01369 ; Ergebnis in ACC1
+                      01370 ; ACC2 bleibt unverändert
+                      01371 ; Caryy wird gesetzt
+                      01372 ;===================================================
+02EE                  01373 dAddAcc
+                      01374 
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 27
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+02EE   0838           01375         movfw   ACC2_L
+02EF   07B5           01376         addwf   ACC1_L,F
+02F0   1C03           01377         btfss   STATUS,C
+02F1   2AF6           01378         goto    dAddAcc1        
+02F2   0AB4           01379         incf    ACC1_H,F
+02F3   08B4           01380         movf    ACC1_H,F                ; = 0?
+02F4   1903           01381         btfsc   STATUS,Z
+02F5   0AB3           01382         incf    ACC1_0,f        
+                      01383         
+02F6                  01384 dAddAcc1
+02F6   0837           01385         movfw   ACC2_H
+02F7   07B4           01386         addwf   ACC1_H,F
+02F8   1803           01387         btfsc   STATUS,C        
+02F9   0AB3           01388         incf    ACC1_0,F
+                      01389         
+02FA   0836           01390         movfw   ACC2_0
+02FB   07B3           01391         addwf   ACC1_0,F
+                      01392         
+02FC   0008           01393         return
+                      01394 ;===================================================
+                      01395 ; SubAcc
+                      01396 ; Subtrahiert die 16Bit Accus ACC1 und ACC1 
+                      01397 ; Ergebnis in ACC1
+                      01398 ; ACC2 bleibt unverändert
+                      01399 ;===================================================
+02FD                  01400 SubAcc
+02FD   10B9           01401         bcf     TEMPFLAG,1
+02FE   0838           01402         movfw   ACC2_L
+02FF   02B5           01403         subwf   ACC1_L,F
+0300   1803           01404         btfsc   STATUS,C
+0301   2B06           01405         goto    SubAcc1 
+0302   08B4           01406         movf    ACC1_H,F
+0303   1903           01407         btfsc   STATUS,Z
+0304   14B9           01408         bsf     TEMPFLAG,1
+0305   03B4           01409         decf    ACC1_H,F
+                      01410 
+0306                  01411 SubAcc1
+0306   0837           01412         movfw   ACC2_H
+0307   02B4           01413         subwf   ACC1_H,F
+                      01414         
+0308   18B9           01415         btfsc   TEMPFLAG,1
+0309   1003           01416         bcf     STATUS,C
+                      01417         
+030A   0008           01418         return
+                      01419 
+                      01420 ;===================================================
+                      01421 ; dSubAcc
+                      01422 ; Subtrahiert die 24Bit Accus ACC1 und ACC1 
+                      01423 ; Ergebnis in ACC1
+                      01424 ; ACC2 bleibt unverändert
+                      01425 ;===================================================
+030B                  01426 dSubAcc
+030B   10B9           01427         bcf     TEMPFLAG,1
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 28
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+030C   0838           01428         movfw   ACC2_L
+030D   02B5           01429         subwf   ACC1_L,F
+030E   1803           01430         btfsc   STATUS,C
+030F   2B19           01431         goto    dSubAcc1        
+0310   03B4           01432         decf    ACC1_H,F
+0311   30FF           01433         movlw   0xff
+0312   0234           01434         subwf   ACC1_H,W
+0313   1D03           01435         btfss   STATUS,Z
+0314   2B19           01436         goto    dSubAcc1
+0315   08B3           01437         movf    ACC1_0,F
+0316   1903           01438         btfsc   STATUS,Z
+0317   14B9           01439         bsf     TEMPFLAG,1
+0318   03B3           01440         decf    ACC1_0,F
+                      01441         
+                      01442 
+0319                  01443 dSubAcc1
+0319   0837           01444         movfw   ACC2_H
+031A   02B4           01445         subwf   ACC1_H,F
+031B   1803           01446         btfsc   STATUS,C
+031C   2B21           01447         goto    dSubAcc2        
+031D   08B3           01448         movf    ACC1_0,F
+031E   1903           01449         btfsc   STATUS,Z
+031F   14B9           01450         bsf     TEMPFLAG,1
+0320   03B3           01451         decf    ACC1_0,F
+                      01452 
+                      01453 
+                      01454 
+0321                  01455 dSubAcc2
+0321   0836           01456         movfw   ACC2_0
+0322   02B3           01457         subwf   ACC1_0,F
+                      01458         
+0323   18B9           01459         btfsc   TEMPFLAG,1
+0324   1003           01460         bcf     STATUS,C
+                      01461         
+0325   0008           01462         return
+                      01463 
+                      01464 
+                      01465 ;===================================================
+                      01466 ; AddAccRep
+                      01467 ; Addiert die 16Bit Accus ACC1 und ACC1 n-mal
+                      01468 ; n steht in TEMP, TEMP wird verändert
+                      01469 ; Ergebnis in ACC1
+                      01470 ; ACC2 bleibt unverändert
+                      01471 ;===================================================
+0326                  01472 AddAccRep
+                      01473 
+0326   08AB           01474         movf    TEMP,F
+0327   1903           01475         btfsc   STATUS,Z
+0328   2B2F           01476         goto    EndAccAdd
+0329   0838           01477         movfw   ACC2_L
+032A   07B5           01478         addwf   ACC1_L,F
+032B   1803           01479         btfsc   STATUS,C        
+032C   0AB4           01480         incf    ACC1_H,F
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 29
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      01481 
+032D   03AB           01482         decf    TEMP,F
+032E   2B26           01483         goto    AddAccRep
+032F                  01484 EndAccAdd
+032F   0008           01485         return
+                      01486 ;===================================================
+                      01487 ; SubAccRep
+                      01488 ; Subtrahiert die 16Bit Accus ACC1 und ACC1 n-mal (ACC1-ACC2)
+                      01489 ; n steht in TEMP, TEMP wird verändert
+                      01490 ; Ergebnis in ACC1
+                      01491 ; ACC2 bleibt unverändert
+                      01492 ;===================================================
+0330                  01493 SubAccRep
+0330   08AB           01494         movf    TEMP,F
+0331   1903           01495         btfsc   STATUS,Z
+0332   2B39           01496         goto    EndAccSub
+0333   0838           01497         movfw   ACC2_L
+0334   02B5           01498         subwf   ACC1_L,F
+0335   1C03           01499         btfss   STATUS,C        
+0336   03B4           01500         decf    ACC1_H,F
+                      01501 
+0337   03AB           01502         decf    TEMP,F
+0338   2B30           01503         goto    SubAccRep
+0339                  01504 EndAccSub
+0339   0008           01505         return
+                      01506 
+                      01507 
+                      01508 ;===================================================
+                      01509 ; sutoa  (short unsigend to ASCII) wandelt 8bit unsigned nach ASCII
+                      01510 ; Quelle ist in TEMP
+                      01511 ; Ziel ist in FSR
+                      01512 ; benutze Register: TEMP und TEMP1 
+                      01513 ;===================================================
+033A                  01514 sutoa
+033A   082B           01515         movfw   TEMP
+033B   00AC           01516         movwf   TEMP1
+033C   3030           01517         movlw   0x30            ; ASCII 0
+033D   0080           01518         movwf   INDF
+033E   3064           01519         movlw   d'100'
+033F                  01520 sutoa1                                  ; Hunderter-Schleife
+033F   02AB           01521         subwf   TEMP,F
+0340   1C03           01522         btfss   STATUS,C
+0341   2B44           01523         goto    sutoa2
+0342   0A80           01524         incf    INDF,F
+0343   2B3F           01525         goto    sutoa1
+0344                  01526 sutoa2                                  ; 
+0344   07AB           01527         addwf   TEMP,F          ; einmal zuviel subtrahiert
+0345   0A84           01528         incf    FSR,f                   ; nächste Stelle im Display-Ram
+0346   3030           01529         movlw   0x30            ; ASCII 0
+0347   0080           01530         movwf   INDF
+0348   300A           01531         movlw   d'10'
+0349                  01532 sutoa3                                  ; Zehner Schleife
+0349   02AB           01533         subwf   TEMP,F
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 30
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+034A   1C03           01534         btfss   STATUS,C
+034B   2B4E           01535         goto    sutoa4
+034C   0A80           01536         incf    INDF,F
+034D   2B49           01537         goto    sutoa3
+034E                  01538 sutoa4
+034E   07AB           01539         addwf   TEMP,F          ; einmal zuviel subtrahiert
+034F   3030           01540         movlw   0x30
+0350   072B           01541         addwf   TEMP,W
+0351   0A84           01542         incf    FSR,f
+0352   0080           01543         movwf   INDF
+                      01544 
+0353   0008           01545         return
+                      01546 
+                      01547 ;===================================================
+                      01548 ; lutoa  (long unsigend to ASCII) wandelt 16bit unsigned nach ASCII
+                      01549 ; Quelle ist in ACC1 (wird überschrieben)
+                      01550 ; Ziel ist in FSR
+                      01551 ; benutze Register: ACC2 
+                      01552 ;===================================================
+0354                  01553 lutoa
+0354   0084           01554         movwf   FSR
+0355   3030           01555         movlw   0x30            ; ASCII 0
+0356   0080           01556         movwf   INDF
+0357   3027           01557         movlw   HIGH d'10000'
+0358   00B7           01558         movwf   ACC2_H
+0359   3010           01559         movlw   LOW d'10000'
+035A   00B8           01560         movwf   ACC2_L
+                      01561 
+035B                  01562 lutoa1                                  ; 10000er-Schleife
+035B   22FD           01563         call    SubAcc          ; 16Bit-Subtraktion
+035C   1C03           01564         btfss   STATUS,C
+035D   2B60           01565         goto    lutoa2
+035E   0A80           01566         incf    INDF,F
+035F   2B5B           01567         goto    lutoa1
+0360                  01568 lutoa2                                  ; 
+0360   22E7           01569         call    AddAcc          ; einmal zuviel subtrahiert
+0361                  01570 lutoa_sub
+0361   0A84           01571         incf    FSR,f                   ; nächste Stelle im Display-Ram
+0362   3030           01572         movlw   0x30            ; ASCII 0
+0363   0080           01573         movwf   INDF
+0364   3003           01574         movlw   HIGH d'1000'
+0365   00B7           01575         movwf   ACC2_H
+0366   30E8           01576         movlw   LOW d'1000'
+0367   00B8           01577         movwf   ACC2_L
+                      01578 
+0368                  01579 lutoa3                                  ; Tausender Schleife
+0368   22FD           01580         call    SubAcc
+0369   1C03           01581         btfss   STATUS,C
+036A   2B6D           01582         goto    lutoa4
+036B   0A80           01583         incf    INDF,F
+036C   2B68           01584         goto    lutoa3
+036D                  01585 lutoa4
+036D   22E7           01586         call    AddAcc          ; einmal zuviel subtrahiert
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 31
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+036E   0A84           01587         incf    FSR,f                   ; nächste Stelle im Display-Ram
+036F   3030           01588         movlw   0x30            ; ASCII 0
+0370   0080           01589         movwf   INDF
+0371   3000           01590         movlw   HIGH d'100'
+0372   00B7           01591         movwf   ACC2_H
+0373   3064           01592         movlw   LOW d'100'
+0374   00B8           01593         movwf   ACC2_L
+                      01594 
+0375                  01595 lutoa5                                  ; Hunderter Schleife
+0375   22FD           01596         call    SubAcc
+0376   1C03           01597         btfss   STATUS,C
+0377   2B7A           01598         goto    lutoa6
+0378   0A80           01599         incf    INDF,F
+0379   2B75           01600         goto    lutoa5
+037A                  01601 lutoa6
+037A   22E7           01602         call    AddAcc          ; einmal zuviel subtrahiert
+037B   0A84           01603         incf    FSR,f                   ; nächste Stelle im Display-Ram
+037C   3030           01604         movlw   0x30            ; ASCII 0
+037D   0080           01605         movwf   INDF
+037E   3000           01606         movlw   HIGH d'10'
+037F   00B7           01607         movwf   ACC2_H
+0380   300A           01608         movlw   LOW d'10'
+0381   00B8           01609         movwf   ACC2_L
+                      01610 
+0382                  01611 lutoa7                                  ; Zehner Schleife
+0382   22FD           01612         call    SubAcc
+0383   1C03           01613         btfss   STATUS,C
+0384   2B87           01614         goto    lutoa8
+0385   0A80           01615         incf    INDF,F
+0386   2B82           01616         goto    lutoa7
+                      01617 
+0387                  01618 lutoa8
+                      01619 
+0387   22E7           01620         call    AddAcc          ; einmal zuviel subtrahiert
+0388   3030           01621         movlw   0x30
+0389   0735           01622         addwf   ACC1_L,W
+038A   0A84           01623         incf    FSR,f
+038B   0080           01624         movwf   INDF
+                      01625 
+038C   0008           01626         return
+                      01627 
+                      01628 
+                      01629 ;===================================================
+                      01630 ; Dutoa  (long unsigend to ASCII) wandelt 16bit unsigned nach ASCII
+                      01631 ; Quelle ist in ACC1 (wird überschrieben)
+                      01632 ; Ziel ist in FSR
+                      01633 ; benutze Register: ACC2 
+                      01634 ;===================================================
+038D                  01635 dutoa
+038D   0084           01636         movwf   FSR
+038E   3030           01637         movlw   0x30            ; ASCII 0
+038F   0080           01638         movwf   INDF
+0390   3001           01639         movlw   0x1
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 32
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0391   00B6           01640         movwf   ACC2_0
+0392   3086           01641         movlw   0x86
+0393   00B7           01642         movwf   ACC2_H
+0394   30A0           01643         movlw   0xa0            ; 0x186A0 = 100.000
+0395   00B8           01644         movwf   ACC2_L
+                      01645 
+0396                  01646 dutoa1                                  ; 100000er-Schleife
+0396   230B           01647         call    dSubAcc         ; 16Bit-Subtraktion
+0397   1C03           01648         btfss   STATUS,C
+0398   2B9B           01649         goto    dutoa2
+0399   0A80           01650         incf    INDF,F
+039A   2B96           01651         goto    dutoa1
+039B                  01652 dutoa2                                  ; 
+039B   22EE           01653         call    dAddAcc         ; einmal zuviel subtrahiert
+039C   0A84           01654         incf    FSR,f                   ; nächste Stelle im Display-Ram
+                      01655 
+                      01656 
+                      01657 
+039D   3030           01658         movlw   0x30            ; ASCII 0
+039E   0080           01659         movwf   INDF
+039F   01B6           01660         clrf    ACC2_0
+03A0   3027           01661         movlw   HIGH d'10000'
+03A1   00B7           01662         movwf   ACC2_H
+03A2   3010           01663         movlw   LOW d'10000'
+03A3   00B8           01664         movwf   ACC2_L
+                      01665 
+03A4                  01666 dutoa3                                  ; 10000er-Schleife
+03A4   230B           01667         call    dSubAcc         ; 16Bit-Subtraktion
+03A5   1C03           01668         btfss   STATUS,C
+03A6   2BA9           01669         goto    dutoa4
+03A7   0A80           01670         incf    INDF,F
+03A8   2BA4           01671         goto    dutoa3
+03A9                  01672 dutoa4
+03A9   22EE           01673         call    dAddAcc         ; einmal zuviel subtrahiert
+                      01674 
+03AA   2361           01675         call    lutoa_sub
+                      01676 
+                      01677 
+                      01678 
+03AB   0008           01679         return
+                      01680 
+                      01681 
+                      01682 
+                      01683 ;===================================================
+                      01684 ;  TAST-SCAN
+                      01685 ;===================================================
+                      01686 
+03AC                  01687 TastScan
+03AC   0868           01688         movfw   HEX_AKT
+03AD   390F           01689         andlw   0xf
+03AE   3C02           01690         sublw   2                               ; Hex = 2 --> Gateway-Funktion
+03AF   1903           01691         btfsc   STATUS,Z
+03B0   0008           01692         return
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 33
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      01693 
+                      01694 
+03B1   23CF           01695         call    TastScan1
+03B2   082B           01696         movfw   TEMP                    ; Ergebnis 1. Scan... 
+03B3   00AC           01697         movwf   TEMP1                   ; ... zwischenspeichern
+                      01698         
+03B4   0828           01699         movfw   TASTE_AKT
+03B5   390F           01700         andlw   0xf
+03B6   02AB           01701         subwf   TEMP,F  
+03B7   1903           01702         btfsc   STATUS,Z
+03B8   2BCE           01703         goto    EndScan
+                      01704 
+03B9   3001           01705         movlw   1                               ; 30msec
+03BA   00A2           01706         movwf   TIM1_10MS
+03BB                  01707 TstScLoop
+03BB   178B           01708         bsf     INTCON,GIE
+03BC   08A2           01709         movf    TIM1_10MS,F
+03BD   1D03           01710         btfss   STATUS,Z
+                      01711 
+03BE   2BBB           01712         goto    TstScLoop
+                      01713 
+03BF   23CF           01714         call    TastScan1
+                      01715 
+03C0   082B           01716         movfw   TEMP
+03C1   022C           01717         subwf   TEMP1,W
+03C2   1D03           01718         btfss   STATUS,Z                ; Z= 2 identische Scans
+03C3   2BCE           01719         goto    EndScan                 ; 2 Scans lieferten keine gleichen Ergebnisse
+                      01720 
+03C4   0828           01721         movfw   TASTE_AKT
+03C5   390F           01722         andlw   0xf
+03C6   022B           01723         subwf   TEMP,W
+03C7   1D03           01724         btfss   STATUS,Z                ; Z=Alte Taste noch immer gedrückt-> Repeat
+03C8   2BCB           01725         goto    NeueTaste
+03C9                  01726 RepeatTaste
+03C9   1728           01727         bsf     TASTE_AKT,6
+03CA   2BCE           01728         goto    EndScan
+                      01729 
+03CB                  01730 NeueTaste
+                      01731 
+03CB   082B           01732         movfw   TEMP
+03CC   00A8           01733         movwf   TASTE_AKT       
+03CD   17A8           01734         bsf     TASTE_AKT,7             ; = Flag "Taste gedrückt"
+                      01735 
+03CE                  01736 EndScan
+03CE   0008           01737         return
+                      01738 
+                      01739 ;-------------------
+03CF                  01740 TastScan1               ; setzt nacheinander die drei Ausgänge
+                      01741 
+03CF   3000           01742         movlw   0x0
+03D0   0586           01743         andwf   PORT_TASTOUT,f          ; Alle Scan-Lines High
+                      01744         
+03D1   3000           01745         movlw   0x0
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 34
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+03D2   00AB           01746         movwf   TEMP
+03D3   3001           01747         movlw   0x1
+03D4   0486           01748         iorwf   PORT_TASTOUT,F          ; Bit0 für ScanOut auf L
+03D5   23FE           01749         call    CheckTastIn
+03D6   1D03           01750         btfss   STATUS,Z
+03D7   2BF6           01751         goto    EndTast
+                      01752         
+03D8   3000           01753         movlw   0x0
+03D9   0586           01754         andwf   PORT_TASTOUT,f          ; Alle Scan-Lines High
+03DA   3004           01755         movlw   0x04
+03DB   00AB           01756         movwf   TEMP
+03DC   3002           01757         movlw   0x2
+03DD   0486           01758         iorwf   PORT_TASTOUT,F          ; Bit0 für ScanOut auf L
+03DE   23FE           01759         call    CheckTastIn
+03DF   1D03           01760         btfss   STATUS,Z
+03E0   2BF6           01761         goto    EndTast
+                      01762 
+03E1   3000           01763         movlw   0x0
+03E2   0586           01764         andwf   PORT_TASTOUT,f          ; Alle Scan-Lines High
+03E3   3008           01765         movlw   0x08
+03E4   00AB           01766         movwf   TEMP
+03E5   3004           01767         movlw   0x4
+03E6   0486           01768         iorwf   PORT_TASTOUT,F          ; Bit0 für ScanOut auf L
+03E7   23FE           01769         call    CheckTastIn
+03E8   1D03           01770         btfss   STATUS,Z
+03E9   2BF6           01771         goto    EndTast
+                      01772 
+03EA   3000           01773         movlw   0x0
+03EB   0586           01774         andwf   PORT_TASTOUT,f          ; Alle Scan-Lines High
+03EC   300C           01775         movlw   0xC
+03ED   00AB           01776         movwf   TEMP
+03EE   3008           01777         movlw   0x8
+03EF   0486           01778         iorwf   PORT_TASTOUT,F          ; Bit0 für ScanOut auf L
+03F0   23FE           01779         call    CheckTastIn
+03F1   1D03           01780         btfss   STATUS,Z
+03F2   2BF6           01781         goto    EndTast
+                      01782 
+                      01783         
+03F3   3000           01784         movlw   0
+03F4   00AB           01785         movwf   TEMP
+03F5   00AC           01786         movwf   TEMP1
+03F6                  01787 EndTast
+03F6   07AB           01788         addwf   TEMP,F
+03F7   3007           01789         movlw   HIGH TasteUmsetzen
+03F8   008A           01790         movwf   PCLATH
+                      01791 
+03F9   082B           01792         movfw   TEMP
+                      01793         
+03FA   2755           01794         call    TasteUmsetzen
+03FB   00AB           01795         movwf   TEMP
+03FC   00AC           01796         movwf   TEMP1
+                      01797 
+03FD   0008           01798         return
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 35
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      01799 
+                      01800 ;-------------------
+                      01801 
+03FE                  01802 CheckTastIn             ; prüft die 3 Eingänge
+                      01803 
+03FE   3000           01804         movlw   0x00
+03FF   1B88           01805         btfsc   PORT_TASTIN,7
+0400   3001           01806         movlw   1
+0401   1B08           01807         btfsc   PORT_TASTIN,6
+0402   3002           01808         movlw   2
+0403   1A88           01809         btfsc   PORT_TASTIN,5
+0404   3003           01810         movlw   3
+0405   1A08           01811         btfsc   PORT_TASTIN,4
+0406   3004           01812         movlw   4
+0407   3800           01813         iorlw   0               ; Test WREG auf 0
+0408   0008           01814         return  
+                      01815 
+                      01816 ;-----------------------
+                      01817 
+                      01818 ;===================================================
+                      01819 ;  HexScan
+                      01820 ;===================================================
+                      01821 
+0409                  01822 HexScan
+0409   0807           01823         movfw   PORTC
+040A   3A0F           01824         xorlw   0xf     ; wg. Invertierung durch Pull-Ups
+040B   390F           01825         andlw   0xf
+040C   00E8           01826         movwf   HEX_AKT 
+040D   0269           01827         subwf   HEX_LAST,W
+040E   1903           01828         btfsc   STATUS,Z
+040F   0008           01829         return                          ; keine Änderung
+0410   0868           01830         movfw   HEX_AKT
+0411   00E9           01831         movwf   HEX_LAST        
+                      01832 
+                      01833 
+0412   3000           01834         movlw   0x0
+0413   0268           01835         subwf   HEX_AKT,w
+0414   1D03           01836         btfss   STATUS,Z
+0415   2C1E           01837         goto    TestHex1
+                      01838 
+0416   2507           01839         call    ClearDispBuff
+0417   1531           01840         bsf     DISP_Z_FLAG,2
+0418   2497           01841         call    display
+0419   14B1           01842         bsf     DISP_Z_FLAG,1
+041A   2497           01843         call    display
+041B   01EE           01844         clrf    TASTBUFF_IDX
+041C   2511           01845         call    ClearTastBuff
+041D   0008           01846         return
+                      01847 
+041E                  01848 TestHex1
+041E   3001           01849         movlw   0x1
+041F   0268           01850         subwf   HEX_AKT,w
+0420   1D03           01851         btfss   STATUS,Z
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 36
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0421   2C3C           01852         goto    TestHex2
+                      01853 
+0422   01A3           01854         clrf    TIM2_10MS
+0423   01E6           01855         clrf    TIMECOUNT
+                      01856 
+0424   01EA           01857         clrf    FARB_IDX_AKT
+0425   3001           01858         movlw   1
+0426   00EB           01859         movwf   FARB_IDX_NEXT
+                      01860 
+                      01861 
+0427   2222           01862         call    LadeSekundenWert
+                      01863 
+                      01864 
+0428   1683           01865         bsf     STATUS,RP0
+0429   0820           01866         movfw   FARBTAB
+042A   1283           01867         bcf     STATUS,RP0
+042B   00A4           01868         movwf   AD0
+                      01869 
+042C   1683           01870         bsf     STATUS,RP0
+042D   0821           01871         movfw   FARBTAB+1
+042E   1283           01872         bcf     STATUS,RP0
+042F   00A5           01873         movwf   AD1
+                      01874 
+                      01875 
+0430   1683           01876         bsf     STATUS,RP0
+0431   0822           01877         movfw   FARBTAB+2
+0432   1283           01878         bcf     STATUS,RP0
+0433   00A6           01879         movwf   AD2
+                      01880 
+0434   2144           01881         call    SendNewColor
+0435   20AC           01882         call    DispMainParam
+                      01883 
+0436   01EE           01884         clrf    TASTBUFF_IDX
+                      01885 
+                      01886 
+                      01887 ;       movlw   1
+                      01888 ;       movwf   STEP_DATENLESEN
+                      01889 
+0437   01E6           01890         clrf    TIMECOUNT
+0438   2507           01891         call    ClearDispBuff
+0439   1531           01892         bsf     DISP_Z_FLAG,2
+043A   2497           01893         call    display
+                      01894 
+043B   0008           01895         return
+043C                  01896 TestHex2
+043C   3002           01897         movlw   0x2
+043D   0268           01898         subwf   HEX_AKT,w
+043E   1D03           01899         btfss   STATUS,Z
+043F   2C4A           01900         goto    TestHex3
+0440   2507           01901         call    ClearDispBuff
+0441   14B1           01902         bsf             DISP_Z_FLAG,1
+0442   2497           01903         call    display
+0443   1531           01904         bsf             DISP_Z_FLAG,2
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 37
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0444   2497           01905         call    display
+0445   209C           01906         call    DispGateway
+0446   01EF           01907         clrf    RX_COUNT
+0447   081A           01908         movfw   RCREG           ; DUmmy zum Leeren des Rx-Fifos
+0448   081A           01909         movfw   RCREG           ; DUmmy zum Leeren des Rx-Fifos
+0449   0008           01910         return
+044A                  01911 TestHex3        
+                      01912 ;       call    DispKeineFunktion
+                      01913 
+044A   0008           01914         return
+                      01915 
+                      01916 
+                      01917 
+                      01918 ;===================================================
+                      01919 ;  Wait10ms
+                      01920 ;  Übergabe: keine
+                      01921 ; Unterprogramm kehrt nach 10msec zurück
+                      01922 
+044B                  01923 Wait10ms
+044B   3001           01924         movlw   1
+044C   00A2           01925         movwf   TIM1_10MS
+044D                  01926 WaitLoop
+044D   08A2           01927         movf    TIM1_10MS,F
+044E   1D03           01928         btfss   STATUS,Z
+044F   2C4D           01929         goto    WaitLoop
+0450   0008           01930         return
+                      01931 
+                      01932 
+                      01933 ;===================================================
+                      01934 
+                      01935 ;===================================================
+                      01936 ;  ADconv
+                      01937 ;  Übergabe: keine
+                      01938 ;  wandelt Kanal 1 und 2, 
+                      01939 ;===================================================
+0451                  01940 ADconv
+                      01941 ;--------  HEX-Drehschalters = 0 ? -------------
+0451   0868           01942         movfw   HEX_AKT
+0452   390F           01943         andlw   0xf
+0453   3C02           01944         sublw   2                       ; Hex =2 --> Gateway-Funktion
+0454   1903           01945         btfsc   STATUS,Z
+0455   0008           01946         return
+                      01947 
+                      01948 
+                      01949 
+0456   0868           01950         movfw   HEX_AKT
+0457   390F           01951         andlw   0xf
+0458   3C00           01952         sublw   0
+0459   1D03           01953         btfss   STATUS,Z
+045A   2C83           01954         goto    WandleKanal_3
+                      01955 ; --- Kanal 0 -> ROT ----
+                      01956 
+045B   111F           01957         bcf     ADCON0, CHS0            ; Kanal 0 -> rot
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 38
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+045C   119F           01958         bcf     ADCON0, CHS1    
+045D   149F           01959         bsf     ADCON0, GO_DONE         ; Start
+045E                  01960 ADLoop1
+045E   189F           01961         btfsc   ADCON0, GO_DONE
+045F   2C5E           01962         goto    ADLoop1
+                      01963 
+0460   081E           01964         movfw   ADRESH
+0461   00AB           01965         movwf   TEMP                    ; AD-Wert nach TEMP
+                      01966 
+0462   0224           01967         subwf   AD0,W
+0463   1903           01968         btfsc   STATUS,Z
+0464   2C68           01969         goto    WandleKanal_1
+0465   143F           01970         bsf             AD_STATUS,0                     ; Flag , neuer WERT da
+0466   082B           01971         movfw   TEMP
+0467   00A4           01972         movwf   AD0
+                      01973 
+                      01974 ;----- Kanal 1 gruen -----
+0468                  01975 WandleKanal_1
+0468   151F           01976         bsf     ADCON0, CHS0            ; kanal 1->Grün, 
+0469   2560           01977         call    delay_ms1
+                      01978 
+046A   149F           01979         bsf     ADCON0, GO_DONE         ; Start
+046B                  01980 ADLoop2
+046B   189F           01981         btfsc   ADCON0, GO_DONE
+046C   2C6B           01982         goto    ADLoop2
+                      01983 
+046D   081E           01984         movfw   ADRESH
+046E   00AB           01985         movwf   TEMP                    
+                      01986 
+046F   0225           01987         subwf   AD1,W
+0470   1903           01988         btfsc   STATUS,Z
+0471   2C75           01989         goto    WandleKanal_2
+0472   14BF           01990         bsf             AD_STATUS,1                     ; Flag , neuer WERT da
+0473   082B           01991         movfw   TEMP
+0474   00A5           01992         movwf   AD1
+                      01993 
+                      01994 ;----- Kanal 2 blau -----
+0475                  01995 WandleKanal_2
+0475   111F           01996         bcf     ADCON0, CHS0            ;  
+0476   159F           01997         bsf     ADCON0, CHS1            ; kanal 2-> Blau, 
+0477   2560           01998         call    delay_ms1
+                      01999 
+0478   149F           02000         bsf     ADCON0, GO_DONE         ; Start
+0479                  02001 ADLoop3
+0479   189F           02002         btfsc   ADCON0, GO_DONE
+047A   2C79           02003         goto    ADLoop3
+                      02004 
+047B   081E           02005         movfw   ADRESH
+047C   00AB           02006         movwf   TEMP                    
+                      02007 
+047D   0226           02008         subwf   AD2,W
+047E   1903           02009         btfsc   STATUS,Z
+047F   2C83           02010         goto    WandleKanal_3
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 39
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0480   153F           02011         bsf             AD_STATUS,2                     ; Flag , neuer WERT da
+0481   082B           02012         movfw   TEMP
+0482   00A6           02013         movwf   AD2
+                      02014 
+                      02015 
+                      02016 
+                      02017 
+                      02018 ;----- Kanal 3 Speed -----
+0483                  02019 WandleKanal_3
+0483   151F           02020         bsf     ADCON0, CHS0            ;  
+0484   159F           02021         bsf     ADCON0, CHS1            ; kanal 3->Speed, 
+0485   2560           02022         call    delay_ms1
+                      02023 
+0486   149F           02024         bsf     ADCON0, GO_DONE         ; Start
+0487                  02025 ADLoop4
+0487   189F           02026         btfsc   ADCON0, GO_DONE
+0488   2C87           02027         goto    ADLoop4
+                      02028 
+0489   081E           02029         movfw   ADRESH
+                      02030 
+048A   00AB           02031         movwf   TEMP                    
+048B   1003           02032         bcf             STATUS,C
+048C   0CAB           02033         rrf             TEMP,F
+                      02034 
+                      02035 ;       movf    TEMP,F  ; Wenn ADRESHH = 0, immer 1 laden
+                      02036 ;       btfsc   STATUS,Z
+                      02037 ;       bsf     TEMP,0          ;
+                      02038 
+048D   082B           02039         movfw   TEMP
+                      02040 
+048E   0227           02041         subwf   AD3,W
+048F   1903           02042         btfsc   STATUS,Z
+0490   2C94           02043         goto    EndAD
+0491   15BF           02044         bsf             AD_STATUS,3                     ; Flag , neuer WERT da
+0492   082B           02045         movfw   TEMP
+0493   00A7           02046         movwf   AD3
+                      02047 
+                      02048 
+                      02049 
+0494                  02050 EndAD
+0494   111F           02051         bcf             ADCON0, CHS0    
+0495   119F           02052         bcf             ADCON0, CHS1    
+                      02053 
+                      02054 
+0496   0008           02055         return
+                      02056 
+                      02057 
+                      02058 
+                      02059 
+                      02060 
+                      02061 
+                      02062 
+                      02063 
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 40
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      02064 
+                      02065 ;================ D I S P L A Y =================================
+                      02066 
+                      02067 ; ***************************************************************************
+0497                  02068 display
+                      02069 ;       btfss   DISP_STAT,3             ; soll ausgegeben werden?
+                      02070 ;       return
+                      02071 
+0497   11B2           02072         bcf             DISP_STAT,3
+0498   1F32           02073         btfss   DISP_STAT,6             ; Anzeigen oder ausschalten
+0499   24CE           02074         call    display_on
+                      02075 
+                      02076 ; welche Zeile soll geschrieben werden?
+                      02077 
+049A   1831           02078         btfsc   DISP_Z_FLAG,0           ; Zeile 1
+049B   24A3           02079         call    display_z1
+049C   18B1           02080         btfsc   DISP_Z_FLAG,1           ; Zeile 2
+049D   24A7           02081         call    display_z2
+049E   1931           02082         btfsc   DISP_Z_FLAG,2           ; Zeile 3
+049F   24AB           02083         call    display_z3
+04A0   19B1           02084         btfsc   DISP_Z_FLAG,3           ; Zeile 4
+04A1   24AF           02085         call    display_z4
+04A2   0008           02086         return
+                      02087 
+04A3                  02088 display_z1
+04A3   3080           02089         movlw   80              ; DD-Adresse im Display für Zeile 1
+04A4   24B3           02090         call    display_zout
+04A5   1031           02091         bcf             DISP_Z_FLAG,0
+04A6   0008           02092         return
+                      02093 
+04A7                  02094 display_z2
+04A7   30C0           02095         movlw   0xc0
+04A8   24B3           02096         call    display_zout
+04A9   10B1           02097         bcf             DISP_Z_FLAG,1
+04AA   0008           02098         return
+04AB                  02099 display_z3
+04AB   3090           02100         movlw   90              ; DD-Adresse im Display für Zeile 3
+04AC   24B3           02101         call    display_zout
+04AD   1131           02102         bcf             DISP_Z_FLAG,2
+04AE   0008           02103         return
+04AF                  02104 display_z4
+04AF   30D0           02105         movlw   0xd0            ; DD-Adresse im Display für Zeile 4
+04B0   24B3           02106         call    display_zout
+04B1   11B1           02107         bcf             DISP_Z_FLAG,3
+04B2   0008           02108         return
+                      02109 
+                      02110 
+                      02111 
+                      02112 ; ***************************************************************************
+                      02113 ; ***************************************************************************
+04B3                  02114 display_zout
+                      02115 
+                      02116 
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 41
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+04B3   1108           02117         bcf     PORTD,2         ; RS = 0
+04B4   1008           02118         bcf     PORTD,0         ; R/W = 0
+                      02119 
+04B5   24ED           02120         call    display_write
+                      02121 
+                      02122 ; hier 16 Bytes füllen
+                      02123 
+04B6   3010           02124         movlw   10              ; 16 Zeichen ausgeben
+04B7   00B0           02125         movwf   DISP_CNT        
+                      02126         
+04B8   3050           02127         movlw   50                                      ; Zeilenbuffer im Ram
+04B9   0084           02128         movwf   04                                      ;!Indir Addr
+                      02129         
+04BA                  02130 display_zout0                   ; Display-Zeile beschreiben
+04BA   1508           02131         bsf     PORTD,2
+04BB   1008           02132         bcf     PORTD,0
+04BC   0800           02133         movf    0,0
+04BD   24ED           02134         call    display_write
+04BE   0A84           02135         incf    04,1
+04BF   0BB0           02136         decfsz  DISP_CNT,1
+04C0   2CBA           02137         goto    display_zout0
+04C1   0008           02138         return
+                      02139 
+04C2                  02140 display_off
+04C2   24C9           02141         call    display_clr
+04C3   255E           02142         call    delay_ms
+04C4   3008           02143         movlw   b'00001000'     ; Display OFF
+04C5   1108           02144         bcf     PORTD,2
+04C6   1008           02145         bcf     PORTD,0
+04C7   24ED           02146         call    display_write
+04C8   0008           02147         return
+                      02148 
+04C9                  02149 display_clr
+04C9   3001           02150         movlw   b'00000001'     ; Clear Display
+04CA   1108           02151         bcf     PORTD,2
+04CB   1008           02152         bcf     PORTD,0
+04CC   24ED           02153         call    display_write
+04CD   0008           02154         return
+                      02155         
+04CE                  02156 display_on
+04CE   300C           02157         movlw   b'00001100'
+04CF   1108           02158         bcf     PORTD,2
+04D0   1008           02159         bcf     PORTD,0
+04D1   24ED           02160         call    display_write
+04D2   0008           02161         return
+                      02162 
+04D3                  02163 display_CB
+04D3   300D           02164         movlw   b'00001101'     ; Cursor blinken lassen
+04D4   1108           02165         bcf             PORTD,2
+04D5   1008           02166         bcf             PORTD,0
+04D6   24ED           02167         call    display_write
+04D7   0008           02168         return
+                      02169 
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 42
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+04D8                  02170 display_init
+04D8   244B           02171         call    Wait10ms
+04D9   244B           02172         call    Wait10ms
+                      02173 
+04DA   30F8           02174         movlw   b'11111000'     ; Bit 9.0..9.2 löschen
+04DB   0588           02175         andwf   PORTD,F
+                      02176         
+04DC   303F           02177         movlw   3F
+04DD   24ED           02178         call    display_write
+                      02179 
+04DE   244B           02180         call    Wait10ms
+                      02181 
+04DF   303F           02182         movlw   3F
+04E0   24ED           02183         call    display_write
+                      02184 
+04E1   255E           02185         call    delay_ms
+                      02186 
+04E2   303F           02187         movlw   3F
+04E3   24ED           02188         call    display_write
+                      02189 
+04E4   3038           02190         movlw   b'00111000'     ; ab hier SET-Mode
+04E5   24ED           02191         call    display_write
+                      02192 
+04E6   300C           02193         movlw   b'00001100'     ; Display ON
+04E7   24ED           02194         call    display_write
+                      02195         
+04E8   3001           02196         movlw   b'00000001'     ; Display CLEAR
+04E9   24ED           02197         call    display_write
+                      02198 
+04EA   3006           02199         movlw   b'00000110'     ; ENTER Mode SET Increment
+04EB   24ED           02200         call    display_write
+04EC   0008           02201         return
+                      02202 
+                      02203 ;***************************************************************************
+04ED                  02204 display_write
+04ED   00AB           02205         movwf   TEMP
+04EE   0186           02206         clrf    PORTB
+04EF   1109           02207         bcf             PORTE,2
+04F0   1205           02208         bcf             PORTA,4
+                      02209 
+04F1   182B           02210         btfsc   TEMP,0
+04F2   1605           02211         bsf             PORTA,4
+04F3   18AB           02212         btfsc   TEMP,1
+04F4   1509           02213         bsf             PORTE,2
+04F5   192B           02214         btfsc   TEMP,2
+04F6   1686           02215         bsf             PORTB,5
+04F7   19AB           02216         btfsc   TEMP,3
+04F8   1606           02217         bsf             PORTB,4
+04F9   1A2B           02218         btfsc   TEMP,4
+04FA   1586           02219         bsf             PORTB,3
+04FB   1AAB           02220         btfsc   TEMP,5
+04FC   1506           02221         bsf             PORTB,2
+04FD   1B2B           02222         btfsc   TEMP,6
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 43
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+04FE   1486           02223         bsf             PORTB,1
+04FF   1BAB           02224         btfsc   TEMP,7
+0500   1406           02225         bsf             PORTB,0
+                      02226 
+0501   1488           02227         bsf     PORTD,1
+0502   0000           02228         nop
+0503   0000           02229         nop
+0504   1088           02230         bcf     PORTD,1         ; Wert übernehmen
+                      02231 
+0505   255E           02232         call delay_ms
+0506   0008           02233         return
+                      02234         
+                      02235 ;***************************************************************************
+0507                  02236 ClearDispBuff           ; Display buffer (0x50) löschen
+0507   3010           02237         movlw   0x10
+0508   00AC           02238         movwf   TEMP1
+0509   3050           02239         movlw   0x50
+050A   0084           02240         movwf   FSR
+050B   3020           02241         movlw   0x20    ; Leerzeichen
+050C                  02242 CDP
+050C   0080           02243         movwf   INDF
+050D   0A84           02244         incf    FSR,f
+050E   0BAC           02245         decfsz  TEMP1,F
+050F   2D0C           02246         goto    CDP
+                      02247 
+0510   0008           02248         return
+                      02249 
+                      02250 ;***************************************************************************
+0511                  02251 ClearTastBuff           ; Display buffer (0x50) löschen
+0511   3010           02252         movlw   0x10
+0512   00AC           02253         movwf   TEMP1
+0513   3040           02254         movlw   TASTBUFF
+0514   0084           02255         movwf   FSR
+0515   3020           02256         movlw   0x20    ; Leerzeichen
+0516                  02257 CTB
+0516   0080           02258         movwf   INDF
+0517   0A84           02259         incf    FSR,f
+0518   0BAC           02260         decfsz  TEMP1,F
+0519   2D16           02261         goto    CTB
+                      02262 
+051A   0008           02263         return
+                      02264 
+                      02265 ;============================================================
+                      02266 ; EEpromWErite
+                      02267 ; schreibt 64 Byte ab Adresse 0xA0 ins EEprom Adresse 0xC0
+                      02268 ;============================================================
+                      02269 
+051B                  02270 EEpromWrite
+051B   30A0           02271         movlw   FARBTAB
+051C   00AB           02272         movwf   TEMP            ; SourceAdresse
+051D   30C0           02273         movlw   0xC0
+051E   00AC           02274         movwf   TEMP1           ; TargetAdresse im EEprom
+051F   3040           02275         movlw   d'64'
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 44
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0520   00AD           02276         movwf   TEMP2           ; COunt
+0521   138B           02277         BCF     INTCON,GIE      ;Disable INTs.
+                      02278 
+0522                  02279 EEPromWriteLoop
+0522   1703           02280         BSF     STATUS,RP1      ; Bank 3
+0523   1683           02281         BSF     STATUS,RP0
+0524   188C           02282         BTFSC   EECON1,WR       ;Wait for write
+0525   2D24           02283         GOTO $-1                ;to complete
+                      02284 
+0526   1303           02285         BCF     STATUS,RP1      ; Bank 0
+0527   1283           02286         BCF     STATUS,RP0
+0528   082C           02287         MOVFW   TEMP1           ;Adresse im EEprom
+0529   1703           02288         BSF     STATUS,RP1      ; BANK 2
+                      02289         
+052A   008D           02290         MOVWF   EEADRL          ;Address to write
+                      02291 
+                      02292 
+052B   1303           02293         BCF     STATUS,RP1      ; Bank 0
+052C   1283           02294         BCF     STATUS,RP0
+052D   082B           02295         MOVFW   TEMP            ; Daten für EEprom
+052E   0084           02296         movwf   FSR
+052F   1683           02297         BSF     STATUS,RP0      ; Bank 1
+0530   0800           02298         movfw   INDF
+0531   1283           02299         BCF     STATUS,RP0      ; Bank 1
+0532   1703           02300         BSF     STATUS,RP1      ; BANK 2
+                      02301 
+                      02302 
+0533   008C           02303         MOVWF   EEDATL          ;to write
+0534   1683           02304         BSF     STATUS,RP0      ;Bank 3
+0535   138C           02305         BCF     EECON1,EEPGD    ;Point to DATA
+                      02306         ;memory
+0536   150C           02307         BSF     EECON1,WREN     ;Enable writes
+0537   3055           02308         MOVLW   0x55 ;
+0538   008D           02309         MOVWF   EECON2          ;Write 55h
+0539   30AA           02310         MOVLW   0xAA            ;
+053A   008D           02311         MOVWF   EECON2          ;Write AAh
+053B   148C           02312         BSF     EECON1,WR       ;Set WR bit to
+                      02313         ;begin write
+053C   110C           02314         BCF     EECON1,WREN     ;Disable writes
+                      02315 
+                      02316 
+053D   1303           02317         BCF     STATUS,RP1      ;
+053E   1283           02318         BCF     STATUS,RP0
+053F   0AAB           02319         incf    TEMP,F
+0540   0AAC           02320         incf    TEMP1,F
+0541   0BAD           02321         decfsz  TEMP2
+0542   2D22           02322         goto    EEPromWriteLoop 
+                      02323 
+0543   178B           02324         BSF     INTCON,GIE      ;Enable INTs.
+                      02325 
+0544   0008           02326         return
+                      02327 
+                      02328 
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 45
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      02329 ;============================================================
+                      02330 ; EEpromRead
+                      02331 ; liest 64 Byte ab EEpromAdresse[TEMP]  nach Adresse 0xA0
+                      02332 ;============================================================
+0545                  02333 EEpromRead
+                      02334 ;       movlw   0xC0
+0545   00AC           02335         movwf   TEMP1           ; TargetAdresse im EEprom
+0546   30A0           02336         movlw   FARBTAB
+0547   00AB           02337         movwf   TEMP            ; SourceAdresse
+0548   3040           02338         movlw   d'64'
+0549   00AD           02339         movwf   TEMP2           ; COunt
+054A                  02340 EEPromReadLoop
+054A   082B           02341         movfw   TEMP
+054B   0084           02342         movwf   FSR
+054C   082C           02343         movfw   TEMP1           ; Adresse im EEprom
+054D   1703           02344         BSF     STATUS,RP1 ;
+054E   1283           02345         BCF     STATUS,RP0 ; Bank 2
+054F   008D           02346         MOVWF   EEADRL ; Address to read
+0550   1683           02347         BSF     STATUS,RP0 ; Bank 3
+0551   138C           02348         BCF     EECON1,EEPGD ; Point to Data
+                      02349         ; memory
+0552   140C           02350         BSF     EECON1,RD ; EE Read
+0553   1283           02351         BCF     STATUS,RP0 ; Bank 2
+0554   080C           02352         MOVF    EEDATL,W ; W = EEDATA
+0555   1303           02353         BCF     STATUS,RP1      ;
+0556   1683           02354         BSF     STATUS,RP0
+0557   0080           02355         movwf   INDF
+0558   1283           02356         BCF     STATUS,RP0
+                      02357 
+0559   0AAB           02358         incf    TEMP,F
+055A   0AAC           02359         incf    TEMP1,F
+055B   0BAD           02360         decfsz  TEMP2
+055C   2D4A           02361         goto    EEPromReadLoop 
+                      02362 
+                      02363 
+                      02364 
+                      02365 
+055D   0008           02366         return
+                      02367 
+                      02368 
+                      02369 ;============================================================
+                      02370 ; delay_ms
+                      02371 ; kehrt anch 1 msec zurück
+                      02372 ;============================================================
+055E                  02373 delay_ms                        ; delay ca. 1ms
+                      02374 ;       clrf    DELAY
+055E   3040           02375         movlw   0x40
+055F   00BA           02376         movwf   DELAY
+0560                  02377 delay_ms1
+                      02378 ;       clrwdt
+0560   0000           02379         nop
+0561   0BBA           02380         decfsz  DELAY,F
+                      02381 
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 46
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0562   2D60           02382         goto    delay_ms1
+0563   0008           02383         return
+                      02384 
+                      02385 ;============================================================
+                      02386 ; Datenbereich
+                      02387 ;=============================================================
+                      02388 ; ***************************************************************************
+                      02389 ;       org     0x7d0
+                      02390 ; ***************************************************************************
+                      02391 
+                      02392 
+                      02393 
+0700                  02394         org 0x700
+                      02395 
+0700                  02396 DatenKeineFunktion
+0700   0782           02397         addwf   2,1
+                      02398 
+0701   3420           02399         retlw   " "
+0702   344B           02400         retlw   "K"
+0703   3465           02401         retlw   "e"
+0704   3469           02402         retlw   "i"
+0705   346E           02403         retlw   "n"
+0706   3465           02404         retlw   "e"
+0707   3420           02405         retlw   " "
+0708   3446           02406         retlw   "F"
+0709   3475           02407         retlw   "u"
+070A   346E           02408         retlw   "n"
+070B   346B           02409         retlw   "k"
+070C   3474           02410         retlw   "t"
+070D   3469           02411         retlw   "i"
+070E   346F           02412         retlw   "o"
+070F   346E           02413         retlw   "n"
+0710   3420           02414         retlw   " "
+                      02415 
+                      02416 
+0711                  02417 BinToHexTab
+0711   0782           02418         addwf   2,1
+                      02419 
+0712   3430           02420         retlw   "0"
+0713   3431           02421         retlw   "1"
+0714   3432           02422         retlw   "2"
+0715   3433           02423         retlw   "3"
+0716   3434           02424         retlw   "4"
+0717   3435           02425         retlw   "5"
+0718   3436           02426         retlw   "6"
+0719   3437           02427         retlw   "7"
+071A   3438           02428         retlw   "8"
+071B   3439           02429         retlw   "9"
+071C   3441           02430         retlw   "A"
+071D   3442           02431         retlw   "B"
+071E   3443           02432         retlw   "C"
+071F   3444           02433         retlw   "D"
+0720   3445           02434         retlw   "E"
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 47
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0721   3446           02435         retlw   "F"
+                      02436 
+                      02437 
+0722                  02438 VersionData
+0722   0782           02439         addwf   2,1
+                      02440 
+0723   3456           02441         retlw   "V"
+0724   3431           02442         retlw   "1"
+0725   342E           02443         retlw   "."
+0726   3432           02444         retlw   "2"
+0727   3433           02445         retlw   "3"
+0728   3420           02446         retlw   " "
+0729   342F           02447         retlw   "/"
+072A   3420           02448         retlw   " "
+                      02449 
+                      02450 
+072B   3431           02451         retlw   "1"
+072C   3430           02452         retlw   "0"
+072D   342E           02453         retlw   "."
+072E   3431           02454         retlw   "1"
+072F   3430           02455         retlw   "0"
+0730   342E           02456         retlw   "."
+0731   3430           02457         retlw   "0"
+0732   3435           02458         retlw   "5"
+                      02459 
+0733                  02460 MainParamData
+0733   0782           02461         addwf   2,1
+                      02462 
+0734   3472           02463         retlw   "r"
+0735   346F           02464         retlw   "o"
+0736   3474           02465         retlw   "t"
+0737   3420           02466         retlw   " "
+0738   3467           02467         retlw   "g"
+0739   3472           02468         retlw   "r"
+073A   3420           02469         retlw   " "
+                      02470 
+                      02471 
+073B   3420           02472         retlw   " "
+073C   3462           02473         retlw   "b"
+073D   346C           02474         retlw   "l"
+073E   3420           02475         retlw   " "
+073F   3420           02476         retlw   " "
+0740   3454           02477         retlw   "T"
+0741   3465           02478         retlw   "e"
+0742   346D           02479         retlw   "m"
+0743   3470           02480         retlw   "p"
+                      02481 
+0744                  02482 GatewayData
+0744   0782           02483         addwf   2,1
+                      02484 
+0745   3420           02485         retlw   " "
+0746   3420           02486         retlw   " "
+0747   3420           02487         retlw   " "
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 48
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0748   3420           02488         retlw   " "
+0749   3447           02489         retlw   "G"
+074A   3461           02490         retlw   "a"
+074B   3474           02491         retlw   "t"
+074C   3465           02492         retlw   "e"
+                      02493 
+                      02494 
+074D   3477           02495         retlw   "w"
+074E   3461           02496         retlw   "a"
+074F   3479           02497         retlw   "y"
+0750   3420           02498         retlw   " "
+0751   3420           02499         retlw   " "
+0752   3420           02500         retlw   " "
+0753   3420           02501         retlw   " "
+0754   3420           02502         retlw   " "
+                      02503 
+                      02504 
+0755                  02505 TasteUmsetzen
+0755   0782           02506         addwf   2,1
+                      02507 
+0756   3400           02508         retlw   0
+0757   342A           02509         retlw   "*"
+0758   340A           02510         retlw   0xa             ; die Null!!
+0759   3423           02511         retlw   "#"
+075A   343F           02512         retlw   "?"
+075B   3407           02513         retlw   7
+075C   3408           02514         retlw   8
+075D   3409           02515         retlw   9
+075E   3463           02516         retlw   "c"
+075F   3404           02517         retlw   4
+0760   3405           02518         retlw   5
+0761   3406           02519         retlw   6
+0762   342D           02520         retlw   "-"
+0763   3401           02521         retlw   1       ; 0xD
+0764   3402           02522         retlw   2
+0765   3403           02523         retlw   3
+0766   342B           02524         retlw   "+"
+                      02525 
+                      02526 
+                      02527 
+                      02528 ;*******************************************************************************
+                      02529 ;********************** EEPROM Bereich *****************************************
+                      02530 ;*******************************************************************************
+2100                  02531         org 2100        ; EEPROM Bereich
+                      02532 
+                      02533 ;       DE      'V','2','F','A','0',' ','1','4','.','0','4','.','2','0','0','5'
+2100   0010 0000 0000 02534         DE      0x10,0x0 ,0x0, 0x1
+       0001 
+2104   0000 0010 0000 02535         DE      0x0 ,0x10,0x0, 0x1
+       0001 
+2108   0000 0000 0010 02536         DE      0x0 ,0x0 ,0x10,0x0
+       0000 
+210C   0080 0000 0000 02537         DE      0x80,0x0 ,0x0, 0x1
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 49
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+       0001 
+2110   0000 0000 0000 02538         DE      0x0, 0x0 ,0x0, 0x6
+       0006 
+2114   0080 0000 0000 02539         DE      0x80,0x0 ,0x0, 0x7f
+       007F 
+                      02540 
+                      02541 
+                      02542 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                      02543         END
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 50
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ACC1_0                            00000033
+ACC1_H                            00000034
+ACC1_L                            00000035
+ACC2_0                            00000036
+ACC2_H                            00000037
+ACC2_L                            00000038
+AD0                               00000024
+AD1                               00000025
+AD2                               00000026
+AD3                               00000027
+ADCON0                            0000001F
+ADCON1                            0000009F
+ADCS0                             00000004
+ADCS1                             00000005
+ADCS2                             00000006
+ADDEN                             00000003
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADLoop1                           0000045E
+ADLoop2                           0000046B
+ADLoop3                           00000479
+ADLoop4                           00000487
+ADON                              00000000
+ADRESH                            0000001E
+ADRESL                            0000009E
+AD_STATUS                         0000003F
+ADconv                            00000451
+AN0                               00000000
+AN1                               00000001
+AN2                               00000002
+AN3                               00000003
+AN4                               00000004
+AN5                               00000005
+AN6                               00000006
+AN7                               00000007
+ANSEL                             00000091
+AdDispatch                        00000133
+AddAcc                            000002E7
+AddAccRep                         00000326
+AddDifferenz                      00000220
+AddTastBuff                       000002B0
+AtoiDec                           000002A2
+BF                                00000000
+BIASMD                            00000006
+BRGH                              00000002
+BinToHex                          0000011C
+BinToHex8                         000000FB
+BinToHex81                        00000100
+BinToHexTab                       00000711
+C                                 00000000
+C1IE                              00000005
+C1IF                              00000005
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 51
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+C1INV                             00000004
+C1OUT                             00000006
+C2IE                              00000006
+C2IF                              00000006
+C2INV                             00000005
+C2OUT                             00000007
+C2SYNC                            00000000
+CCP1CON                           00000017
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP1X                             00000005
+CCP1Y                             00000004
+CCP2CON                           0000001D
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+CCP2M3                            00000003
+CCP2X                             00000005
+CCP2Y                             00000004
+CCPR1H                            00000016
+CCPR1L                            00000015
+CCPR2H                            0000001C
+CCPR2L                            0000001B
+CDP                               0000050C
+CHS0                              00000002
+CHS1                              00000003
+CHS2                              00000004
+CIS                               00000003
+CKE                               00000006
+CKP                               00000004
+CM0                               00000000
+CM1                               00000001
+CM2                               00000002
+CMCON0                            0000009C
+CMCON1                            00000097
+CREN                              00000004
+CS0                               00000002
+CS1                               00000003
+CSRC                              00000007
+CTB                               00000516
+CheckTastIn                       000003FE
+ClearDispBuff                     00000507
+ClearTastBuff                     00000511
+D                                 00000005
+DATA_ADDRESS                      00000005
+DC                                00000001
+DELAY                             0000003A
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 52
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+DISP_BUFF                         00000050
+DISP_CNT                          00000030
+DISP_STAT                         00000032
+DISP_Z_FLAG                       00000031
+D_A                               00000005
+DatenKeineFunktion                00000700
+DispGateway                       0000009C
+DispGateway_1                     0000009F
+DispInitLoop                      0000006F
+DispKeineFunktion                 00000123
+DispKeineFunktionLoop             00000126
+DispMainParam                     000000AC
+DispMainParam_1                   000000AF
+DispVersion                       0000008C
+DispVersion_1                     0000008F
+EEADRH                            0000010F
+EEADRL                            0000010D
+EECON1                            0000018C
+EECON2                            0000018D
+EEDATH                            0000010E
+EEDATL                            0000010C
+EEIE                              00000007
+EEIF                              00000007
+EEPGD                             00000007
+EEPromReadLoop                    0000054A
+EEPromWriteLoop                   00000522
+EERD                              00000000
+EEWR                              00000001
+EEpromRead                        00000545
+EEpromWrite                       0000051B
+ETX                               00000003
+EndAD                             00000494
+EndAccAdd                         0000032F
+EndAccSub                         00000339
+EndDifferenz                      00000221
+EndInt                            00000023
+EndScan                           000003CE
+EndTast                           000003F6
+EndTastDispatch                   000002A1
+EndTimer1Int                      00000016
+F                                 00000001
+FARBTAB                           000000A0
+FARB_COUNT                        0000006C
+FARB_IDX_AKT                      0000006A
+FARB_IDX_NEXT                     0000006B
+FARB_SPEICHER_IDX                 0000006D
+FERR                              00000002
+FSR                               00000004
+FarbeSteppen                      000001EC
+Farbprogramm_1                    000002C3
+Farbprogramm_2                    000002CC
+Farbprogramm_3                    000002D5
+Farbprogramm_4                    000002DE
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 53
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+GIE                               00000007
+GO_DONE                           00000001
+GatewayData                       00000744
+HEX1_Dispatch                     00000165
+HEX2_Dispatch                     000001C0
+HEX_AKT                           00000068
+HEX_LAST                          00000069
+HTS                               00000002
+HexScan                           00000409
+I2C_DATA                          00000005
+I2C_READ                          00000002
+I2C_START                         00000003
+I2C_STOP                          00000004
+INDF                              00000000
+INTCON                            0000000B
+INTE                              00000004
+INTEDG                            00000006
+INTF                              00000001
+IOC                               00000096
+IOC4                              00000004
+IOC5                              00000005
+IOC6                              00000006
+IOC7                              00000007
+IOCB                              00000096
+IOCB4                             00000004
+IOCB5                             00000005
+IOCB6                             00000006
+IOCB7                             00000007
+IRCF0                             00000004
+IRCF1                             00000005
+IRCF2                             00000006
+IRP                               00000007
+IRVST                             00000005
+ITOA_BUFF                         00000060
+Interrupt                         00000008
+KeinSwap                          00000214
+LCDA                              00000005
+LCDCON                            00000107
+LCDDATA0                          00000110
+LCDDATA1                          00000111
+LCDDATA10                         0000011A
+LCDDATA11                         0000011B
+LCDDATA2                          00000112
+LCDDATA3                          00000113
+LCDDATA4                          00000114
+LCDDATA5                          00000115
+LCDDATA6                          00000116
+LCDDATA7                          00000117
+LCDDATA8                          00000118
+LCDDATA9                          00000119
+LCDEN                             00000007
+LCDIE                             00000004
+LCDIF                             00000004
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 54
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+LCDPS                             00000108
+LCDSE0                            0000011C
+LCDSE1                            0000011D
+LCDSE2                            0000011E
+LMUX0                             00000000
+LMUX1                             00000001
+LP0                               00000000
+LP1                               00000001
+LP2                               00000002
+LP3                               00000003
+LTS                               00000001
+LVDCON                            00000109
+LVDEN                             00000004
+LVDIE                             00000002
+LVDIF                             00000002
+LVDL0                             00000000
+LVDL1                             00000001
+LVDL2                             00000002
+LadeSekundenWert                  00000222
+MainParamData                     00000733
+MainWaitLoop                      0000008B
+MoveToDispBuff                    000000E5
+MoveToDispBuff1                   000000EA
+NOT_A                             00000005
+NOT_ADDRESS                       00000005
+NOT_BO                            00000000
+NOT_BOR                           00000000
+NOT_DONE                          00000001
+NOT_PD                            00000003
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RC8                           00000006
+NOT_T1SYNC                        00000002
+NOT_TO                            00000004
+NOT_TX8                           00000006
+NOT_W                             00000002
+NOT_WRITE                         00000002
+NeueTaste                         000003CB
+NoIdxReset                        000002B8
+NormalDispatchEnd                 000001BF
+NormalWeiter                      000001B4
+OERR                              00000001
+OPTION_REG                        00000081
+OSCCON                            0000008F
+OSCTUNE                           00000090
+OSFIE                             00000007
+OSFIF                             00000007
+OSTS                              00000003
+P                                 00000004
+PCL                               00000002
+PCLATH                            0000000A
+PCLATH_TEMP                       00000021
+PCON                              0000008E
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 55
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PEIE                              00000006
+PIE1                              0000008C
+PIE2                              0000008D
+PIR1                              0000000C
+PIR2                              0000000D
+PORTA                             00000005
+PORTB                             00000006
+PORTC                             00000007
+PORTD                             00000008
+PORTE                             00000009
+PORT_TASTIN                       00000008
+PORT_TASTOUT                      00000006
+PR2                               00000092
+PS0                               00000000
+PS1                               00000001
+PS2                               00000002
+PSA                               00000003
+R                                 00000002
+RBIE                              00000003
+RBIF                              00000000
+RC8_9                             00000006
+RC9                               00000006
+RCD8                              00000000
+RCIE                              00000005
+RCIF                              00000005
+RCREG                             0000001A
+RCSTA                             00000018
+RD                                00000000
+READ_WRITE                        00000002
+RP0                               00000005
+RP1                               00000006
+RX9                               00000006
+RX9D                              00000000
+RX_COUNT                          0000006F
+R_W                               00000002
+RecByteAvailable                  000001CD
+RepeatTaste                       000003C9
+S                                 00000003
+S0C0                              00000000
+S0C1                              00000000
+S0C2                              00000000
+S0C3                              00000000
+S10C0                             00000002
+S10C1                             00000002
+S10C2                             00000002
+S10C3                             00000002
+S11C0                             00000003
+S11C1                             00000003
+S11C2                             00000003
+S11C3                             00000003
+S12C0                             00000004
+S12C1                             00000004
+S12C2                             00000004
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 56
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+S12C3                             00000004
+S13C0                             00000005
+S13C1                             00000005
+S13C2                             00000005
+S13C3                             00000005
+S14C0                             00000006
+S14C1                             00000006
+S14C2                             00000006
+S14C3                             00000006
+S15C0                             00000007
+S15C1                             00000007
+S15C2                             00000007
+S15C3                             00000007
+S16C0                             00000000
+S16C1                             00000000
+S16C2                             00000000
+S16C3                             00000000
+S17C0                             00000001
+S17C1                             00000001
+S17C2                             00000001
+S17C3                             00000001
+S18C0                             00000002
+S18C1                             00000002
+S18C2                             00000002
+S18C3                             00000002
+S19C0                             00000003
+S19C1                             00000003
+S19C2                             00000003
+S19C3                             00000003
+S1C0                              00000001
+S1C1                              00000001
+S1C2                              00000001
+S1C3                              00000001
+S20C0                             00000004
+S20C1                             00000004
+S20C2                             00000004
+S20C3                             00000004
+S21C0                             00000005
+S21C1                             00000005
+S21C2                             00000005
+S21C3                             00000005
+S22C0                             00000006
+S22C1                             00000006
+S22C2                             00000006
+S22C3                             00000006
+S23C0                             00000007
+S23C1                             00000007
+S23C2                             00000007
+S23C3                             00000007
+S2C0                              00000002
+S2C1                              00000002
+S2C2                              00000002
+S2C3                              00000002
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 57
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+S3C0                              00000003
+S3C1                              00000003
+S3C2                              00000003
+S3C3                              00000003
+S4C0                              00000004
+S4C1                              00000004
+S4C2                              00000004
+S4C3                              00000004
+S5C0                              00000005
+S5C1                              00000005
+S5C2                              00000005
+S5C3                              00000005
+S6C0                              00000006
+S6C1                              00000006
+S6C2                              00000006
+S6C3                              00000006
+S7C0                              00000007
+S7C1                              00000007
+S7C2                              00000007
+S7C3                              00000007
+S8C0                              00000000
+S8C1                              00000000
+S8C2                              00000000
+S8C3                              00000000
+S9C0                              00000001
+S9C1                              00000001
+S9C2                              00000001
+S9C3                              00000001
+SBOREN                            00000004
+SCS                               00000000
+SE0                               00000000
+SE1                               00000001
+SE10                              00000002
+SE11                              00000003
+SE12                              00000004
+SE13                              00000005
+SE14                              00000006
+SE15                              00000007
+SE16                              00000000
+SE17                              00000001
+SE18                              00000002
+SE19                              00000003
+SE2                               00000002
+SE20                              00000004
+SE21                              00000005
+SE22                              00000006
+SE23                              00000007
+SE3                               00000003
+SE4                               00000004
+SE5                               00000005
+SE6                               00000006
+SE7                               00000007
+SE8                               00000000
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 58
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SE9                               00000001
+SEG0COM0                          00000000
+SEG0COM1                          00000000
+SEG0COM2                          00000000
+SEG0COM3                          00000000
+SEG10COM0                         00000002
+SEG10COM1                         00000002
+SEG10COM2                         00000002
+SEG10COM3                         00000002
+SEG11COM0                         00000003
+SEG11COM1                         00000003
+SEG11COM2                         00000003
+SEG11COM3                         00000003
+SEG12COM0                         00000004
+SEG12COM1                         00000004
+SEG12COM2                         00000004
+SEG12COM3                         00000004
+SEG13COM0                         00000005
+SEG13COM1                         00000005
+SEG13COM2                         00000005
+SEG13COM3                         00000005
+SEG14COM0                         00000006
+SEG14COM1                         00000006
+SEG14COM2                         00000006
+SEG14COM3                         00000006
+SEG15COM0                         00000007
+SEG15COM1                         00000007
+SEG15COM2                         00000007
+SEG15COM3                         00000007
+SEG16COM0                         00000000
+SEG16COM1                         00000000
+SEG16COM2                         00000000
+SEG16COM3                         00000000
+SEG17COM0                         00000001
+SEG17COM1                         00000001
+SEG17COM2                         00000001
+SEG17COM3                         00000001
+SEG18COM0                         00000002
+SEG18COM1                         00000002
+SEG18COM2                         00000002
+SEG18COM3                         00000002
+SEG19COM0                         00000003
+SEG19COM1                         00000003
+SEG19COM2                         00000003
+SEG19COM3                         00000003
+SEG1COM0                          00000001
+SEG1COM1                          00000001
+SEG1COM2                          00000001
+SEG1COM3                          00000001
+SEG20COM0                         00000004
+SEG20COM1                         00000004
+SEG20COM2                         00000004
+SEG20COM3                         00000004
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 59
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SEG21COM0                         00000005
+SEG21COM1                         00000005
+SEG21COM2                         00000005
+SEG21COM3                         00000005
+SEG22COM0                         00000006
+SEG22COM1                         00000006
+SEG22COM2                         00000006
+SEG22COM3                         00000006
+SEG23COM0                         00000007
+SEG23COM1                         00000007
+SEG23COM2                         00000007
+SEG23COM3                         00000007
+SEG2COM0                          00000002
+SEG2COM1                          00000002
+SEG2COM2                          00000002
+SEG2COM3                          00000002
+SEG3COM0                          00000003
+SEG3COM1                          00000003
+SEG3COM2                          00000003
+SEG3COM3                          00000003
+SEG4COM0                          00000004
+SEG4COM1                          00000004
+SEG4COM2                          00000004
+SEG4COM3                          00000004
+SEG5COM0                          00000005
+SEG5COM1                          00000005
+SEG5COM2                          00000005
+SEG5COM3                          00000005
+SEG6COM0                          00000006
+SEG6COM1                          00000006
+SEG6COM2                          00000006
+SEG6COM3                          00000006
+SEG7COM0                          00000007
+SEG7COM1                          00000007
+SEG7COM2                          00000007
+SEG7COM3                          00000007
+SEG8COM0                          00000000
+SEG8COM1                          00000000
+SEG8COM2                          00000000
+SEG8COM3                          00000000
+SEG9COM0                          00000001
+SEG9COM1                          00000001
+SEG9COM2                          00000001
+SEG9COM3                          00000001
+SEGEN0                            00000000
+SEGEN1                            00000001
+SEGEN10                           00000002
+SEGEN11                           00000003
+SEGEN12                           00000004
+SEGEN13                           00000005
+SEGEN14                           00000006
+SEGEN15                           00000007
+SEGEN16                           00000000
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 60
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SEGEN17                           00000001
+SEGEN18                           00000002
+SEGEN19                           00000003
+SEGEN2                            00000002
+SEGEN20                           00000004
+SEGEN21                           00000005
+SEGEN22                           00000006
+SEGEN23                           00000007
+SEGEN3                            00000003
+SEGEN4                            00000004
+SEGEN5                            00000005
+SEGEN6                            00000006
+SEGEN7                            00000007
+SEGEN8                            00000000
+SEGEN9                            00000001
+SEKUNDEN_COUNT                    0000002F
+SEKUNDEN_WERT                     0000002E
+SLPEN                             00000006
+SMP                               00000007
+SPBRG                             00000099
+SPEN                              00000007
+SREN                              00000005
+SSPADD                            00000093
+SSPBUF                            00000013
+SSPCON                            00000014
+SSPEN                             00000005
+SSPIE                             00000003
+SSPIF                             00000003
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPOV                             00000006
+SSPSTAT                           00000094
+STATUS                            00000003
+STATUS_TEMP                       0000007F
+STX                               00000002
+SWDTE                             00000000
+SWDTEN                            00000000
+SYNC                              00000004
+SendNewColor                      00000144
+SendToKachel                      000001E4
+SubAcc                            000002FD
+SubAcc1                           00000306
+SubAccRep                         00000330
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0SE                              00000004
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000010
+T1GE                              00000006
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 61
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+T1GINV                            00000007
+T1GSS                             00000001
+T1INSYNC                          00000002
+T1OSCEN                           00000003
+T1SYNC                            00000002
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000012
+TASTBUFF                          00000040
+TASTBUFF_IDX                      0000006E
+TASTE_AKT                         00000028
+TASTE_IDX                         0000002A
+TASTE_LAST                        00000029
+TEMP                              0000002B
+TEMP1                             0000002C
+TEMP2                             0000002D
+TEMP3                             0000003B
+TEMP4                             0000003C
+TEMP5                             0000003D
+TEMPFLAG                          00000039
+TIM1_10MS                         00000022
+TIM2_10MS                         00000023
+TIMECOUNT                         00000066
+TMR0                              00000001
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR1CS                            00000001
+TMR1H                             0000000F
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1L                             0000000E
+TMR1ON                            00000000
+TMR2                              00000011
+TMR2IE                            00000001
+TMR2IF                            00000001
+TMR2ON                            00000002
+TOUTPS0                           00000003
+TOUTPS1                           00000004
+TOUTPS2                           00000005
+TOUTPS3                           00000006
+TRISA                             00000085
+TRISB                             00000086
+TRISC                             00000087
+TRISD                             00000088
+TRISE                             00000089
+TRMT                              00000001
+TUN0                              00000000
+TUN1                              00000001
+TUN2                              00000002
+TUN3                              00000003
+TUN4                              00000004
+TX8_9                             00000006
+TX9                               00000006
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 62
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TX9D                              00000000
+TXD8                              00000000
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXREG                             00000019
+TXSTA                             00000098
+TastDispatch                      00000234
+TastScan                          000003AC
+TastScan1                         000003CF
+TasteUmsetzen                     00000755
+TestHex1                          0000041E
+TestHex2                          0000043C
+TestHex3                          0000044A
+TestHex_0                         0000025C
+TestTaste_2                       00000249
+TestTaste_3                       0000024F
+TestTaste_4                       00000255
+TestTaste_5                       0000025B
+TestTaste_C                       0000029B
+TestTaste_null                    00000270
+TestTaste_plus                    00000277
+Timer1Int                         00000016
+Timer2Int                         00000019
+TstScLoop                         000003BB
+UA                                00000001
+V24Send                           000000DF
+VCFG0                             00000005
+VCFG1                             00000006
+VLCDEN                            00000004
+VR0                               00000000
+VR1                               00000001
+VR2                               00000002
+VR3                               00000003
+VRCON                             0000009D
+VREN                              00000007
+VRR                               00000005
+VersLoop                          00000075
+VersionData                       00000722
+W                                 00000000
+WA                                00000004
+WCOL                              00000007
+WDTCON                            00000105
+WDTPS0                            00000001
+WDTPS1                            00000002
+WDTPS2                            00000003
+WDTPS3                            00000004
+WERR                              00000005
+WFT                               00000007
+WPU                               00000095
+WPU0                              00000000
+WPU1                              00000001
+WPU2                              00000002
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 63
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+WPU3                              00000003
+WPU4                              00000004
+WPU5                              00000005
+WPU6                              00000006
+WPU7                              00000007
+WPUB                              00000095
+WPUB0                             00000000
+WPUB1                             00000001
+WPUB2                             00000002
+WPUB3                             00000003
+WPUB4                             00000004
+WPUB5                             00000005
+WPUB6                             00000006
+WPUB7                             00000007
+WR                                00000001
+WREN                              00000002
+WRERR                             00000003
+W_TEMP                            0000007E
+Wait10ms                          0000044B
+WaitLoop                          0000044D
+WaitTxBufferleer                  000000E0
+WandleKanal_1                     00000468
+WandleKanal_2                     00000475
+WandleKanal_3                     00000483
+Weiter_FIDX                       000001AB
+Z                                 00000002
+ZEIT_FidxAktholen                 00000195
+ZeroCount                         0000015C
+ZeroCountLoop                     0000015F
+_BOD_NSLEEP                       00003EFF
+_BOD_OFF                          00003CFF
+_BOD_ON                           00003FFF
+_BOD_SBODEN                       00003DFF
+_CONFIG                           00002007
+_CPD_OFF                          00003FFF
+_CPD_ON                           00003F7F
+_CP_OFF                           00003FFF
+_CP_ON                            00003FBF
+_DEBUG_OFF                        00003FFF
+_DEBUG_ON                         00002FFF
+_EC_OSC                           00003FFB
+_EXTRC                            00003FFF
+_EXTRCIO                          00003FFE
+_EXTRC_OSC_CLKOUT                 00003FFF
+_EXTRC_OSC_NOCLKOUT               00003FFE
+_FCMEN_OFF                        000037FF
+_FCMEN_ON                         00003FFF
+_HS_OSC                           00003FFA
+_IESO_OFF                         00003BFF
+_IESO_ON                          00003FFF
+_INTOSC                           00003FFD
+_INTOSCIO                         00003FFC
+_INTRC_OSC_CLKOUT                 00003FFD
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 64
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_INTRC_OSC_NOCLKOUT               00003FFC
+_LP_OSC                           00003FF8
+_MCLRE_OFF                        00003FDF
+_MCLRE_ON                         00003FFF
+_PWRTE_OFF                        00003FFF
+_PWRTE_ON                         00003FEF
+_WDT_OFF                          00003FF7
+_WDT_ON                           00003FFF
+_XT_OSC                           00003FF9
+__16F914                          00000001
+dAddAcc                           000002EE
+dAddAcc1                          000002F6
+dSubAcc                           0000030B
+dSubAcc1                          00000319
+dSubAcc2                          00000321
+delay_ms                          0000055E
+delay_ms1                         00000560
+display                           00000497
+display_CB                        000004D3
+display_clr                       000004C9
+display_init                      000004D8
+display_off                       000004C2
+display_on                        000004CE
+display_write                     000004ED
+display_z1                        000004A3
+display_z2                        000004A7
+display_z3                        000004AB
+display_z4                        000004AF
+display_zout                      000004B3
+display_zout0                     000004BA
+dutoa                             0000038D
+dutoa1                            00000396
+dutoa2                            0000039B
+dutoa3                            000003A4
+dutoa4                            000003A9
+loop_1                            0000002E
+lutoa                             00000354
+lutoa1                            0000035B
+lutoa2                            00000360
+lutoa3                            00000368
+lutoa4                            0000036D
+lutoa5                            00000375
+lutoa6                            0000037A
+lutoa7                            00000382
+lutoa8                            00000387
+lutoa_sub                         00000361
+main                              00000084
+start                             0000002A
+sutoa                             0000033A
+sutoa1                            0000033F
+sutoa2                            00000344
+sutoa3                            00000349
+sutoa4                            0000034E
+MPASM  4.02 Released                               KACHEL.ASM   10-10-2005  17:02:54         PAGE 65
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+wait_15zms                        000000D5
+wait_22zms                        000000D4
+wait_3ms                          000000D3
+wait_750us                        000000D6
+
+
+MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
+
+0000 : XX--X---XXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0040 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0080 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+00C0 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0100 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0140 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0180 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+01C0 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0200 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0240 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0280 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+02C0 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0300 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0340 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0380 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+03C0 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0400 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0440 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0480 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+04C0 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0500 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0540 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXX------------ ----------------
+0700 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0740 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXX--------- ----------------
+2000 : -------X-------- ---------------- ---------------- ----------------
+2100 : XXXXXXXXXXXXXXXX XXXXXXXX-------- ---------------- ----------------
+
+All other memory blocks unused.
+
+Program Memory Words Used:  1478
+Program Memory Words Free:  2618
+
+
+Errors   :     0
+Warnings :     0 reported,     0 suppressed
+Messages :     0 reported,    40 suppressed
+
+

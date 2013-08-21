@@ -1,0 +1,329 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Deutsch (Deutschland) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 7, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\ESCollect.rc2""  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen\r\n"
+    "#include ""l.deu\\afxres.rc""          // Standardkomponenten\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\ESCollect.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 278, 65
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Info über KachelPlayer"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "KachelPlayer Vers. 1.24 / 28.09.2006",IDC_STATIC,136,5,
+                    119,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) Leber Systemtechnik 2006",IDC_STATIC,136,
+                    16,131,8
+    DEFPUSHBUTTON   "OK",IDOK,114,40,50,14,WS_GROUP
+    LTEXT           "www.lumitile.de",IDC_STATIC,135,26,77,8
+    CONTROL         135,IDC_STATIC,"Static",SS_BITMAP,7,5,32,30
+END
+
+IDD_ESCOLLECT_DIALOG DIALOGEX 0, 0, 245, 250
+STYLE DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
+    WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "KachelPlayer"
+FONT 8, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Exit",IDCANCEL,124,231,50,14
+    EDITTEXT        IDC_MESS1,12,85,94,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Einstellungen",IDC_PARAM,12,231,50,14
+    CONTROL         131,IDC_BMP5,"Static",SS_BITMAP | NOT WS_VISIBLE,112,85,
+                    13,12
+    PUSHBUTTON      "Test",IDC_TEST,1,20,28,14,NOT WS_VISIBLE
+    LTEXT           "Status",IDC_LABEL1,13,72,92,8
+    PUSHBUTTON      "Info",IDC_INFO,68,231,50,14
+    CONTROL         135,IDC_STATIC,"Static",SS_BITMAP,13,7,119,37
+    CONTROL         130,IDC_BMP1,"Static",SS_BITMAP,112,85,13,12
+    EDITTEXT        IDC_ANZEIGE,13,116,156,104,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    WS_VSCROLL
+    PUSHBUTTON      "LoadFile",IDC_LOADFILE,13,48,50,14
+    EDITTEXT        IDC_TESTEDIT,1,6,37,14,ES_AUTOHSCROLL | NOT WS_VISIBLE
+    CONTROL         "Slider1",IDC_SPEED,"msctls_trackbar32",TBS_AUTOTICKS | 
+                    TBS_VERT | TBS_BOTH | WS_TABSTOP,148,26,26,50
+    CONTROL         "Slider1",IDC_DIMMER,"msctls_trackbar32",TBS_AUTOTICKS | 
+                    TBS_VERT | TBS_BOTH | WS_TABSTOP,198,26,26,50
+    LTEXT           "Tempo",IDC_STATIC,148,17,23,8
+    LTEXT           "Dimmer",IDC_STATIC,196,17,24,8
+    PUSHBUTTON      "Upload",IDC_UPLOAD,67,48,50,14
+    CONTROL         "Progress1",IDC_UPLOAD_PROGRESS,"msctls_progress32",NOT 
+                    WS_VISIBLE | WS_BORDER,67,63,50,6
+    LTEXT           "100%",IDC_STATIC,224,30,18,8
+    LTEXT           "10%",IDC_STATIC,226,62,14,8
+    LTEXT           "100%",IDC_STATIC,175,31,18,8
+    LTEXT           "1%",IDC_STATIC,177,63,10,8
+END
+
+IDD_PARAMETER DIALOG DISCARDABLE  0, 0, 219, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Parameter"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,94,55,50,14
+    PUSHBUTTON      "Abbrechen",IDCANCEL,158,55,50,14
+    EDITTEXT        IDC_PORT1,162,18,40,14,ES_AUTOHSCROLL | NOT WS_VISIBLE
+    LTEXT           "Port 1",IDC_STATIC,137,20,20,8,NOT WS_VISIBLE
+    EDITTEXT        IDC_LABEL1,105,0,40,14,ES_AUTOHSCROLL | NOT WS_VISIBLE
+    LTEXT           "Bezeichnung",IDC_STATIC,57,0,42,8,NOT WS_VISIBLE
+    PUSHBUTTON      "FirmwareUpdate",IDC_FW_UPDATE,17,54,62,15
+    COMBOBOX        IDC_VPSCOM,79,18,48,77,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
+    LTEXT           "Kachel-Controler an",IDC_STATIC,7,20,63,8
+END
+
+IDD_UPLOAD DIALOG DISCARDABLE  0, 0, 186, 122
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Firmware Update"
+FONT 8, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Abbrechen",IDCANCEL,15,13,50,14
+    PUSHBUTTON      "Open HexFile",IDC_OPENHEXFILE,13,68,50,14
+    PUSHBUTTON      "Verify",IDC_VERIFY,123,68,50,14
+    PUSHBUTTON      "Schließen",IDOK,119,13,50,14
+    CONTROL         "Progress1",IDC_PROGRESS,"msctls_progress32",WS_BORDER,7,
+                    92,172,6
+    PUSHBUTTON      "Upload Start",IDC_UPLOAD,69,68,50,14
+    LTEXT           "",IDC_ADRESSE,7,102,172,11,SS_SUNKEN
+    LTEXT           "ACHTUNG!! Beenden sie NIE während eines Uploads das Programm, fahren Sie NICHT den Rechner herunter. Warten Sie, bis der Upload beendet ist",
+                    IDC_MESSAGE,17,26,153,37,NOT WS_VISIBLE
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040704B0"
+        BEGIN
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "MFC-Anwendung Kachel-Player\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "Kachel-Player\0"
+            VALUE "LegalCopyright", "Copyright (C) 2003\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "KachelPlayer.EXE\0"
+            VALUE "ProductName", "Anwendung Kachel-Player\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        RIGHTMARGIN, 276
+    END
+
+    IDD_ESCOLLECT_DIALOG, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 248
+    END
+
+    IDD_PARAMETER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 212
+        BOTTOMMARGIN, 83
+    END
+
+    IDD_UPLOAD, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 120
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP  DISCARDABLE     "res\\bitmap1.bmp"
+IDB_BITMAP2             BITMAP  DISCARDABLE     "res\\bitmap2.bmp"
+IDB_BITMAP4             BITMAP  DISCARDABLE     "res\\lumitile_logo_256.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_PARAMETER DLGINIT
+BEGIN
+    IDC_VPSCOM, 0x403, 5, 0
+0x4f43, 0x314d, "\000" 
+    IDC_VPSCOM, 0x403, 5, 0
+0x4f43, 0x324d, "\000" 
+    IDC_VPSCOM, 0x403, 5, 0
+0x4f43, 0x334d, "\000" 
+    IDC_VPSCOM, 0x403, 5, 0
+0x4f43, 0x344d, "\000" 
+    IDC_VPSCOM, 0x403, 5, 0
+0x4f43, 0x354d, "\000" 
+    IDC_VPSCOM, 0x403, 5, 0
+0x4f43, 0x364d, "\000" 
+    IDC_VPSCOM, 0x403, 5, 0
+0x4f43, 0x374d, "\000" 
+    IDC_VPSCOM, 0x403, 5, 0
+0x4f43, 0x384d, "\000" 
+    IDC_VPSCOM, 0x403, 5, 0
+0x4f43, 0x394d, "\000" 
+    IDC_VPSCOM, 0x403, 6, 0
+0x4f43, 0x314d, 0x0030, 
+    IDC_VPSCOM, 0x403, 6, 0
+0x4f43, 0x314d, 0x0031, 
+    IDC_VPSCOM, 0x403, 6, 0
+0x4f43, 0x314d, 0x0032, 
+    IDC_VPSCOM, 0x403, 6, 0
+0x4f43, 0x314d, 0x0033, 
+    IDC_VPSCOM, 0x403, 6, 0
+0x4f43, 0x314d, 0x0034, 
+    IDC_VPSCOM, 0x403, 6, 0
+0x4f43, 0x314d, 0x0035, 
+    IDC_VPSCOM, 0x403, 6, 0
+0x4f43, 0x314d, 0x0036, 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_ABOUTBOX            "Inf&o über Kachel-Player..."
+    IDP_SOCKETS_INIT_FAILED "Fehler beim Initialisieren der Windows-Sockets."
+END
+
+#endif    // Deutsch (Deutschland) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+#ifdef _WIN32
+LANGUAGE 7, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\ESCollect.rc2"  // Nicht mit Microsoft Visual C++ bearbeitete Ressourcen
+#include "l.deu\afxres.rc"          // Standardkomponenten
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

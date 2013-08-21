@@ -1,0 +1,55 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.5.4	//
+!_TAG_REVISION_NAME	MCHPTags	//
+!_TAG_REVISION_VERSION	6.0.1	//
+ADCON0	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	30;"	d	line:30
+ADRESH	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	29;"	d	line:29
+ADRESL	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	37;"	d	line:37
+ANSEL	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	38;"	d	line:38
+C	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	13;"	d	line:13
+CMCON	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	28;"	d	line:28
+F	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	15;"	d	line:15
+FSR	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	19;"	d	line:19
+Flag_ON	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	41;"	d	line:41
+GPIO	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	20;"	d	line:20
+INTCON	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	22;"	d	line:22
+Merker	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	45;"	d	line:45
+OPTION_REG	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	33;"	d	line:33
+OSCCAL	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	35;"	d	line:35
+PCL	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	17;"	d	line:17
+PCLATH	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	21;"	d	line:21
+PCLATH_TEMP	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	52;"	d	line:52
+PIE1	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	24;"	d	line:24
+PIR1	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	23;"	d	line:23
+Periode1	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	43;"	d	line:43
+Periode2	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	44;"	d	line:44
+STATUS	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	18;"	d	line:18
+STATUS_TEMP	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	51;"	d	line:51
+Spannung	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	54;"	d	line:54
+Start_TMR00	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	242;"	l	line:242
+Start_TMR01	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	248;"	l	line:248
+Stellwert	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	42;"	d	line:42
+Stellwert_S	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	46;"	d	line:46
+T1CON	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	27;"	d	line:27
+TMR0	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	16;"	d	line:16
+TMR1H	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	26;"	d	line:26
+TMR1L	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	25;"	d	line:25
+TRIS0	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	34;"	d	line:34
+Tab_Wert	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	255;"	l	line:255
+Temperatur	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	55;"	d	line:55
+VRCON	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	36;"	d	line:36
+W	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	12;"	d	line:12
+W_TEMP	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	50;"	d	line:50
+Wert1	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	57;"	d	line:57
+Wert2	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	58;"	d	line:58
+Z	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	14;"	d	line:14
+main	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	178;"	l	line:178
+main_OFF	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	190;"	l	line:190
+main_OFF0	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	208;"	l	line:208
+main_ON	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	182;"	l	line:182
+read_T	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	225;"	l	line:225
+start	O:\0190_LED-Wall\Intern\PICs\U_Contr\Test.asm	109;"	l	line:109

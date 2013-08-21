@@ -1,0 +1,32 @@
+#LED-Programm in lesbarer Form, nur VORSICHTIG editieren !
+{
+'version': 1.00,
+#DIE METASZENE...
+'size': (5, 5) ,
+'meta': [
+    [  1,  2,  3,  4,  5, ],
+    [  6,  7,  8,  9, 10, ],
+    [ 11, 12, 13, 14, 15, ],
+    [ 16, 17, 18, 19, 20, ],
+    [ 21, 22, 23, 24, 25, ],
+  ],
+
+#USER DEFINED PROPERTIES
+'QuadratSize': 50,
+
+#LISTE VON SZENEN
+'szenen': [
+    { 
+      'name': 'Szene 1',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['400040', '5F2A5F', '7F557F', '9F7F9F', 'FFFFFF'],
+        ['5F2A5F', '7F557F', '9F7F9F', 'BFAABF', 'FFFFFF'],
+        ['7F557F', '9F7F9F', 'BFAABF', 'DFD4DF', 'FFFFFF'],
+        ['9F7F9F', 'BFAABF', 'DFD4DF', 'FFFFFF', 'FFFFFF'],
+        ['FFFFFF', 'FFFFFF', 'FFFFFF', 'FFFFFF', 'FFFFFF'],
+      ],
+    } ,
+  ],
+}

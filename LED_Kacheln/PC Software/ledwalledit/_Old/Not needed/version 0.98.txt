@@ -1,0 +1,95 @@
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		LED-Editor Olaf-Nachtraege zu 0.98
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  # GESAMT-AUFWAND 4h WIRD 50-50 AUFGETEILT:
+  # 2h "Garantie" UND 2h "Zusatzleistung"
+
+* Begrenzung der Maximalzahl von Kacheln:
+  fuer sehr grosse Kachelmengen (20x20) haengt der Editor
+  
+  - DEBUGGING:
+    - anstatt nur die Kachelzahl zu Begrenzen habe ich zunaechst
+      das Problem genau verfolgt
+    - das Problem ist aber tatsaechlich *UNMITTELBAR* die Kachelzahl > 127:
+      1.der Numerierungsalgorithmus (in META) weiss nicht was er machen soll
+        und so entsteht "unten" eine grosse Zahl von gleichen Kacheln
+        mit Nummer 127
+      2.der Fuellalgorithmus (beim Umschalten nach PAINT)
+          war nie fuer derart lange Ketten gedacht,
+        daher ist er simpel gehalten und so fuellt er
+        fuer jede dieser Kacheln diese und alle anderen gleichen
+    
+    - in der Tat ist dass kein Absturz, es dauert nur unertraeglich lange
+      (18x18 Kacheln auf einem P600 schon 45 Sekunden)
+  
+  - LOESUNG:
+    damit ist die Begrenzung auf 127 keine Notloesung sondern absolut korrekt
+  
+  - ###FUTURE:
+    sollten lange Ketten gleicher Kacheln jemals relevant werden,
+    muesste ich in vielleicht 4..8 Stunden den Kettenalgorithmus
+    optimieren und gruendlich neu debuggen
+  
+  - AUFWAND: 1h Analyse (und 3min Aenderung)
+
+  =>FUER DIE HILFE: auf beide Grenzen hinweisen
+
+* Menu-Kuerzel erscheinen unter XP zwar
+  in der besonderen Gross-Klein-Schreibung aber ohne Underline
+  
+  - ERKLAERUNG: *XP IST SCHULD* eine der 100 Optionen,
+    die man unter XP sofort umstellen sollte,
+    ist, dass Menu-Underlines immer angezeigt werden
+    und nicht erst wenn man ALT gedrueckt haelt
+    
+    ->ueber Desktop oder ControlPanel "Display Properties" oeffnen
+      ->Appearance tab
+        ->Effects Button
+          [ ] Hide Underlined letters for keyboard navigation until I press the ALT Key
+              AUSSCHALTEN
+  
+  =>FUER DIE HILFE: eventuell als Tip mit aufnehmen
+
+* der Player wird mit dem Editor gestartet
+  aber am Ende nicht mit dem Editor beendet
+  
+  ! ABSICHT: die Idee ist, dass der Player 
+    das uebergebene Programm ja weiter spielen soll,
+    intensiv mit Herr Leber besprochen...
+  
+  =>FUER DIE HILFE: mit Grund darauf hinweisen
+
+* gleichzeitige Einfärbung von mehreren Kacheln: 
+  fuer eine Selektion von mehreren Kacheln
+  sollte der Colorpicker per Hotkey und auch
+  rechte Maustaste "Uebernehmen der Clipboard-Farbe"
+  alle einfaerben
+  
+  - FERTIG: geht mit Hotkey und sogar Ctrl-Doppelklick
+    fuer Farbdialog und fuer Fuellen mit rechter Maustaste
+  
+  - AUFWAND: 2.5h, insbesondere Debugging der Folgen
+
+  ! VORSICHT, BITTE AUCH BEI EUCH DEBUGGEN
+    eigentlich war das fast eine zu grosse Aenderung
+    kurz vor der finalen ersten Version, genau ansehen
+  
+  =>FUER DIE HILFE: nicht noetig, man merkt es selber
+
+* ColorPicker (1): Farben lassen sich nicht direkt auswählen, 
+  erst wenn eine Grundfarbe ausgewählt wurde, 
+  lässt sich eine benutzerdefinierte Farbe auswählen
+  
+  - TAEUSCHUNG: kommt daher dass man mit weiss anfaengt,
+    wenn man also auf der Farbflaeche eine Farbe waehlt,
+    hat man zwar Farbwert und Saettigung eingestellt,
+    die Helligkeit ist aber immer noch 100%, was man 
+    im Regler rechts neben der Farbflaeche aendern muss
+
+* ColorPicker (2): Benutzerdefinierte Farben werden nicht gespeichtert
+  sind beim nächsten Öffnen des Color-Pickers wieder weg
+
+  - FERTIG: war zum Glueck in der Fensterbibliothek vorgesehen
+  
+  - AUFWAND: 0.5h, nur kurze Recherche

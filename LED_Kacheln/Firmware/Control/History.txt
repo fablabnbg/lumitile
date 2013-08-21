@@ -1,0 +1,38 @@
+//******************************************************************************
+//                                                                             *
+//    Author              :  S. Gassner                                        *
+//    Company             :  Leber Systemtechnik                               *
+//    Filename            :  main.c                                            *
+//    Date                :  04/05/2006                                        *
+//    Program Version     :  3.00                                              *
+//                                                                             *
+//    Other Files Required: p30F4013.gld, p30f4013.h, Portdef.h                *
+//    Tools Used:MPLAB GL : 7.31                                               *
+//               Compiler : 1.31                                               *
+//               Assembler: 1.31                                               *
+//               Linker   : 1.31                                               *
+//                               
+//    Änderungen:
+//    
+//    Vers. 2.02 / 05.04.2006 Ga
+//    - Freier Speicher für Szenen-Download (in Versionsabfrage) wurde nicht 
+//      korrekt übertragen                           
+//                               
+//    Vers. 3.00 / 04.05.2006 Ga
+//    - Zeitintervall durch 10 gteilt, d.h. eine 1 aus KachelEdit enstpricht jetzt 100msec 
+//    - Kachel-Baudrate auf 57.6 Kbaud erhöht
+//    - Temporegler: Eine Änderung setzt nicht den Counter für die aktuelle Szene zurück, 
+//		sondern wird anteilig eingerechnet-> kein Blitzen mehr bei Jitter
+//              Es werden keine kleineren Zeiten als 100msec eingetragen. Ergibt eine Be-
+//		rechnung eine Zeit < 100msec, wird 100msec verwendet.
+//    - Tx2Buff (KachelSend) erhöht, es können die Daten für 50 Kacheln in einem Rutsch berechnet und
+//		rausgeschickt werden, nächster Send erst wieder, wenn Tx2Buff emtpy.
+//	
+//    - Optimierung: RxBuff und Rx1Buff werden im PlayFile-Modus dazu verwendet, den letzten
+//		Stand und den aktuellen Stand (Farben) der Kacheln abzuspeichern. Gesendet wird nur an die
+//		Kacheln, bei denen eine Farbänderung stattgefunden hat.
+//    - Optimierung: CalcFarbeShort() eingebaut, wie CalcFarbe(), jedoch werden 2 Variablen,
+//		die für alle Kacheln die gleichen sind, zuvor berechnet (nur einmal)
+//	  - Firmwareupdate: Text in der Anzeige ergänzt um "und Enter drücken"
+//******************************************************************************
+

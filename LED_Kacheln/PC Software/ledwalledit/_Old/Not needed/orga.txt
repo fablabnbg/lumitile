@@ -1,0 +1,126 @@
+		~~~~~~~~~~~~~~~~~~~~
+		ORGANASITORISCHES...
+		~~~~~~~~~~~~~~~~~~~~
+
+  MY TASK, BEZAHLUNG
+  ==================
+    * MINDESTENS v0.2 guter Proof of Concept mit der Fensterbibo
+      - Grid
+      - Farbpicker
+      - Menues
+    
+    * MAXIMAL v1.0 ganze EDITOR.EXE
+      + aber auch dann Uebertragung von Wissen an Sigi
+    
+    * GENEHMIGUNG VON MARTIN FELDMANN schriftlich am 16.11.05, 
+      ausserdem Interesse an Panels als Filmlicht
+    
+    * STUNDENSATZ 
+      - 40 .. 100 angekuendigt
+      - Vorschlag 2 Level:
+        teuer 70:	Transfer,Kernprog,Kernkonzept
+        		#IDEE: 2 STUNDEN KONZEPTANTEIL
+        		#      + 3 TAGE KERN-PROTOTYP
+        		#      FEST 2000 = 4..5 PANELS + BOX + MONTAGE/COVER
+        normal 50:	falls weitere Prog gewuenscht
+      - 50 .. 70 telefonisch am 19.11.05 angekuendigt, okay
+    
+    * kein Steuerproblem, Bezahlung in Naturalien
+      PANELS A BIS 400 EURO (?)
+
+  FENSTERBIBLIOTHEK
+  =================
+    * PY + PYQT /oder/ wxPYTHON passt
+      - QT ist kommerziell teuerer als erwartet:
+        1500-2500 EU fuer QT selber,
+        250 Pfund fuer PyQT
+      
+      ! WX scheint komplett frei, auch fuer PY
+        @@@KLAEREN Sigi: wo war Hinweis auf Kosten ?
+      ! WX mag an manchen Stellen noch in Entwicklung sein,
+        gewinnt aber stark an Popularitaet,
+        das ist die Zukunft
+      ! PROTOTYP IN WX IST OKAY
+    
+    * PLATFORMEN:
+      - beide fuer diverse Windows-Systeme
+      - beide fuer Mac nur OS/X
+      - beide Linuxe, fuer WX allerdings GTK nicht sehr stabil
+
+  SOFTWARE, MODULE
+  ================
+    * MODULE:
+      ActiveState	2.4.2
+      wx		2.6.1.0	fuer 2.4
+      ##NOT: PIL	1.1.5	fuer 2.4
+      py2exe		0.6.5	fuer 2.4
+    
+    * EDITOREN
+      SciTE             1.67 (bei mir 1.62)
+      SPE               0.8 NEU,auf Wunsch
+  
+  IMMER UEBER PC
+  ==============
+    die Moeglichkeiten muessen nicht auf das eingeschraenkt werden,
+    was man in die Box an den Panels programmieren kann;
+    die Box ist nur Elektronik, keine Logik
+      (sie hat war einfache Logik fuer die Ansteuerung von 16 Szenen, 
+       in dieser Konfig schleift sie aber nur durch)
+
+  VERSIONEN
+  =========
+    DEMO v0.5
+      Liste, Grid, Farbdialoge, Fuelloperationen, Bitmap-I/O
+    
+    GUI VOLL v0.7
+      Meta, Reload, volle Menues, Connection-Framework, Undo
+    
+    RELEASE CANDIDATES v0.95, ...
+      kleinere Fixes...
+
+  STUNDEN
+  =======
+    12.11.05		2,5	#nicht berechnen, Verkaufsgespraech
+    13.11.05	2,0	minimaler Anteil an konzeptioneller Nacharbeit
+    
+     3. 1.06		4,0	#nicht berechnen, Suche und Installation meine Sache
+    
+     4. 1.06	7,0	erster Grid mit Farbzellen :-)
+     5. 1.06	6,5	Lesen & Schreiben von echten Daten :-)
+     6. 1.06	7,5	Farbdialoge, main Layout, Filloperationen 75%
+     7. 1.06	7,25	Gradientenops, Bitmap I/O, SzenenListe pseudo
+     8. 1.06	9,0	Szenenliste, Szenenops, Debug, Feinschliff
+    
+    11. 1.06	1,0	Planung
+    12. 1.06	1,5	Planung
+    14. 1.06	6,0	Planung: 800 Zeilen Neuplan (Meta,Play,Fileformat)
+    15. 1.06	5,5	Neuplanung fertig, Icons, kleine Fixes
+    16. 1.06	2,25	kleine Bugs, fertig zur DEMO
+
+    #ZWISCHENSUMME =	55,5 STUNDEN BIS ZUR DEMO (1500 L Code + 1500 L Entwurftexte)
+    
+    21. 1.06	2,0	Meeting anteilig von 4,5h
+    21. 1.06	5,0	komplette Neutextung version1:version245 ist 50:50, erste Changes
+
+    22. 1.06	5,75	PROG: virtuell,2 zeiten,3 moves; ENTWURF: 4p Pseudocode Reload 
+    23. 1.06	3,5	Folgen Reload + Meta -> fuer Szene,Prog,Liste,Grid,Events...
+    24. 1.06	5,5	META inklusive Debugging :-) + neue MENUES Pseudocode
+    25. 1.06	4,5	neue Menufunktionen, Debugging, NEUE GUI 90%
+    26. 1.06	3,0	Pseudocode Connection-Klasse
+    
+    28. 1.06	7,5	CONNECTION ! mein Rahmen, meine Opti, Progformat, DEBUGGING !
+    29. 1.06	4,5	UNDO ! debugging, kleine fixes, letzte icons
+    30. 1.06	1,0	lieferbereit...
+
+    #ZWISCHENSUMME =	42,25 STUNDEN BIS ZUR DEMO (1500 L Code + 1500 L Entwurftexte)
+    #GESAMT JETZT =	97,75 STUNDEN BIS GUI VOLLSTAENDIG (2600 L Code)
+    
+    15. 5.06	5,5	alle v1.0 Plaene (Hotkeys,Szenenname,Player-Connection,Ledx-Sicherung,Help)
+    19. 5.06	2,5	Doppelklick Experimente, Move Tests
+    21. 5.06	2,0	Versionstest sauber, einstellbar per INI-File
+    31. 5.06	2,5	DOKUMENTATION: INI mit Kommentaren, 55min Diktat fuer Hilfe
+    13. 6.06	2,25	led2exe Setupscript, Optionen, TEST
+    20. 6.06	3,0	NACHTRAEGE RC2: Demo-Fehler, letzte Wuensche, besonders lastdir in INI
+    
+    #ZWISCHENSUMME =	17,75 STUNDEN
+    #GESAMT JETZT =	115,5 STUNDEN BIS 0.97 RC2

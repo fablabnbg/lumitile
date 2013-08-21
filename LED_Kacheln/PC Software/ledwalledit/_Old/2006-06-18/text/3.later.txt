@@ -1,0 +1,138 @@
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		UNKLAR, UNENTSCHIEDEN, LATER
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  #MEIST nach Version 1.0
+  #MEIST noch unausgegorene Konzepte
+
+----------------------------------------------------------------------
+INPUT EVENTS
+------------
+
+  _/ VOM EDITOR FESTGEHALTEN, VOM PLAYER AUSGEWERTET
+     UNKLAR IST DIE GENAUE LOGIK...
+  
+  !! ACHTUNG: im Internen Play Events ueber Checkboxen simulieren
+  
+  TEST-SCHRITTE ODER GLOBALE EVENTHANDLER ?
+  =========================================
+    TEST-SCHRITTE: damit gaebe es links 
+      noch einen moeglichen LedStep (ausser LedSzene & LedBlende):
+      
+      + LedCode: IF, ELSE...
+        - an einfachsten Assembler denken, was den Lauf durchs Prog betrifft
+          (bedingte Spruenge +/- X, Call & Return, ...)
+        - fuer die Ausdruecke selber aber eval in Python
+    
+    EVENTS:
+      * auf jeden Fall 2 Events generieren: AN & AUS
+      + eventuell auch direkt IF abfragbar machen ?
+      
+      * Zustandsuebergaenge wie in endlichem Automat
+        gehen nur fuer ganze fertige Programme
+        - es laeuft Programm grau0
+        - bei Event1-AN geht es auf rot1 ueber
+        - bei Event1-AUS wieder zurueck
+  
+  GANZE SZENEN ODER FEINER ?
+  ==========================
+    * mit obiger "IMMER GANZE BITMAPS" Metapher
+      sind die Reaktionen beschraenkt auf die Zeit:
+      - Anhalten und Fortsetzen
+      - Springen zu Szenen
+      - Veraenderung von Tempo
+    
+    =>HIN ZU PARAMETRISIERBARKEIT:
+      LED-PROGRAMME mehr wie eine Programmiersprache sehen
+      ! das waere aber weg von der "IMMER GANZE BITMAPS" Metapher
+      ! es ist SCHWACH, wenn da ein voller PC ist und 
+        wir ihn nur wie eine kleine schwarze Box programmieren
+      
+      - Unterprogramme, die bei gleichem Muster und
+        Tempo noch in der Farbe parametrisierbar sind
+      - ausser Spruengen auch Call und Return
+      - wie bei animated GIFs auch nur Bereiche tauschen/animieren
+        #zB. einzeln 3 von 5 Saeulen einschalten, wenn da 3 Menschen stehen, 
+        #    ohne das es 2^5 volle Bilder braucht
+      - wenn Farben austauschbar sind, darf ich Uebergaenge 
+        nicht vor-rendern sondern das entsteht Live
+  
+  PARAMETRISIERBARKEIT VON PROGRAMMEN
+  ===================================
+    - MEHR ALS GRAFIK-PROGRAMM, GEHT FAST IN RICHTUNG VEKTOR-GRAFIK
+    - ein weiterer MODUS :-) ein weiteres OP RECYCLING :-)
+    ! schwer zu verstehen und zu entwerfen, VERSION 3.0 !!!
+    
+    - Grundidee ist "Meta-Infos aufheben"
+    - wenn ich einen Farbgradient von li ob nach re unt mache,
+      dann aendere ich nicht nur das BMP,
+      sondern merke mir auch, dass es ein Uebergang war
+    
+    - ein bisschen als waere es Vektorformat statt nur BMP
+    - das ist die Basis fuer Parametrisierbarkeit :-)
+    
+    ! das ist Version 2.0 oder 3.0, erstmal muss es was geben, 
+      bevor es parametrisierbar wird
+      + mit meinen Actionen in der GUI nicht feste Farben
+        anlegen sondern, Formeln (vielleicht auf Wunsch so oder so)
+      + das Grid als kleiner Bruder von XL hat sogar
+        schon ein Batch-Feature, so koennte ich alle formeln updaten
+      + feste Zellen (rot, weiss, 3F0CD4...) oder
+        variable (Gradient, Invers von x, ...)
+    
+    + so koennte man parametrisierbare Funktionen
+      sogar als LedBlendeProg Schritte verwenden :-)
+
+
+----------------------------------------------------------------------
+MISC...
+-------
+
+  OPERATION RECYCLING 3++
+  =======================
+    # 1,2 und vielleicht 3 sollten implementiert sein, es gaenge noch mehr...
+    
+    z.B. fuer MOVE waere dutzende Modi denkbar
+    1 SELEKTION einer normalen Szene
+    - ganze SZENE (braucht aber 8 statt 3 Ops oder eindeutige Pivotstellung)
+    2 META-Selektion und alle Szenen darunter
+    3 aktuelle Szene/Selektion, erzeugt BLENDE+NEUE SZENE
+    + MEHRERE SZENEN LINKS (braucht Mehrfachmarkierung...)
+  
+  MENUES + TOOLBARS AKTUELL
+  =========================
+    ! mit Praedikat siehe Robana GUI
+      - Save erst wenn need MainProg.needsave
+      - Fill-Operationen nur wenn die Selektion dafuer passt, FillCheck() fragen
+    
+    - ORGA:
+      alle Icons auch inaktiv malen
+      MyToolAdd ein optionales weiteres Bild
+    
+    * wenn ich schon die Selektion beobachten wuerde,
+      um Menueops zu deaktivieren, dann koennte ich auch noch deren Icon drehen,
+      wenn die Selecktion rechts oder/und unten anfaengt...
+  
+  OOP CLEANUP
+  ===========
+    * Zellen objekte ?
+      - dann koennte ich fuer alle einer Kette das gleiche verwenden,
+        eine einmal eingetragene Farbe waere automatisch in allen
+      - die Sache mit den virtuellen Farben waere auch leichter,
+        das Setzen sowieso, und die Anfragen wuerden verschieden
+        antworten je nachdem ob ich ------ will oder rgb ?
+    
+    * Programm zwischenzeitlich nur in der Liste ?
+      - wenn jedes Item in den SetData den Link
+        auf die eigene LedSzene haette, haette ich viel Aerger vermieden !
+      - die Szenen bleiben, aber die Listenitems links
+        uebernehmen die Ownership; fuer volles Programm wieder zusammenbauen
+
+  VOLLE PALETTE RECHTS ?
+  ======================
+    ##NEIN, zu aufwendig
+    - fuer mich genuegt der Colorbutton...
+    - netter waere statt ColourSelect mit Popup 
+      rechts wie in PSP gleich die Palette;
+      leider ist PyColourChooser nicht so leicht anpassbar...
+

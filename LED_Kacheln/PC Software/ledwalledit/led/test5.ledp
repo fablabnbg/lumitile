@@ -1,0 +1,43 @@
+#LED-Programm in lesbarer Form, nur VORSICHTIG editieren !
+{
+#DIE METASZENE...
+'size': (5, 5) ,
+'meta': [
+    [ -1,  2,  3,  4,  5, ],
+    [  2,  3,  4,  5,  6, ],
+    [  3,  4,  5,  6,  7, ],
+    [  4,  5,  6,  7,  8, ],
+    [  5,  6,  7,  8, -1, ],
+  ],
+
+#USER DEFINED PROPERTIES
+'QuadratSize': 50,
+
+#LISTE VON SZENEN
+'szenen': [
+    { 
+      'name': 'Szene0',
+      'dauer': 10,
+      'trans': 10,
+      'farben': [
+        ['(FFFFFF)', 'FF8000', 'EAF158', '8080FF', 'FF0000'],
+        ['FF8000', 'EAF158', '8080FF', 'FF0000', '80FF80'],
+        ['EAF158', '8080FF', 'FF0000', '80FF80', '116AB3'],
+        ['8080FF', 'FF0000', '80FF80', '116AB3', 'FF80C0'],
+        ['FF0000', '80FF80', '116AB3', 'FF80C0', '(FFFFFF)'],
+      ],
+    } ,
+    { 
+      'name': 'www',
+      'dauer': 222,
+      'trans': 333,
+      'farben': [
+        ['(FFFFFF)', 'FFFFFF', 'FFFFFF', 'FFFFFF', 'FF0000'],
+        ['FFFFFF', 'FFFFFF', 'FFFFFF', 'FF0000', 'FF3F3F'],
+        ['FFFFFF', 'FFFFFF', 'FF0000', 'FF3F3F', 'FF7F7F'],
+        ['FFFFFF', 'FF0000', 'FF3F3F', 'FF7F7F', 'FFBFBF'],
+        ['FF0000', 'FF3F3F', 'FF7F7F', 'FFBFBF', '(FFFFFF)'],
+      ],
+    } ,
+  ],
+}
