@@ -85,48 +85,51 @@ static void tx_bit(uint8_t bit)
   if (bit)
     {
       PORTD |= (1<<PD5);	// LED on
-      PORTB |= (1<<PB4);
-      PORTD &= ~(1<<PD2);
+      PORTB &= ~(1<<PB4);
+      PORTD |= (1<<PD2);
     }
   else
     {
       PORTD &= ~(1<<PD5);	// LED off
-      PORTB &= ~(1<<PB4);
-      PORTD |= (1<<PD2);
+      PORTB |= (1<<PB4);
+      PORTD &= ~(1<<PD2);
     }
-  _delay_us(15.0); 		// tune this to generate 57.6 kbps
+  _delay_us(16.7); 		// tune this to generate 57.6 kbps
   // _delay_ms(100.0); 		// slow food for debugging
 }
 
 static void tx_word(uint16_t word)
 {
-  tx_bit(0);	// start bit
   uint8_t bit;
+  tx_bit(0);	// start bit
 
-  for (bit = 0; bit < 8; bit++)
+  for (bit = 0; bit < 9; bit++)
     {
       tx_bit(word & 0x01);
       word >>= 1;
     }
 
-  tx_bit(1);	// high idle
+  tx_bit(1);	// stop bit
+  tx_bit(1);	// stop bit
 }
 
-static void send_lumitile(uint8_t now)
+static void send_lumitile(uint8_t addr, uint8_t red, uint8_t green, uint8_t blue, uint8_t now)
 {
   uint8_t zcnt = 0;
 
-  zcnt += count_zeros(cmd_buf[1]);
-  zcnt += count_zeros(cmd_buf[2]);
-  zcnt += count_zeros(cmd_buf[3]);
-  if (now) zcnt |= 0x20;	// Bit 5 = 1--> Kachel speichert die 
+  zcnt += count_zeros(red);
+  zcnt += count_zeros(green);
+  zcnt += count_zeros(blue);
+  if (!now) zcnt |= 0x20;	// Bit 5 = 1--> Kachel speichert die 
   				// Farbwerte, zeigt sie erst dann
 				// an, wenn ein Broadcast mit bit5=1 erfolgt.
-  tx_word(cmd_buf[0] | 0x100);	// Bit 9 wg. Adresse setzen
-  tx_word(cmd_buf[1]);
-  tx_word(cmd_buf[2]);
-  tx_word(cmd_buf[3]);
+  cli();
+  tx_word(addr | 0x100);	// Bit 9 wg. Adresse setzen
+  tx_word(red);
+  tx_word(green);
+  tx_word(blue);
   tx_word(zcnt);
+  sei();
 }
 
 int main()
@@ -143,6 +146,29 @@ int main()
 
   tx_bit(1);	// high idle
 
+  uint16_t i;
+  uint8_t j;
+
+  for (j = 0; j < 3; j++)
+    {
+      for (i = 0; i < 256; i++) { send_lumitile(255, i,     0, 0, 1); _delay_ms(5); }
+      for (i = 0; i < 256; i++) { send_lumitile(255, 255-i, 0, 0, 1); _delay_ms(5); }
+      for (i = 0; i < 256; i++) { send_lumitile(255, 0, i,     0, 1); _delay_ms(5); }
+      for (i = 0; i < 256; i++) { send_lumitile(255, 0, 255-i, 0, 1); _delay_ms(5); }
+      for (i = 0; i < 256; i++) { send_lumitile(255, 0, 0, i,     1); _delay_ms(5); }
+      for (i = 0; i < 256; i++) { send_lumitile(255, 0, 0, 255-i, 1); _delay_ms(5); }
+
+      for (i = 0; i < 256; i++) { send_lumitile(255, i,     i,     0, 1); _delay_ms(5); }
+      for (i = 0; i < 256; i++) { send_lumitile(255, 255-i, 255-i, 0, 1); _delay_ms(5); }
+      for (i = 0; i < 256; i++) { send_lumitile(255, 0, i,     i,     1); _delay_ms(5); }
+      for (i = 0; i < 256; i++) { send_lumitile(255, 0, 255-i, 255-i, 1); _delay_ms(5); }
+      for (i = 0; i < 256; i++) { send_lumitile(255, i,     0, i,     1); _delay_ms(5); }
+      for (i = 0; i < 256; i++) { send_lumitile(255, 255-i, 0, 255-i, 1); _delay_ms(5); }
+
+      for (i = 0; i < 256; i++) { send_lumitile(255, i,    i,    i,     1); _delay_ms(5); }
+      for (i = 0; i < 256; i++) { send_lumitile(255, 255-i,255-i,255-i, 1); _delay_ms(5); }
+    }
+
   for (;;)
     {
       if (cmd_seen) rs232_send(cmd_seen);	  
@@ -157,7 +183,7 @@ int main()
           rs232_send_hex(cmd_buf[3]);	  
           rs232_send('\r');	  
           rs232_send('\n');	  
-	  send_lumitile(1);
+	  send_lumitile(cmd_buf[0], cmd_buf[1], cmd_buf[2], cmd_buf[3], 1);
           cmd_state = CMD_STATE_DONE;	// allow repeated ENTER to resend.
 	  cmd_seen = 0;
 	  continue;
