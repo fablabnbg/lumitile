@@ -18,6 +18,7 @@
  *              Collect command "aNNN rNNN gNNN bNNN<CR>"
  *              Execute upon pressing enter.
  * 		For the timing, see https://www.dropbox.com/home/Photos/Fablab/LED-Kacheln
+ * 2013-08-22, V0.2 WAVE_PATTERN compiletime flag, aborts, when any key is pressed.
  */
 
 #include <ctype.h>
@@ -35,6 +36,8 @@
 #include "rs232.h"
 #include <util/delay.h>			// needs F_CPU from cpu_mhz.h
 
+#define WAVE_PATTERN 3			// 3 is okayish.
+
 #define LED_PORT PORTD
 #define LED_DDR  DDRD
 #define RED_LED_BITS	(1<<4)
@@ -51,17 +54,10 @@ static uint8_t cmd_state = CMD_STATE_ADDR;
 static uint8_t cmd_buf[4];
 static uint8_t fieldnames[] = "argb";
 
-static uint16_t hall_counter = 0;
-ISR(INT1_vect)
-{
-  hall_counter++;
-}
-
 static uint8_t cmd_seen = 0;	
 static void rs232_recv(uint8_t byte)
 {
   // just an echo back dummy.
-  rs232_send('=');
   rs232_send(byte);
   cmd_seen = byte;
 }
@@ -149,24 +145,58 @@ int main()
   uint16_t i;
   uint8_t j;
 
-  for (j = 0; j < 3; j++)
+#if WAVE_PATTERN
+  for (j = 0; j < WAVE_PATTERN; j++)
     {
-      for (i = 0; i < 256; i++) { send_lumitile(255, i,     0, 0, 1); _delay_ms(5); }
-      for (i = 0; i < 256; i++) { send_lumitile(255, 255-i, 0, 0, 1); _delay_ms(5); }
-      for (i = 0; i < 256; i++) { send_lumitile(255, 0, i,     0, 1); _delay_ms(5); }
-      for (i = 0; i < 256; i++) { send_lumitile(255, 0, 255-i, 0, 1); _delay_ms(5); }
-      for (i = 0; i < 256; i++) { send_lumitile(255, 0, 0, i,     1); _delay_ms(5); }
-      for (i = 0; i < 256; i++) { send_lumitile(255, 0, 0, 255-i, 1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, i,     0, 0, 1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 255-i, 0, 0, 1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 0, i,     0, 1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 0, 255-i, 0, 1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 0, 0, i,     1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 0, 0, 255-i, 1); _delay_ms(5); }
 
-      for (i = 0; i < 256; i++) { send_lumitile(255, i,     i,     0, 1); _delay_ms(5); }
-      for (i = 0; i < 256; i++) { send_lumitile(255, 255-i, 255-i, 0, 1); _delay_ms(5); }
-      for (i = 0; i < 256; i++) { send_lumitile(255, 0, i,     i,     1); _delay_ms(5); }
-      for (i = 0; i < 256; i++) { send_lumitile(255, 0, 255-i, 255-i, 1); _delay_ms(5); }
-      for (i = 0; i < 256; i++) { send_lumitile(255, i,     0, i,     1); _delay_ms(5); }
-      for (i = 0; i < 256; i++) { send_lumitile(255, 255-i, 0, 255-i, 1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, i,     i,     0, 1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 255-i, 255-i, 0, 1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 0, i,     i,     1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 0, 255-i, 255-i, 1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, i,     0, i,     1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 255-i, 0, 255-i, 1); _delay_ms(5); }
 
-      for (i = 0; i < 256; i++) { send_lumitile(255, i,    i,    i,     1); _delay_ms(5); }
-      for (i = 0; i < 256; i++) { send_lumitile(255, 255-i,255-i,255-i, 1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, i,    i,    i,     1); _delay_ms(5); }
+      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 255-i,255-i,255-i, 1); _delay_ms(5); }
+    }
+#endif
+
+  cmd_seen = 0;
+
+  int16_t bl = 0;
+  int16_t ye = 0;
+#define FADE_STEP 5
+  int8_t bl_step = FADE_STEP;
+  int8_t ye_step = 0;
+  for (j = 0; j < 20; j++)
+    {
+      for (i = 0; i < 6; i++)
+        {
+	  uint8_t k;
+	  for (k = 0; k < 20 && !cmd_seen; k++)
+	    {
+	      uint8_t l = i;
+	      l++; if (l > 6) l = 1; send_lumitile(l, 255, ye, bl, 1);
+	      l++; if (l > 6) l = 1; send_lumitile(l, ye,  ye, bl, 1);
+	      l++; if (l > 6) l = 1; send_lumitile(l, ye,  ye, bl, 1);
+	      l++; if (l > 6) l = 1; send_lumitile(l, ye, 255, bl, 1);
+	      l++; if (l > 6) l = 1; send_lumitile(l, ye,  ye, bl, 1);
+	      l++; if (l > 6) l = 1; send_lumitile(l, ye,  ye, bl, 1);
+	      bl += bl_step;
+	      ye += ye_step;
+	      if (bl > 255) { bl = 255; bl_step = -FADE_STEP; }
+	      if (bl < 0)   { bl = 0;   bl_step = 0; ye_step = FADE_STEP; }
+	      if (ye > 166) { ye = 166; ye_step = -FADE_STEP; }
+	      if (ye < 0)   { ye = 0;   ye_step = 0; bl_step = FADE_STEP; }
+	      _delay_ms(20);	// tune to 33bpm
+	    }
+	}
     }
 
   for (;;)
@@ -205,6 +235,7 @@ int main()
 	  if (cmd_state > CMD_STATE_BLUE) cmd_state = CMD_STATE_ADDR;
           rs232_send(fieldnames[cmd_state]);	  
 	}
+#if 0
       else if (cmd_seen == 'a' || cmd_seen == 'A')
         {
 	  cmd_state = CMD_STATE_ADDR;
@@ -225,6 +256,7 @@ int main()
 	  cmd_state = CMD_STATE_BLUE;
           rs232_send(fieldnames[cmd_state]);	  
 	}
+#endif
       cmd_seen = 0;
     }
 }
