@@ -1,0 +1,32 @@
+			jw, Thu Aug 29 00:40:24 CEST 2013
+
+Vergleiche mit Kachel DEMO 7
+
+ * Sichtprüfung...
+ * Vorderseite 1k 
+ * Rückseite: 3x 22k einbauen
+ 
+
+ Nadeln    Stecker
+ auf       am
+ Kachel    PicKit3
+
+ [1]  ---- 2
+ (2)  ---- 1
+ (3)  ---- 5
+ (4)  ---- 4
+ (5)  ---- 3
+     nc -- 6
+
+ * (netbeans) mplab von microchip.com download
+   - erst dongle anstecken, dann software starten
+   - IPE (integrated programming env)
+    -> Family: Midrange
+       Device: PIC16F88
+       Tool: PicKit... (autodetect)
+
+    -> Settings -> Advanced Mode
+       Password: microchip
+      -> Power 
+       (x) Power Target circuit from tool
+    
