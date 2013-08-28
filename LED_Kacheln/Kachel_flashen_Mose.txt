@@ -24,9 +24,15 @@ Vergleiche mit Kachel DEMO 7
     -> Family: Midrange
        Device: PIC16F88
        Tool: PicKit... (autodetect)
+    -> Firmware: lumitile/LED_Kacheln/Firmware/Kachel/3582.HEX
 
     -> Settings -> Advanced Mode
        Password: microchip
       -> Power 
        (x) Power Target circuit from tool
     
+ * Justieren nach Anleitung_neu.pdf
+   Alle SCH1 SCH2 auf OFF
+   alle poti links (bei alter version rechts)
+
+ * Jumpern nach README.md
