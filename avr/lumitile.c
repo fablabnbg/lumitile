@@ -217,7 +217,7 @@ int main()
   DDRD |= (1<<PD2);			// RS485 out -
   PORTB	= (1<<PB0)|(1<<PB1)|(1<<PB2);	// pullups for switches
 
-#define BAUD      19200
+#define BAUD      38400
   rs232_init(UBRV(BAUD));
 
   tx_bit(1);	// high idle
@@ -225,59 +225,7 @@ int main()
   uint16_t i;
   uint8_t j;
 
-#if WAVE_PATTERN
-  for (j = 0; j < WAVE_PATTERN; j++)
-    {
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, i,     0, 0, 1); _delay_ms(5); }
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 255-i, 0, 0, 1); _delay_ms(5); }
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 0, i,     0, 1); _delay_ms(5); }
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 0, 255-i, 0, 1); _delay_ms(5); }
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 0, 0, i,     1); _delay_ms(5); }
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 0, 0, 255-i, 1); _delay_ms(5); }
-
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, i,     i,     0, 1); _delay_ms(5); }
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 255-i, 255-i, 0, 1); _delay_ms(5); }
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 0, i,     i,     1); _delay_ms(5); }
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 0, 255-i, 255-i, 1); _delay_ms(5); }
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, i,     0, i,     1); _delay_ms(5); }
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 255-i, 0, 255-i, 1); _delay_ms(5); }
-
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, i,    i,    i,     1); _delay_ms(5); }
-      for (i = 0; i < 256 && !cmd_seen; i++) { send_lumitile(255, 255-i,255-i,255-i, 1); _delay_ms(5); }
-    }
-#endif
-
   cmd_seen = 0;
-
-  int16_t bl = 0;
-  int16_t ye = 0;
-#define FADE_STEP 5
-  int8_t bl_step = FADE_STEP;
-  int8_t ye_step = 0;
-  for (j = 0; j < 20; j++)
-    {
-      for (i = 0; i < 6; i++)
-        {
-	  uint8_t k;
-	  for (k = 0; k < 20 && !cmd_seen; k++)
-	    {
-	      uint8_t l = i;
-	      l++; if (l > 6) l = 1; send_lumitile(l, 255, ye, bl, 1);
-	      l++; if (l > 6) l = 1; send_lumitile(l, ye,  ye, bl, 1);
-	      l++; if (l > 6) l = 1; send_lumitile(l, ye,  ye, bl, 1);
-	      l++; if (l > 6) l = 1; send_lumitile(l, ye, 255, bl, 1);
-	      l++; if (l > 6) l = 1; send_lumitile(l, ye,  ye, bl, 1);
-	      l++; if (l > 6) l = 1; send_lumitile(l, ye,  ye, bl, 1);
-	      bl += bl_step;
-	      ye += ye_step;
-	      if (bl > 255) { bl = 255; bl_step = -FADE_STEP; }
-	      if (bl < 0)   { bl = 0;   bl_step = 0; ye_step = FADE_STEP; }
-	      if (ye > 166) { ye = 166; ye_step = -FADE_STEP; }
-	      if (ye < 0)   { ye = 0;   ye_step = 0; bl_step = FADE_STEP; }
-	      _delay_ms(20);	// tune to 33bpm
-	    }
-	}
-    }
 
   for (;;)
     {
