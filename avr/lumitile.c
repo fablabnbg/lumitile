@@ -50,17 +50,21 @@
 #define CMD_STATE_GREEN	2
 #define CMD_STATE_BLUE	3
 #define CMD_STATE_DONE  0x80
+
+#define T0TOP  139		// 8000000/57600
+#define T0_STATE_IDLE	0
+#define T0_STATE_PREP	1
+#define T0_STATE_ADDR	2
+#define T0_STATE_RED	3
+#define T0_STATE_GREEN	4
+#define T0_STATE_BLUE	5
+#define T0_STATE_CS	6
+
 static uint8_t cmd_state = CMD_STATE_ADDR;
 static uint8_t cmd_buf[4];
 static uint8_t fieldnames[] = "argb";
 
 static uint8_t cmd_seen = 0;	
-static void rs232_recv(uint8_t byte)
-{
-  // just an echo back dummy.
-  rs232_send(byte);
-  cmd_seen = byte;
-}
 
 static uint8_t count_zeros(uint8_t Cw)
 {
@@ -74,6 +78,24 @@ static uint8_t count_zeros(uint8_t Cw)
       bitval >>= 1;
     }
   return cnt;
+}
+
+// taken from rs232.c
+#if defined(__AVR_ATtiny2313__)
+#define USART0_RX_vect   USART_RX_vect
+#define USART0_UDRE_vect USART_UDRE_vect
+#define USART0_TX_vect   USART_TX_vect
+#define UMSEL0 UMSEL
+#endif
+
+#if USE_POLLING
+
+ISR(USART0_RX_vect)
+{
+  uint8_t byte = UDR;
+  // just an echo back dummy.
+  rs232_send(byte);
+  cmd_seen = byte;
 }
 
 static void tx_bit(uint8_t bit)
@@ -128,6 +150,64 @@ static void send_lumitile(uint8_t addr, uint8_t red, uint8_t green, uint8_t blue
   sei();
 }
 
+#else	// !USE_POLLING
+
+#if USART0_RX_vect < TIMER0_OVF_vect
+# error "TIMER0_OVF_vect cannot interrupt USART0_RX_vect"
+#endif
+
+ISR(USART0_RX_vect)
+{
+  uint8_t byte = UDR;
+  // just an echo back dummy.
+  rs232_send(byte);
+  cmd_seen = byte;
+}
+
+#define TX_BUF_SZ 16	// can put 16 commands in the outbound buffer.
+struct tx_cmd
+{
+  uint8_t add, red, green, blue, cs;
+};
+static struct tx_cmd tx_buf[TX_BUF_SZ];	// 16*5 = 80 bytes.
+static uint8_t tx_buf_head = 0;
+static uint8_t tx_buf_tail = 0;
+
+static void send_lumitile(uint8_t addr, uint8_t red, uint8_t green, uint8_t blue, uint8_t now)
+{
+}
+
+static uint8_t tick_counter = 0;
+
+ISR(TIMER0_OVF_vect)	// TOV0
+{
+  tick_counter++;
+}
+
+static void timer_init()
+{
+  /*
+   * Init T0 in Fast PWM Mode, prescaler 1.
+   * Mode 7: ovfl vect enabled, nothing else.
+   *
+   */
+# if (CPU_MHZ != 8)
+#  error "must run at 8Mhz"
+# endif
+
+  OCR0A = T0TOP;				// fixed 57.6 khz
+
+  TCCR0A = (0<<COM0A1)|(0<<COM0A0)|		// OC0A disconnected
+           (0<<COM0B1)|(0<<COM0B0)|		// OC0B disconnected
+	   (1<<WGM01)|(1<<WGM00);		// Mode 7.
+
+  TCCR0B = (1<<WGM02)|(0<<CS02)|(0<<CS01)|(1<<CS00);
+
+  TIMSK = (1<<TOIE0);				// enable TOV0
+}
+#endif	// USE_POLLING
+
+
 int main()
 {
   DDRB = 0;
@@ -138,7 +218,7 @@ int main()
   PORTB	= (1<<PB0)|(1<<PB1)|(1<<PB2);	// pullups for switches
 
 #define BAUD      19200
-  rs232_init(UBRV(BAUD), &rs232_recv);
+  rs232_init(UBRV(BAUD));
 
   tx_bit(1);	// high idle
 

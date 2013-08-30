@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2005,2008 jw@suse.de
- * This code is distributable under the GPL.
+ * Copyright (C) 2005,2008,2013 jw@suse.de
+ * This code is distributable under GPL-2.0
  *
  * rs232.c -- serial line transmitter and receiver for 
  * attiny2313 and atmega8, atmega48
@@ -9,7 +9,9 @@
  * 2008-02-01, jw - rxd pulldown added to schematics, to discharge statics.
  * 2008-02-02, jw - prepared for stdio. Debug LED glows while we wait
  *                  for the buffer to make room.
- * 2013-04-09, jw - SIG_USART0_RECV is poisoned. Use instead.
+ * 2013-04-09, jw - SIG_USART0_RECV is poisoned. Use USART_RX_vect instead.
+ * 2013-08-29, jw - added UBRV 250k 500k 1M, 
+ *                  added RS232_RECEIVE_CB to make callback code optional.
  */
 #if 0
          [E]___[B]          BSF17            PC COM port, 
@@ -113,7 +115,7 @@ volatile        uint8_t rs232_headroom;
 #define RXD_BIT		(1<<PD0)
 #define TXD_BIT		(1<<PD1)
 
-#if RS232_RECEIVE
+#if (RS232_RECEIVE && RS232_RECEIVE_CB)
 static void (*rs232_rxd_cb)(uint8_t) = (void(*)(uint8_t))0;
 
 ISR(USART0_RX_vect)
@@ -192,7 +194,9 @@ void rs232_init(uint16_t ubrr)
   USART_DDR &= ~RXD_BIT;		// input 
   USART_PORT |= RXD_BIT;		// enable pullup
   UCSRB |= (1<<RXEN)|(1<<RXCIE);
+# if RS232_RECEIVE_CB
   rs232_rxd_cb = recv_cb;
+# endif
 #endif
   sei();
 }
