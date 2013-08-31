@@ -32,6 +32,7 @@ D.h. vor Inbetriebnahme sind unbedingt die DIP-Schalter zu korrigieren.
 
 Die niedrigste mögliche Adresse ist 1. 
 
+<pre>
 Addr	SCH1		  SCH2
 ----    ----              ----
 1	OFF ON  ON  ON    ON  ON  ON  ON
@@ -52,4 +53,4 @@ Addr	SCH1		  SCH2
 129	OFF ON  ON  ON    ON  ON  ON  OFF
 
 254	ON  OFF OFF OFF   OFF OFF OFF OFF
-
+</pre>
