@@ -23,7 +23,8 @@ def getch():
     return sys.stdin.read(1)
   return 0
 
-for j in range(5):
+# for j in range(5):
+if 0:
   for i in range(256): kachel.send(i, 0, 0, delay=0.005)
   if (getch()): break
   for i in range(256): kachel.send(255-i, 0, 0, delay=0.005)
@@ -61,7 +62,9 @@ ye = 0
 FADE_STEP = 5
 bl_step = FADE_STEP
 ye_step = 0
-for j in range(20):
+
+# for j in range(20):
+if 0:
   for i in range(6):
     for k in range(20):
       cmd_seen = getch()

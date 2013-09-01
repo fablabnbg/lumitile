@@ -72,7 +72,7 @@
 
 #define RS232_BAUD      57600
 #define RS485_BAUD      57600
-#define T0TOP     (F_CPU/RS485_BAUD)	// 8000000/57600 = 137
+#define T0TOP     (F_CPU/RS485_BAUD)+10	// 8000000/57600 = 137
 
 #if POWER_BOARD
 # define LED_PORT PORTA
@@ -149,10 +149,11 @@ static volatile uint8_t tx_bytes = 5;		// bytes sent for this command. 5=all don
 // Load a start bit, 9 databits, 2 stop bits into a 16bit word.
 // Backwards, as we shift down for each bit.
 #define TX_QUEUE_WORD(val) \
-  do { tx_word = ((val)<<1)| 0xc00; tx_bits = 11; } while (0)
+  do { tx_word = ((val)<<1)| 0xc00; tx_bits = 12; } while (0)
 
 ISR(TIMER0_OVF_vect)	// TOV0
 {
+  LED_PORT |= (RED_LED_BIT);
   if (tx_bits)
     {
       tx_bit(tx_word & 0x0001);
@@ -163,6 +164,7 @@ ISR(TIMER0_OVF_vect)	// TOV0
     {
       if (tx_bytes == 0)
         {
+          // PIND |= (1<<PD2);
 	  TX_QUEUE_WORD(cmd_buf[0]|0x100);	// address value
           tx_bytes = 1;
 	}
@@ -172,7 +174,7 @@ ISR(TIMER0_OVF_vect)	// TOV0
 	  TX_QUEUE_WORD(val);	// color or csum value
 	}
     }
-  tick_counter++;
+  LED_PORT &= ~(RED_LED_BIT);
 }
 
 static uint8_t count_zeros(uint8_t Cw)
@@ -193,7 +195,7 @@ static uint8_t count_zeros(uint8_t Cw)
 static volatile uint8_t cmd_bytes_seen = 0;
 ISR(USART0_RX_vect)
 {
-  if ((UCSRA & (1<<UPE)) == 0)		// else parity error.
+  if (1)	// (UCSRA & (1<<UPE)) == 0)		// else parity error.
     {
       uint8_t byte = UDR;
 
@@ -272,7 +274,14 @@ int main()
 
   for (;;)
     {
-      TX_QUEUE_WORD(0x55);
+#if 0
+  cmd_buf[4] = 0;
+  cmd_buf[0] = 255;
+  cmd_buf[1] = 100; cmd_buf[4] += count_zeros(cmd_buf[1]);
+  cmd_buf[2] = 0;   cmd_buf[4] += count_zeros(cmd_buf[2]);
+  cmd_buf[3] = 0;   cmd_buf[4] += count_zeros(cmd_buf[3]);
+  tx_bytes = 0;			// Restart the transmitter.
+#endif
       _delay_ms(100);
     }
 }
