@@ -1,24 +1,58 @@
-/*
- * lumitile.c -- simple lumitile controller
+/* lumitile.c -- simple lumitile controller
  *
  * Copyright (C) 2013, jw@suse.de, distribute under GPL, use with mercy.
  *
  * Board config:
+#if POWER_BOARD
+ *   PD0:	RxD RS232 from USB
+ *   PD2:	OUT RS485 not inverted
+ *   PD3:	OUT RS485 not inverted
+ *   PD4:	OUT RS485 not inverted
+ *   PD5:	OUT RS485 not inverted
+ *   PD6:	OUT RS485 not inverted
+ *   PB0:	OUT RS485 inverted
+ *   PB1:	OUT RS485 inverted
+ *   PB2:	OUT RS485 inverted
+ *   PB3:	OUT RS485 inverted
+ *   PB4:	OUT RS485 inverted
+ *   PA0:	OUT green LED low active
+#else // !POWER_BOARD
+ *   PD0:	RxD RS232 from USB
+ *   PD1:	TxD RS232 to USB
  *   PB0:	IN right switch n-c
  *   PB1:	IN stop switch n-c
  *   PB2:	IN left switch n-c
- *   PB4:	OUT RS485 not inverted
- *   PD2:	OUT RS485 inverted
+ *   PB4:	OUT RS485 inverted
+ *   PD2:	OUT RS485 not inverted
  *   PD3:	IN (aka INT1)
  *   PD4:	OUT red LED
  *   PD5:	OUT green LED
+#endif
  *
+ * Protocoll:
+ *
+ * RS485: 5 bytes: 1 start, 9 data, no parity, 2 stop bits each.
+ *        lsb first.
+ *        0: addr,  1: red, 2: green, 3: blue, 4: checksum 5bits+ command 1bit
+ *
+ * RS232: 6 bytes: 1 start, 8 data, even parity, 1 stop bit each.
+ *        msb first
+ *        0: Magic 'F'	// short for 'FabLab'
+ *        1: Command 'S': direct set or 'L': load only, waiting for broadcast set.
+ *        2: addr, 3: red, 4: green, 5: blue
+ * 
+ * The input command on RS232 has 66bits, while the output on RS485 has 60.
+ * thus the host can saturate RS232, and we still have some headroom to 
+ * convert everything without need for handshake.
+ *   
  * 2013-08-21, V0.1, jw - initial draught. 
  *		Crude bit banging.
  *              Collect command "aNNN rNNN gNNN bNNN<CR>"
  *              Execute upon pressing enter.
  * 		For the timing, see https://www.dropbox.com/home/Photos/Fablab/LED-Kacheln
  * 2013-08-22, V0.2 WAVE_PATTERN compiletime flag, aborts, when any key is pressed.
+ * 2013-09-01, V0.3 Support for POWER_BOARD added, protocol redefined.
+ *		Command is now "FS%c%c%c%c" % (addr,red,green,blue)
  */
 
 #include <ctype.h>
@@ -36,22 +70,39 @@
 #include "rs232.h"
 #include <util/delay.h>			// needs F_CPU from cpu_mhz.h
 
-#define WAVE_PATTERN 3			// 3 is okayish.
+#define RS232_BAUD      57600
+#define RS485_BAUD      57600
+#define T0TOP     (F_CPU/RS485_BAUD)	// 8000000/57600 = 137
 
-#define LED_PORT PORTD
-#define LED_DDR  DDRD
-#define RED_LED_BITS	(1<<4)
-#define GREEN_LED_BITS	(1<<5)
-#define LED_BITS	(RED_LED_BITS|GREEN_LED_BITS)
+#if POWER_BOARD
+# define LED_PORT PORTA
+# define LED_DDR  DDRA
+# define GREEN_LED_BIT	(1<<PA0)
+# define LED_BITS	(GREEN_LED_BIT)
 
+# define RS485I_PORT PORTB
+# define RS485I_DDR  DDRB
+# define RS485I_BITS ((1<<PB0)|(1<<PB1)|(1<<PB2)|(1<<PB3)|(1<<PB4))
+# define RS485N_PORT PORTD
+# define RS485N_DDR  DDRD
+# define RS485N_BITS ((1<<PD2)|(1<<PD3)|(1<<PD4)|(1<<PD5)|(1<<PD6))
 
-#define CMD_STATE_ADDR	0
-#define CMD_STATE_RED	1
-#define CMD_STATE_GREEN	2
-#define CMD_STATE_BLUE	3
-#define CMD_STATE_DONE  0x80
+#else
+# define LED_PORT PORTD
+# define LED_DDR  DDRD
+# define RED_LED_BIT	(1<<PD4)
+# define GREEN_LED_BIT	(1<<PD5)
+# define LED_BITS	(RED_LED_BIT|GREEN_LED_BIT)
 
-#define T0TOP  139		// 8000000/57600
+# define RS485I_PORT PORTB
+# define RS485I_DDR  DDRB
+# define RS485I_BITS (1<<PB4)
+# define RS485N_PORT PORTD
+# define RS485N_DDR  DDRD
+# define RS485N_BITS (1<<PD2)
+
+#endif
+
 #define T0_STATE_IDLE	0
 #define T0_STATE_PREP	1
 #define T0_STATE_ADDR	2
@@ -60,11 +111,69 @@
 #define T0_STATE_BLUE	5
 #define T0_STATE_CS	6
 
-static uint8_t cmd_state = CMD_STATE_ADDR;
-static uint8_t cmd_buf[4];
-static uint8_t fieldnames[] = "argb";
+// taken from rs232.c
+#if defined(__AVR_ATtiny2313__)
+#define USART0_RX_vect   USART_RX_vect
+#define USART0_UDRE_vect USART_UDRE_vect
+#define USART0_TX_vect   USART_TX_vect
+#define UMSEL0 UMSEL
+#endif
 
-static uint8_t cmd_seen = 0;	
+#if USART0_RX_vect < TIMER0_OVF_vect
+# error "TIMER0_OVF_vect cannot interrupt USART0_RX_vect"
+#endif
+
+static void tx_bit(uint8_t bit)
+{
+  if (bit)
+    {
+      LED_PORT |= GREEN_LED_BIT;	// LED on
+      RS485I_PORT &= ~RS485I_BITS;
+      RS485N_PORT |=  RS485N_BITS;
+    }
+  else
+    {
+      LED_PORT &= ~GREEN_LED_BIT;	// LED off
+      RS485I_PORT |=  RS485I_BITS;
+      RS485N_PORT &= ~RS485N_BITS;
+    }
+}
+
+static volatile uint8_t cmd_buf[5];		// 0 addr, 1-3 colors, 4 csum
+
+static volatile uint16_t tick_counter = 0;	// just increment to keep main happy.
+static volatile uint16_t tx_word = 0;		// mask 0xc00 is stop bits, 0x001 is start bit.
+static volatile uint8_t tx_bits = 0;		// stat with 11, end with 0 -- try next byte then.
+static volatile uint8_t tx_bytes = 5;		// bytes sent for this command. 5=all done;
+
+// Load a start bit, 9 databits, 2 stop bits into a 16bit word.
+// Backwards, as we shift down for each bit.
+#define TX_QUEUE_WORD(val) \
+  do { tx_word = ((val)<<1)| 0xc00; tx_bits = 11; } while (0)
+
+ISR(TIMER0_OVF_vect)	// TOV0
+{
+  if (tx_bits)
+    {
+      tx_bit(tx_word & 0x0001);
+      tx_bits--;
+      tx_word >>= 1;
+    }
+  if (tx_bits == 0)	// exhausted current word, try to load next one.
+    {
+      if (tx_bytes == 0)
+        {
+	  TX_QUEUE_WORD(cmd_buf[0]|0x100);	// address value
+          tx_bytes = 1;
+	}
+      else if (tx_bytes < 5)
+        {
+	  uint8_t val = cmd_buf[tx_bytes++];
+	  TX_QUEUE_WORD(val);	// color or csum value
+	}
+    }
+  tick_counter++;
+}
 
 static uint8_t count_zeros(uint8_t Cw)
 {
@@ -80,108 +189,46 @@ static uint8_t count_zeros(uint8_t Cw)
   return cnt;
 }
 
-// taken from rs232.c
-#if defined(__AVR_ATtiny2313__)
-#define USART0_RX_vect   USART_RX_vect
-#define USART0_UDRE_vect USART_UDRE_vect
-#define USART0_TX_vect   USART_TX_vect
-#define UMSEL0 UMSEL
-#endif
 
-#if USE_POLLING
-
+static volatile uint8_t cmd_bytes_seen = 0;
 ISR(USART0_RX_vect)
 {
   uint8_t byte = UDR;
-  // just an echo back dummy.
-  rs232_send(byte);
-  cmd_seen = byte;
-}
 
-static void tx_bit(uint8_t bit)
-{
-  if (bit)
+  if (cmd_bytes_seen == 0)
     {
-      PORTD |= (1<<PD5);	// LED on
-      PORTB &= ~(1<<PB4);
-      PORTD |= (1<<PD2);
+      if (byte == 'F')
+        cmd_bytes_seen++;		// else protocol error.
     }
-  else
+  else if (cmd_bytes_seen == 1)
     {
-      PORTD &= ~(1<<PD5);	// LED off
-      PORTB |= (1<<PB4);
-      PORTD &= ~(1<<PD2);
+      if (byte == 'S')
+        { 
+          cmd_bytes_seen++;
+	  cmd_buf[4] = 0x00;
+	}
+      else if (byte == 'L')
+        {
+	  cmd_bytes_seen++;
+	  cmd_buf[4] = 0x20;
+	}
+      else
+        cmd_bytes_seen = 0;		// protocol error.
     }
-  _delay_us(16.7); 		// tune this to generate 57.6 kbps
-  // _delay_ms(100.0); 		// slow food for debugging
-}
-
-static void tx_word(uint16_t word)
-{
-  uint8_t bit;
-  tx_bit(0);	// start bit
-
-  for (bit = 0; bit < 9; bit++)
+  else if (cmd_bytes_seen < 6)		// 2,3,4,5
     {
-      tx_bit(word & 0x01);
-      word >>= 1;
+      cmd_buf[cmd_bytes_seen-2] = byte;
+      cmd_bytes_seen++;			// 3,4,5,6
+      if (cmd_bytes_seen == 6)
+        {
+          cmd_bytes_seen = 0;		// Get ready for next command.
+	  tx_bytes = 0;			// Restart the transmitter.
+	}
+      else if (cmd_bytes_seen > 3)	// don't csum the addr!
+        { 
+	  cmd_buf[4] += count_zeros(byte);
+	}
     }
-
-  tx_bit(1);	// stop bit
-  tx_bit(1);	// stop bit
-}
-
-static void send_lumitile(uint8_t addr, uint8_t red, uint8_t green, uint8_t blue, uint8_t now)
-{
-  uint8_t zcnt = 0;
-
-  zcnt += count_zeros(red);
-  zcnt += count_zeros(green);
-  zcnt += count_zeros(blue);
-  if (!now) zcnt |= 0x20;	// Bit 5 = 1--> Kachel speichert die 
-  				// Farbwerte, zeigt sie erst dann
-				// an, wenn ein Broadcast mit bit5=1 erfolgt.
-  cli();
-  tx_word(addr | 0x100);	// Bit 9 wg. Adresse setzen
-  tx_word(red);
-  tx_word(green);
-  tx_word(blue);
-  tx_word(zcnt);
-  sei();
-}
-
-#else	// !USE_POLLING
-
-#if USART0_RX_vect < TIMER0_OVF_vect
-# error "TIMER0_OVF_vect cannot interrupt USART0_RX_vect"
-#endif
-
-ISR(USART0_RX_vect)
-{
-  uint8_t byte = UDR;
-  // just an echo back dummy.
-  rs232_send(byte);
-  cmd_seen = byte;
-}
-
-#define TX_BUF_SZ 16	// can put 16 commands in the outbound buffer.
-struct tx_cmd
-{
-  uint8_t add, red, green, blue, cs;
-};
-static struct tx_cmd tx_buf[TX_BUF_SZ];	// 16*5 = 80 bytes.
-static uint8_t tx_buf_head = 0;
-static uint8_t tx_buf_tail = 0;
-
-static void send_lumitile(uint8_t addr, uint8_t red, uint8_t green, uint8_t blue, uint8_t now)
-{
-}
-
-static uint8_t tick_counter = 0;
-
-ISR(TIMER0_OVF_vect)	// TOV0
-{
-  tick_counter++;
 }
 
 static void timer_init()
@@ -205,86 +252,24 @@ static void timer_init()
 
   TIMSK = (1<<TOIE0);				// enable TOV0
 }
-#endif	// USE_POLLING
-
 
 int main()
 {
-  DDRB = 0;
-  DDRD = 0;
+  RS485N_DDR = RS485N_BITS;		// RS485 out +
+  RS485I_DDR = RS485I_BITS;		// RS485 out -
   LED_DDR |= LED_BITS;			// LED pins out
-  DDRB |= (1<<PB4);			// RS485 out +
-  DDRD |= (1<<PD2);			// RS485 out -
-  PORTB	= (1<<PB0)|(1<<PB1)|(1<<PB2);	// pullups for switches
 
-#define BAUD      38400
-  rs232_init(UBRV(BAUD));
+  rs232_init(UBRV(RS232_BAUD));
+  timer_init();
 
   tx_bit(1);	// high idle
-
-  uint16_t i;
-  uint8_t j;
-
-  cmd_seen = 0;
+  _delay_ms(300);
+  _delay_ms(300);
+  _delay_ms(300);
 
   for (;;)
     {
-      if (cmd_seen) rs232_send(cmd_seen);	  
-      _delay_ms(0.1);
-      if (cmd_seen == '\n' || cmd_seen == '\r')
-        {
-          rs232_send('\r');	  
-          rs232_send('\n');	  
-          rs232_send_hex(cmd_buf[0]);	  
-          rs232_send_hex(cmd_buf[1]);	  
-          rs232_send_hex(cmd_buf[2]);	  
-          rs232_send_hex(cmd_buf[3]);	  
-          rs232_send('\r');	  
-          rs232_send('\n');	  
-	  send_lumitile(cmd_buf[0], cmd_buf[1], cmd_buf[2], cmd_buf[3], 1);
-          cmd_state = CMD_STATE_DONE;	// allow repeated ENTER to resend.
-	  cmd_seen = 0;
-	  continue;
-	}
-      else if (cmd_seen && cmd_state == CMD_STATE_DONE)
-        {
-	  cmd_buf[0] = cmd_buf[1] = cmd_buf[2] = cmd_buf[3] = 0;
-	  cmd_state = CMD_STATE_ADDR;
-          rs232_send(fieldnames[cmd_state]);	  
-	}
-
-      if (cmd_seen >= '0' && cmd_seen <= '9')
-        {
-	  cmd_buf[cmd_state] = 10 * cmd_buf[cmd_state] + cmd_seen - '0';
-	}
-      else if (cmd_seen == '\t' || cmd_seen == ' ')
-        {
-	  cmd_state++;
-	  if (cmd_state > CMD_STATE_BLUE) cmd_state = CMD_STATE_ADDR;
-          rs232_send(fieldnames[cmd_state]);	  
-	}
-#if 0
-      else if (cmd_seen == 'a' || cmd_seen == 'A')
-        {
-	  cmd_state = CMD_STATE_ADDR;
-          rs232_send(fieldnames[cmd_state]);	  
-	}
-      else if (cmd_seen == 'r' || cmd_seen == 'R')
-        {
-	  cmd_state = CMD_STATE_RED;
-          rs232_send(fieldnames[cmd_state]);	  
-	}
-      else if (cmd_seen == 'g' || cmd_seen == 'G')
-        {
-	  cmd_state = CMD_STATE_GREEN;
-          rs232_send(fieldnames[cmd_state]);	  
-	}
-      else if (cmd_seen == 'b' || cmd_seen == 'B')
-        {
-	  cmd_state = CMD_STATE_BLUE;
-          rs232_send(fieldnames[cmd_state]);	  
-	}
-#endif
-      cmd_seen = 0;
+      TX_QUEUE_WORD(0x55);
+      _delay_ms(100);
     }
 }
