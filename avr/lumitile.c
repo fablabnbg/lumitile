@@ -193,40 +193,43 @@ static uint8_t count_zeros(uint8_t Cw)
 static volatile uint8_t cmd_bytes_seen = 0;
 ISR(USART0_RX_vect)
 {
-  uint8_t byte = UDR;
+  if ((UCSRA & (1<<UPE)) == 0)		// else parity error.
+    {
+      uint8_t byte = UDR;
 
-  if (cmd_bytes_seen == 0)
-    {
-      if (byte == 'F')
-        cmd_bytes_seen++;		// else protocol error.
-    }
-  else if (cmd_bytes_seen == 1)
-    {
-      if (byte == 'S')
-        { 
-          cmd_bytes_seen++;
-	  cmd_buf[4] = 0x00;
+      if (cmd_bytes_seen == 0)
+	{
+	  if (byte == 'F')
+	    cmd_bytes_seen++;		// else protocol error.
 	}
-      else if (byte == 'L')
-        {
-	  cmd_bytes_seen++;
-	  cmd_buf[4] = 0x20;
+      else if (cmd_bytes_seen == 1)
+	{
+	  if (byte == 'S')
+	    { 
+	      cmd_bytes_seen++;
+	      cmd_buf[4] = 0x00;
+	    }
+	  else if (byte == 'L')
+	    {
+	      cmd_bytes_seen++;
+	      cmd_buf[4] = 0x20;
+	    }
+	  else
+	    cmd_bytes_seen = 0;		// protocol error.
 	}
-      else
-        cmd_bytes_seen = 0;		// protocol error.
-    }
-  else if (cmd_bytes_seen < 6)		// 2,3,4,5
-    {
-      cmd_buf[cmd_bytes_seen-2] = byte;
-      cmd_bytes_seen++;			// 3,4,5,6
-      if (cmd_bytes_seen == 6)
-        {
-          cmd_bytes_seen = 0;		// Get ready for next command.
-	  tx_bytes = 0;			// Restart the transmitter.
-	}
-      else if (cmd_bytes_seen > 3)	// don't csum the addr!
-        { 
-	  cmd_buf[4] += count_zeros(byte);
+      else if (cmd_bytes_seen < 6)		// 2,3,4,5
+	{
+	  cmd_buf[cmd_bytes_seen-2] = byte;
+	  cmd_bytes_seen++;			// 3,4,5,6
+	  if (cmd_bytes_seen == 6)
+	    {
+	      cmd_bytes_seen = 0;		// Get ready for next command.
+	      tx_bytes = 0;			// Restart the transmitter.
+	    }
+	  else if (cmd_bytes_seen > 3)	// don't csum the addr!
+	    { 
+	      cmd_buf[4] += count_zeros(byte);
+	    }
 	}
     }
 }
@@ -259,7 +262,7 @@ int main()
   RS485I_DDR = RS485I_BITS;		// RS485 out -
   LED_DDR |= LED_BITS;			// LED pins out
 
-  rs232_init(UBRV(RS232_BAUD));
+  rs232_init(UBRV(RS232_BAUD));		// even parity!
   timer_init();
 
   tx_bit(1);	// high idle
