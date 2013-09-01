@@ -41,9 +41,8 @@
  *        1: Command 'S': direct set or 'L': load only, waiting for broadcast set.
  *        2: addr, 3: red, 4: green, 5: blue
  * 
- * The input command on RS232 has 66bits, while the output on RS485 has 60.
- * thus the host can saturate RS232, and we still have some headroom to 
- * convert everything without need for handshake.
+ * The code alternates between receiving and sending.
+ * We input at 115.2kbps so that the wait less than 50% of the time.
  *   
  * 2013-08-21, V0.1, jw - initial draught. 
  *		Crude bit banging.
@@ -70,7 +69,7 @@
 #include "rs232.h"
 #include <util/delay.h>			// needs F_CPU from cpu_mhz.h
 
-#define RS232_BAUD      57600
+#define RS232_BAUD      115200
 #define RS485_BAUD      57600
 #define T0TOP     (F_CPU/RS485_BAUD)+10	// 8000000/57600 = 137
 
@@ -123,7 +122,7 @@
 # error "TIMER0_OVF_vect cannot interrupt USART0_RX_vect"
 #endif
 
-static void tx_bit(uint8_t bit)
+static void tx_bit_wait(uint8_t bit)
 {
   if (bit)
     {
@@ -137,6 +136,7 @@ static void tx_bit(uint8_t bit)
       RS485I_PORT |=  RS485I_BITS;
       RS485N_PORT &= ~RS485N_BITS;
     }
+  _delay_us(16.7); 	// tune this to generate 57.6 kbps
 }
 
 static volatile uint8_t cmd_buf[5];		// 0 addr, 1-3 colors, 4 csum
@@ -151,6 +151,7 @@ static volatile uint8_t tx_bytes = 5;		// bytes sent for this command. 5=all don
 #define TX_QUEUE_WORD(val) \
   do { tx_word = ((val)<<1)| 0xc00; tx_bits = 12; } while (0)
 
+#if 0
 ISR(TIMER0_OVF_vect)	// TOV0
 {
   LED_PORT |= (RED_LED_BIT);
@@ -176,6 +177,7 @@ ISR(TIMER0_OVF_vect)	// TOV0
     }
   LED_PORT &= ~(RED_LED_BIT);
 }
+#endif
 
 static uint8_t count_zeros(uint8_t Cw)
 {
@@ -195,43 +197,36 @@ static uint8_t count_zeros(uint8_t Cw)
 static volatile uint8_t cmd_bytes_seen = 0;
 ISR(USART0_RX_vect)
 {
-  if (1)	// (UCSRA & (1<<UPE)) == 0)		// else parity error.
-    {
-      uint8_t byte = UDR;
+  uint8_t byte = UDR;
 
-      if (cmd_bytes_seen == 0)
-	{
-	  if (byte == 'F')
-	    cmd_bytes_seen++;		// else protocol error.
+  if (cmd_bytes_seen == 0)
+    {
+      if (byte == 'F')
+	cmd_bytes_seen++;		// else protocol error.
+    }
+  else if (cmd_bytes_seen == 1)
+    {
+      if (byte == 'S')
+	{ 
+	  cmd_bytes_seen++;
+	  cmd_buf[4] = 0x00;
 	}
-      else if (cmd_bytes_seen == 1)
+      else if (byte == 'L')
 	{
-	  if (byte == 'S')
-	    { 
-	      cmd_bytes_seen++;
-	      cmd_buf[4] = 0x00;
-	    }
-	  else if (byte == 'L')
-	    {
-	      cmd_bytes_seen++;
-	      cmd_buf[4] = 0x20;
-	    }
-	  else
-	    cmd_bytes_seen = 0;		// protocol error.
+	  cmd_bytes_seen++;
+	  cmd_buf[4] = 0x20;
 	}
-      else if (cmd_bytes_seen < 6)		// 2,3,4,5
+      else
+	cmd_bytes_seen = 0;		// protocol error.
+    }
+  else if (cmd_bytes_seen < 6)		// 2,3,4,5
+    {
+      cmd_buf[cmd_bytes_seen-2] = byte;
+      cmd_bytes_seen++;			// 3,4,5,6
+      if (cmd_bytes_seen == 6)
 	{
-	  cmd_buf[cmd_bytes_seen-2] = byte;
-	  cmd_bytes_seen++;			// 3,4,5,6
-	  if (cmd_bytes_seen == 6)
-	    {
-	      cmd_bytes_seen = 0;		// Get ready for next command.
-	      tx_bytes = 0;			// Restart the transmitter.
-	    }
-	  else if (cmd_bytes_seen > 3)	// don't csum the addr!
-	    { 
-	      cmd_buf[4] += count_zeros(byte);
-	    }
+	  cmd_bytes_seen = 0;		// Get ready for next command.
+	  tx_bytes = 0;			// Restart the transmitter.
 	}
     }
 }
@@ -258,6 +253,38 @@ static void timer_init()
   TIMSK = (1<<TOIE0);				// enable TOV0
 }
 
+static void tx_word_wait(uint16_t word)
+{
+  uint8_t bit;
+  tx_bit_wait(0);	// start bit
+
+  for (bit = 0; bit < 9; bit++)
+    {
+      tx_bit_wait(word & 0x01);
+      word >>= 1;
+    }
+
+  tx_bit_wait(1);	// stop bit
+  tx_bit_wait(1);	// stop bit
+}
+
+static void send_lumitile(uint8_t addr, uint8_t red, uint8_t green, uint8_t blue, uint8_t now)
+{
+  uint8_t zcnt = 0;
+
+  zcnt += count_zeros(red);
+  zcnt += count_zeros(green);
+  zcnt += count_zeros(blue);
+  if (!now) zcnt |= 0x20;	// Bit 5 = 1--> Kachel speichert die
+   // Farbwerte, zeigt sie erst dann
+// an, wenn ein Broadcast mit bit5=1 erfolgt.
+  tx_word_wait(addr | 0x100);	// Bit 9 wg. Adresse setzen
+  tx_word_wait(red);
+  tx_word_wait(green);
+  tx_word_wait(blue);
+  tx_word_wait(zcnt);
+}
+
 int main()
 {
   RS485N_DDR = RS485N_BITS;		// RS485 out +
@@ -265,23 +292,16 @@ int main()
   LED_DDR |= LED_BITS;			// LED pins out
 
   rs232_init(UBRV(RS232_BAUD));		// even parity!
-  timer_init();
+  // timer_init();
 
-  tx_bit(1);	// high idle
-  _delay_ms(300);
-  _delay_ms(300);
-  _delay_ms(300);
-
+  tx_bit_wait(1);	// high idle
   for (;;)
     {
-#if 0
-  cmd_buf[4] = 0;
-  cmd_buf[0] = 255;
-  cmd_buf[1] = 100; cmd_buf[4] += count_zeros(cmd_buf[1]);
-  cmd_buf[2] = 0;   cmd_buf[4] += count_zeros(cmd_buf[2]);
-  cmd_buf[3] = 0;   cmd_buf[4] += count_zeros(cmd_buf[3]);
-  tx_bytes = 0;			// Restart the transmitter.
-#endif
-      _delay_ms(100);
+      while(tx_bytes != 0)
+        ;			// wait for the next command
+      cli();
+      send_lumitile(cmd_buf[0], cmd_buf[1], cmd_buf[2], cmd_buf[3], 1);
+      tx_bytes = 5;
+      sei();
     }
 }

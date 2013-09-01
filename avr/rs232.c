@@ -12,7 +12,7 @@
  * 2013-04-09, jw - SIG_USART0_RECV is poisoned. Use USART_RX_vect instead.
  * 2013-08-29, jw - added UBRV 250k 500k 1M, 
  *                  added RS232_RECEIVE_CB to make callback code optional.
- * 2013-09-01, jw - CAUTION: hardcoded UC_PAR_EVEN.
+ * 2013-09-01, jw - CAUTION: hardcoded UC_PAR_NONE.
  */
 #if 0
          [E]___[B]          BSF17            PC COM port, 
@@ -167,7 +167,7 @@ void rs232_init(uint16_t ubrr)
 
   // enable data-reg empty interrupt, switch on transmitter, CS8
   UCSRB = (1<<UDRIE)|(1<<TXEN)|UB_CS8;
-# define UCSRC_V  UC_MASYNC | UC_CS8 | UC_STOPB1 | UC_PAR_EVEN | UC_PASYNC
+# define UCSRC_V  UC_MASYNC | UC_CS8 | UC_STOPB1 | UC_PAR_NONE | UC_PASYNC
 
   // URSEL = 1, atmega8 special: when talking to UCSRC
   // UMSEL = 1, synchronuous mode

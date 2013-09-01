@@ -3,7 +3,7 @@ import sys, lumitile, time, termios, select
 
 dev="/dev/ttyUSB0"
 if len(sys.argv) > 1: dev=sys.argv[1]
-kachel = lumitile.lumitile(port=dev)
+kachel = lumitile.lumitile(port=dev, base=40)
 
 def getch():
   """a simple nonblocking keyboard poll
@@ -63,8 +63,7 @@ FADE_STEP = 5
 bl_step = FADE_STEP
 ye_step = 0
 
-# for j in range(20):
-if 0:
+for j in range(20):
   for i in range(6):
     for k in range(20):
       cmd_seen = getch()
@@ -98,7 +97,7 @@ if 0:
         ye = 0
         ye_step = 0
         bl_step = FADE_STEP
-      time.sleep(0.020)	#  tune to 33bpm
+      # time.sleep(0.020)	#  tune to 33bpm
 
     if (cmd_seen): break
   if (cmd_seen): break

@@ -10,26 +10,28 @@
 import serial, time
 
 __VERSION__ = '0.1'
-__OLD_HARDWARE__ = True
 
 class lumitile():
   """ A driver for Dirk Leber's LED Kacheln -- this
       uses a ATtiny2313 based signal converter from RS232 to RS458
   """
-  def __init__(self, baud=57600, port="/dev/ttyUSB0"):
-    self.addr = 255     # broadcast
+  def __init__(self, baud=115200, port="/dev/ttyUSB0", base=1):
+    self.addr = 255             # broadcast
+    self.base = base            # shift the addresses
     print "dev=", port, "   speed=", baud
-    self.ser = serial.Serial(port, baud, parity='E', timeout=1)
+    self.ser = serial.Serial(port, baud, timeout=1)
     print "serial port opened"
   
   def send(self, red=255, green=255, blue=255, addr=0, now=True, delay=0):
     if (addr == 0): addr = self.addr
+    if (addr != 255): addr += self.base - 1;
     cmd = chr(addr)+chr(red)+chr(green)+chr(blue)
     if (now):
       self.ser.write("FS"+cmd)
     else:
       self.ser.write("FL"+cmd)
-    print "%d %d %d %d" % (addr, red, green, blue)
+    time.sleep(0.001);           # wait, while the controller processes the command.
+    # print "%d %d %d %d" % (addr, red, green, blue)
     if delay:
       time.sleep(delay)
 
