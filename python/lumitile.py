@@ -18,6 +18,7 @@ class lumitile():
   """
   def __init__(self, baud=115200, port="/dev/ttyUSB0", base=1):
     self.addr = 255             # broadcast
+    if base <= 0: base=1
     self.base = base            # shift the addresses
     print "dev=", port, "   speed=", baud
     self.ser = serial.Serial(port, baud, timeout=1)

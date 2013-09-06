@@ -79,12 +79,12 @@
 # define GREEN_LED_BIT	(1<<PA0)
 # define LED_BITS	(GREEN_LED_BIT)
 
-# define RS485I_PORT PORTB
-# define RS485I_DDR  DDRB
-# define RS485I_BITS ((1<<PB0)|(1<<PB1)|(1<<PB2)|(1<<PB3)|(1<<PB4))
-# define RS485N_PORT PORTD
-# define RS485N_DDR  DDRD
-# define RS485N_BITS ((1<<PD2)|(1<<PD3)|(1<<PD4)|(1<<PD5)|(1<<PD6))
+# define RS485N_PORT PORTB
+# define RS485N_DDR  DDRB
+# define RS485N_BITS ((1<<PB0)|(1<<PB1)|(1<<PB2)|(1<<PB3)|(1<<PB4))
+# define RS485I_PORT PORTD
+# define RS485I_DDR  DDRD
+# define RS485I_BITS ((1<<PD2)|(1<<PD3)|(1<<PD4)|(1<<PD5)|(1<<PD6))
 
 #else
 # define LED_PORT PORTD
@@ -136,7 +136,7 @@ static void tx_bit_wait(uint8_t bit)
       RS485I_PORT |=  RS485I_BITS;
       RS485N_PORT &= ~RS485N_BITS;
     }
-  _delay_us(16.7); 	// tune this to generate 57.6 kbps
+  _delay_us(16.1); 	// tune this to generate 57.6 kbps
 }
 
 static volatile uint8_t cmd_buf[5];		// 0 addr, 1-3 colors, 4 csum
@@ -199,6 +199,7 @@ ISR(USART0_RX_vect)
 {
   uint8_t byte = UDR;
 
+
   if (cmd_bytes_seen == 0)
     {
       if (byte == 'F')
@@ -231,6 +232,7 @@ ISR(USART0_RX_vect)
     }
 }
 
+#if 0
 static void timer_init()
 {
   /*
@@ -252,6 +254,7 @@ static void timer_init()
 
   TIMSK = (1<<TOIE0);				// enable TOV0
 }
+#endif
 
 static void tx_word_wait(uint16_t word)
 {
@@ -278,7 +281,7 @@ static void send_lumitile(uint8_t addr, uint8_t red, uint8_t green, uint8_t blue
   if (!now) zcnt |= 0x20;	// Bit 5 = 1--> Kachel speichert die
    // Farbwerte, zeigt sie erst dann
 // an, wenn ein Broadcast mit bit5=1 erfolgt.
-  tx_word_wait(addr | 0x100);	// Bit 9 wg. Adresse setzen
+  tx_word_wait((uint16_t)addr | 0x100);	// Bit 9 wg. Adresse setzen
   tx_word_wait(red);
   tx_word_wait(green);
   tx_word_wait(blue);
@@ -293,7 +296,7 @@ int main()
 
   rs232_init(UBRV(RS232_BAUD));		// even parity!
   // timer_init();
-
+  
   tx_bit_wait(1);	// high idle
   for (;;)
     {
