@@ -1,6 +1,5 @@
-
 #! /usr/bin/python
-import sys, lumitile, time, termios, select
+import sys, lumitile
 
 dev="/dev/ttyUSB0"
 if len(sys.argv) > 1: dev=sys.argv[1]
