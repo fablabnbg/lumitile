@@ -32,7 +32,7 @@ class lumitile():
       self.ser.write("FS"+cmd)
     else:
       self.ser.write("FL"+cmd)
-    time.sleep(0.001);           # wait, while the controller processes the command.
+    time.sleep(0.002);           # wait, while the controller processes the command.
     # print "%d %d %d %d" % (addr, red, green, blue)
     if delay:
       time.sleep(delay)

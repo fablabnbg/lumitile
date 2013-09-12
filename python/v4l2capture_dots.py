@@ -108,7 +108,7 @@ while (not kachel.getch()):
   image = Image.fromstring("RGB", (size_x, size_y), data)
   dots = image_to_dots(image, width, height, hflip=False, vflip=False)
   for a in range(0, len(dots)):
-    kachel.send(dots[i][0], dots[i][1], dots[i][2], addr=a, delay=0.001)
+    kachel.send(dots[a][0], dots[a][1], dots[a][2], addr=a+1, delay=0.001)
     
     
 
