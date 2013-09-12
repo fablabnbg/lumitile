@@ -6,23 +6,39 @@
 # Distribute under GPL-2.0 or ask
 #
 # 2013-08-29, V0.1 jw -- inintial draught: 
+# 2013-09-10, V0.2 jw -- working
+# 2013-09-12, V0.3 jw -- added pipe mode.
 
 import serial, time
 import sys, termios, select
+import subprocess
 
-__VERSION__ = '0.2'
+__VERSION__ = '0.3'
 
 class lumitile():
   """ A driver for Dirk Leber's LED Kacheln -- this
       uses a ATtiny2313 based signal converter from RS232 to RS458
+      If the port name starts with a '|' character, the rest of the name
+      is a command that we pipe into.
   """
   def __init__(self, baud=115200, port="/dev/ttyUSB0", base=1):
     self.addr = 255             # broadcast
     if base <= 0: base=1
     self.base = base            # shift the addresses
-    print "dev=", port, "   speed=", baud
-    self.ser = serial.Serial(port, baud, timeout=1)
-    print "serial port opened"
+    if port[0] == '|':
+      cmd = port[1:]
+      try:
+        self.pipe = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE)
+      except OSError as e:
+        self.proc = "%s failed: errno=%d %s" % (cmd, e.errno, e.strerror)
+        raise OSError(self.proc)
+      self.ser = self.pipe.stdin
+      print "pipe to %s opened" % cmd
+      print "piping not yet supported"
+    else:
+      print "dev=", port, "   speed=", baud
+      self.ser = serial.Serial(port, baud, timeout=1)
+      print "serial port opened"
   
   def send(self, red=255, green=255, blue=255, addr=0, now=True, delay=0):
     if (addr == 0): addr = self.addr
