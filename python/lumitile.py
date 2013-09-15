@@ -34,7 +34,6 @@ class lumitile():
         raise OSError(self.proc)
       self.ser = self.pipe.stdin
       print "pipe to %s opened" % cmd
-      print "piping not yet supported"
     else:
       print "dev=", port, "   speed=", baud
       self.ser = serial.Serial(port, baud, timeout=1)
@@ -48,7 +47,7 @@ class lumitile():
       self.ser.write("FS"+cmd)
     else:
       self.ser.write("FL"+cmd)
-    time.sleep(0.002);           # wait, while the controller processes the command.
+    time.sleep(0.003);           # wait, while the controller processes the command.
     # print "%d %d %d %d" % (addr, red, green, blue)
     if delay:
       time.sleep(delay)

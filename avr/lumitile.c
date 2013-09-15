@@ -136,7 +136,7 @@ static void tx_bit_wait(uint8_t bit)
       RS485I_PORT |=  RS485I_BITS;
       RS485N_PORT &= ~RS485N_BITS;
     }
-  _delay_us(16.1); 	// tune this to generate 57.6 kbps
+  _delay_us(17.0); 	// tune this to generate 57.6 kbps
 }
 
 static volatile uint8_t cmd_buf[5];		// 0 addr, 1-3 colors, 4 csum
@@ -199,7 +199,6 @@ ISR(USART0_RX_vect)
 {
   uint8_t byte = UDR;
 
-
   if (cmd_bytes_seen == 0)
     {
       if (byte == 'F')
@@ -218,7 +217,9 @@ ISR(USART0_RX_vect)
 	  cmd_buf[4] = 0x20;
 	}
       else
-	cmd_bytes_seen = 0;		// protocol error.
+        { 
+	  cmd_bytes_seen = 0;		// protocol error.
+	}
     }
   else if (cmd_bytes_seen < 6)		// 2,3,4,5
     {
@@ -294,10 +295,11 @@ int main()
   RS485I_DDR = RS485I_BITS;		// RS485 out -
   LED_DDR |= LED_BITS;			// LED pins out
 
+  OSCCAL += 5;				// 115200 reception is flaky today.
+
   rs232_init(UBRV(RS232_BAUD));		// even parity!
   // timer_init();
   
-  tx_bit_wait(1);	// high idle
   for (;;)
     {
       while(tx_bytes != 0)

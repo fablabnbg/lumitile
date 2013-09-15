@@ -36,16 +36,19 @@ def KeyboardCb(self,event_cb):
 def ledOnOff(leds, sensor):
   changed=False
   a=None
-  if (select.select([sys.stderr],[],[],0)[0]!=[]):   
-    a = os.read(sys.stderr.fileno(), 6)
+  if (select.select([sys.stdin],[],[],0)[0]!=[]):   
+    a = os.read(sys.stdin.fileno(), 1)
     changed=True
+    if len(a) < 1: return
     if   (a[0] != 'F'): return
-    if   (a[1] != 'S'): return
-    addr  = ord(a[2])
-    red   = ord(a[3])
-    green = ord(a[4])
-    blue  = ord(a[5])
-    print "FS %d %d %d %d" % (addr, red, green, blue)
+    a = os.read(sys.stdin.fileno(), 1)
+    if   (a[0] != 'S'): return
+    a = os.read(sys.stdin.fileno(), 4)
+    addr  = ord(a[0])
+    red   = ord(a[1])
+    green = ord(a[2])
+    blue  = ord(a[3])
+    # print "FS %d %d %d %d" % (addr, red, green, blue)
     if (addr == 255):
       for i in range(len(leds.a)): leds.a[i].on = (red/255., green/255., blue/255.)
     else:
@@ -108,7 +111,7 @@ def main():
         txt.justification = SoAsciiText.CENTER
         txt.string = repr(i+1)
         l_tra = SoTranslation()
-        l_tra.translation = (0,-2.5,1)
+        l_tra.translation = (0,-.5,1)
         l_mat = SoMaterial()
         l_mat.diffuseColor = (.1,.1,.3)
         l_mat.ambientColor = (.1,.1,.3)
@@ -120,9 +123,14 @@ def main():
         led.sca = SoScale()
         led.sca.scaleFactor = (1,1,1)
         led.addChild(led.sca)
-        led.sphere=SoSphere()
+        # led.sphere=SoSphere()
+        # led.addChild(led.sphere)
+        led.kachel=SoCube()
+        led.kachel.width=1.8
+        led.kachel.height=1.8
+        led.kachel.depth=.2
+        led.addChild(led.kachel)
         led.on = False
-        led.addChild(led.sphere)
         leds.addChild(led)
         leds.a.append(led)
 
@@ -135,9 +143,9 @@ def main():
     col = SoBaseColor()
     col.rgb=(0,0,.5)
     ctr=SoTranslation()
-    ctr.translation = (7.4,-.15,0) # use 8.75 with 2.5 spacing
+    ctr.translation = (9.4,-.15,0) # use 8.75 with 2.5 spacing
     cube=SoCube()
-    cube.width=2.1*8
+    cube.width=2.1*10
     cube.height=.4
     cube.depth=1.6
     scene.addChild(col)
@@ -153,7 +161,7 @@ def main():
     cam = viewer.getCamera()
     cam.scaleHeight(.4)
 
-    viewer.setBackgroundColor(QtGui.QColor(180,180,180))
+    viewer.setBackgroundColor(QtGui.QColor(0,0,0))
     viewer.show()
 
     SoGui.show(myWindow) # Display main window
