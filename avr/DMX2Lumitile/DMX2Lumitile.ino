@@ -20,7 +20,9 @@
 #define KACHEL_FIRST	1
 #define KACHEL_LAST	20
 
-// atmega328p
+// atmega328p	<uno>
+//  PD0 <D0>
+//  PD1 <D1>
 //  PB0 <D8>   // RS485 out +
 //  PB1 <D9>   // RS485 out -
 //  PB2 <D10>  
@@ -29,9 +31,9 @@
 //  PB5 <D13>  
 
 #if 1
-# define RS485I_PORT PORTB
-# define RS485I_DDR  DDRB
-# define RS485I_BITS (1<<1)
+# define RS485I_PORT PORTD
+# define RS485I_DDR  DDRD
+# define RS485I_BITS (1<<7)
 # define RS485N_PORT PORTB
 # define RS485N_DDR  DDRB
 # define RS485N_BITS (1<<2)
@@ -66,7 +68,7 @@ static void tx_bit_wait(uint8_t bit)
       RS485I_PORT |=  RS485I_BITS;
       RS485N_PORT &= ~RS485N_BITS;
     }
-  _delay_us(34.0); 	// 40.0 @20Mhz, 34.0 @16Mhz, 17.0 @8Mhz; tune this to generate 57.6 kbps
+  _delay_us(17.0); 	// 40.0 @20Mhz, 34.0 @16Mhz, 17.0 @8Mhz; tune this to generate 57.6 kbps
 }
 
 
@@ -138,7 +140,7 @@ void loop() {
   else
   {
         cli();
-        send_lumitile(255, 0, 100, 0, 1);
+        send_lumitile(255, 100, 0, 100, 1);
         sei();
     
   } // if
