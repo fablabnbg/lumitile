@@ -5,6 +5,10 @@
 # 2013-10-03, V0.1 jw -- initial draught, propedit() added.
 #                        Sometimes my camera runs at 30fps, somtimes at 15fps
 #                        no idea, how to control this.
+# 2013-10-04, V0.1 jw -- adding draw_panel(), wip
+#
+# References:
+# http://docs.opencv.org/modules/core/doc/drawing_functions.html
 
 import cv
 import sys, time, string
@@ -51,6 +55,17 @@ for p in prop:
 print "\n"
 help()
 print "\n"
+
+def draw_panel(cv, img, x, y, w, h, xsubdiv=10, ysubdiv=2, color=(255,0,255)):
+  # http://docs.opencv.org/modules/core/doc/drawing_functions.html
+  xs = w/float(xsubdiv)
+  ys = h/float(ysubdiv)
+  for i in range(0,xsubdiv+1):
+    xx = int(x+i*xs+0.5)
+    cv.Line(img, (xx,y), (xx,y+h), color, 1)
+  for i in range(0,ysubdiv+1):
+    yy = int(y+i*ys+0.5)
+    cv.Line(img, (x,yy), (x+w,yy), color, 1)
 
 def cv_readline(cv):
   s = ''
@@ -135,12 +150,17 @@ while (True):
     cv.CvtColor(img, gray, cv.CV_BGR2GRAY)
     if (mode == 'e'):
       cv.Canny(gray, gray, 50, 150, 3)
-    cv.ShowImage('camera', gray)
-  else:
-    cv.ShowImage('camera', img)
+    img = gray
+  
+  draw_panel(cv, img, 10,10, 100, 20)
+  cv.ShowImage('camera', img)
 
   key = cv.WaitKey(1) & 0xff    # force into ascii range
-  if (key != 255):
+  # 84 = c_down
+  # 82 = c_up
+  # 81 = c_left
+  # 83 = c_right
+  if (key != 255 and key != 225):       # 225 = shift
     # handle events, nonblocking, and also handle key presses
     if (chr(key) in "cgme"):
       mode = chr(key)
