@@ -40,6 +40,11 @@ prop = {
   }
 
 cam = cv.CaptureFromCAM(-1)
+cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FRAME_WIDTH, 320)
+cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FRAME_HEIGHT, 240)
+# cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FRAME_WIDTH, 1280)
+# cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FRAME_HEIGHT, 720)
+
 idx = 0
 for p in prop:
   x = cv.GetCaptureProperty(cam, prop[p][0])
@@ -77,7 +82,7 @@ def get_panel(cv, img, x, y, w, h, xsubdiv=10, ysubdiv=2, color=(255,0,255)):
       cv.Set2D(img, yy, xx, (255,0,0))
   return vals
 
-def draw_panel(cv, img, x, y, w, h, xsubdiv=10, ysubdiv=2, color=(255,0,255)):
+def draw_panel(cv, img, x, y, w, h, xsubdiv=10, ysubdiv=2, color=(255,0,255), vals=None):
   # http://docs.opencv.org/modules/core/doc/drawing_functions.html
   xs = w/float(xsubdiv)
   ys = h/float(ysubdiv)
@@ -87,6 +92,17 @@ def draw_panel(cv, img, x, y, w, h, xsubdiv=10, ysubdiv=2, color=(255,0,255)):
   for i in range(0,ysubdiv+1):
     yy = int(y+i*ys+0.5)
     cv.Line(img, (int(x+.5),yy), (int(x+w+.5),yy), color, 1)
+
+  if (vals):
+    l = list(reversed(vals))
+    s = int(img.width*2/(3*xsubdiv))
+    ww = int(s*.8)
+    for i in range(xsubdiv):
+      xx = int(0.2*ww+i*s)
+      for j in range(ysubdiv):
+        yy = int(img.height-(ysubdiv-j)*s)
+        c = l.pop() # unshift, actually.
+        cv.Rectangle(img, (xx,yy),(xx+ww,yy+ww),(c[0],c[1],c[2]), cv.CV_FILLED)
 
 def cv_readline(cv):
   s = ''
@@ -169,13 +185,11 @@ def scale_panel(dir):
   else:
     pass
 
-# cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FRAME_WIDTH, 1280)
-# cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FRAME_HEIGHT, 720)
 ## max 15fps
 # fourcc = cv.CV_FOURCC('M', 'J', 'P', 'G')
 ## max 30fps
-fourcc = cv.CV_FOURCC('Y', 'U', 'Y', 'V')
-cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FOURCC, fourcc)
+#fourcc = cv.CV_FOURCC('Y', 'U', 'Y', 'V')
+#cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FOURCC, fourcc)
 
 cv.NamedWindow('camera')
 cv.MoveWindow('camera', 10, 10)
@@ -222,7 +236,7 @@ while (True):
     img = gray
   
   v = get_panel(cv, img, pan['x'], pan['y'], pan['w'], pan['h'])
-  draw_panel(cv, img, pan['x'], pan['y'], pan['w'], pan['h'])
+  draw_panel(cv, img, pan['x'], pan['y'], pan['w'], pan['h'], vals=v)
   cv.ShowImage('camera', img)
 
   key_raw = cv.WaitKey(1)
