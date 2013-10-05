@@ -63,7 +63,7 @@ FADE_STEP = 5
 bl_step = FADE_STEP
 ye_step = 0
 
-for j in range(20):
+for j in range(1000):
   for i in range(6):
     for k in range(20):
       cmd_seen = getch()
