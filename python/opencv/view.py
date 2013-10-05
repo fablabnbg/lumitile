@@ -40,8 +40,8 @@ prop = {
   }
 
 cam = cv.CaptureFromCAM(-1)
-cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FRAME_WIDTH, 320)
-cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FRAME_HEIGHT, 240)
+#cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FRAME_WIDTH, 320)
+#cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FRAME_HEIGHT, 240)
 # cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FRAME_WIDTH, 1280)
 # cv.SetCaptureProperty(cam, cv.CV_CAP_PROP_FRAME_HEIGHT, 720)
 
