@@ -24,9 +24,10 @@ if len(sys.argv) > 1: dev=sys.argv[1]
 def help():
       print "toggle display mode: (C)olor, (G)ray, (E)dge detect"
       print "navigate panel: (M)ove, then cursor keys; or (S)cale, then cursor keys"
+      print "                If cursor keys do not work: H, J, K, L"
       print "                (+)/(-): Increase/Decrease steps"
       print "show/edit capture properties: (P), then N [Enter], Value [Enter]"
-      print "exit: (X), (P), ESC"
+      print "exit: (X), (Q), ESC"
 
 prop = {
   'bright':     [cv.CV_CAP_PROP_BRIGHTNESS],
@@ -272,6 +273,11 @@ while (True):
   # 65363 83 = c_right
   # 65513 233 = alt
   # 65505 225 = shift
+  if (chr(key) == 'h'): key_raw = 65361
+  if (chr(key) == 'j'): key_raw = 65364
+  if (chr(key) == 'k'): key_raw = 65362
+  if (chr(key) == 'l'): key_raw = 65363
+
   if (key != 255 and key != 225 and key != 233):       
     # handle events, nonblocking, and also handle key presses
     if (chr(key) in "cge"):
@@ -280,7 +286,7 @@ while (True):
       propedit() 
     elif (chr(key) in "mrs"):
       nav = chr(key)
-    elif (chr(key) in "h?"):
+    elif (chr(key) in "?"):
       help()
     elif (chr(key) == "v"):
       print v
