@@ -35,7 +35,7 @@
  *        lsb first.
  *        0: addr,  1: red, 2: green, 3: blue, 4: checksum 5bits+ command 1bit
  *
- * RS232: 6 bytes: 1 start, 8 data, even parity, 1 stop bit each.
+ * RS232: 6 bytes: 1 start, 8 data, even parity, 1 stop bit each. 115200 baud.
  *        msb first
  *        0: Magic 'F'	// short for 'FabLab'
  *        1: Command 'S': direct set or 'L': load only, waiting for broadcast set.
