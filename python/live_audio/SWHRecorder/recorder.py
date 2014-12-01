@@ -32,7 +32,16 @@ class SwhRecorder:
         self.secPerPoint=1.0/self.RATE
         
         self.p = pyaudio.PyAudio()
-        self.inStream = self.p.open(format=pyaudio.paInt16,channels=1,rate=self.RATE,input=True,frames_per_buffer=self.BUFFERSIZE)
+	for i in range(0,self.p.get_device_count()):
+	  d = self.p.get_device_info_by_index(i)
+	  if d['maxInputChannels']:
+	    print "api="+str(d['hostApi'])+" idx="+str(i)+": ", d['name']
+	in_dev=None
+	  
+	for i in range(0,self.p.get_host_api_count()):
+	  print "host api idx="+str(i)+": ", self.p.get_host_api_info_by_index(i)
+
+        self.inStream = self.p.open(input_device_index=in_dev,format=pyaudio.paInt16,channels=1,rate=self.RATE,input=True,output=False,frames_per_buffer=self.BUFFERSIZE)
         
         self.xsBuffer=numpy.arange(self.BUFFERSIZE)*self.secPerPoint
         self.xs=numpy.arange(self.chunksToRecord*self.BUFFERSIZE)*self.secPerPoint

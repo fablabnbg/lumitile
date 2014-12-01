@@ -10,7 +10,12 @@ from recorder import *
 def plotSomething():
     if SR.newAudio==False: 
         return
-    xs,ys=SR.fft()
+    # trimBy=20: max=1200Hz
+    # trimBy=10: max=2500Hz
+    # trimBy=8:  max=3000Hz
+    # trimBy=7:  max=3500Hz
+    # trimBy=5:  max=5000Hz
+    xs,ys=SR.fft(logScale=False, trimBy=7, divBy=2000)
     c.setData(xs,ys)
     uiplot.qwtPlot.replot()
     SR.newAudio=False
