@@ -1,3 +1,41 @@
+				jw, Wed May 20 01:52:49 CEST 2015
+run a lauflicht
+---------------
+
+scp -r python root@172.16.22.125:
+ssh root@172.16.22.125
+cd python
+vi lauflicht.py
+  ...
+  dev="/dev/ttyATH0"
+  ...
+ZZ
+python lauflicht.py
+
+
+				jw, Wed May 20 00:55:50 CEST 2015
+join a wlan as station
+----------------------
+From the AP config below, enter luci, select Wifi, scan, 
+enter credentials, wait until it no longe reacts.
+Run "nmap -p 80 172.16.22.0/16" - Test the results with "telnet 172.16.22.125 22"
+If it responds with "SSH-2.0-dropbear_2012.55", it is likely you found the device.
+
+opkg update
+vi /etc/opkg.conf
+ src/gz snapshots http://pkg.8devices.com/v2.4/carambola2/packages
+ src/gz pkg25 http://pkg.8devices.com/v2.5/carambola2/packages
+ src/gz pkg26 http://pkg.8devices.com/v2.6/carambola2/packages
+ dest root /
+ dest ram /tmp
+ lists_dir ext /var/opkg-lists
+ option overlay_root /overlay
+ZZ
+opkg install python 	# from 2.4
+opkg install pyserial 	# from 2.5
+opkg install mmio 	# from 2.6
+
+
 				jw, Sun May 17 20:00:15 CEST 2015
 
 The lumitile power supply is 48V. The usual LM2596 regulator cannot handle this input voltage.
