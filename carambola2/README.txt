@@ -10,8 +10,11 @@ vi lauflicht.py
   dev="/dev/ttyATH0"
   ...
 ZZ
-python lauflicht.py
 
+vi /etc/rc.local
+ python /root/python/lauflicht.py &
+ exit 0
+ZZ
 
 				jw, Wed May 20 00:55:50 CEST 2015
 join a wlan as station

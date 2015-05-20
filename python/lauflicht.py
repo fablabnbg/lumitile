@@ -1,7 +1,7 @@
 #! /usr/bin/python
 import sys, lumitile
 
-dev="/dev/ttyUSB0"
+dev="/dev/ttyATH0"
 if len(sys.argv) > 1: dev=sys.argv[1]
 kachel = lumitile.lumitile(port=dev)
 
@@ -62,22 +62,20 @@ def interpolate_rgb(idx, cols=[(255,0,0),(0,0,255)], steps=10, sigma=.5, dim=1.0
 k = 19
 j = 20
 x = 0
-while (not kachel.getch()):
+# while (not kachel.getch()):
+while (True):
   for i in (1,3,5,7,9,11,13,15,17,19,20,18,16,14,12,10,8,6,4,2):
     # (21,22,23,24,25,26,25,24,23,22):       
-    kachel.send(120,120,120, addr=i, delay=0.001)
-    kachel.send(255,255,255, addr=j, delay=0.001)
-    kachel.send(120,120,120, addr=k, delay=0.3)
-    if (x % 123 == 0):
-      kachel.send(0,255,0, delay=.1)
-    else:
-      (bg_r,bg_g,bg_b) = interpolate_rgb(x*.8, 
-        [ 
-          (200,140,0),(255,200,30),(0,255,0),(0,255,0),
-          (0,255,155),(0,255,255), (255,0,255),(255,0,255), 
-          (0,0,255),(0,0,255),(140,140,140)
-        ], 10, dim=1);
-      kachel.send(bg_r,bg_g,bg_b, delay=0.001)
+    kachel.send(255,100,020, addr=i, delay=0.001)
+    kachel.send(255,0,255, addr=j, delay=0.001)
+    kachel.send(220,220,220, addr=k, delay=9.2)
+    (bg_r,bg_g,bg_b) = interpolate_rgb(x*.8, 
+      [ 
+          (200,140,0),(255,50,0),(255,10,0),(255,200,30),(0,255,0),
+          (0,255,0),(0,255,155),(0,255,255),(255,0,255),(255,0,0), 
+          (0,0,255),(0,0,255),(255,0,0)
+      ], 10, dim=.6);
+    kachel.send(bg_r,bg_g,bg_b, delay=0.001)
     x += 1
     k = j
     j = i
